@@ -99,3 +99,15 @@
         border-color: #333 transparent transparent transparent;
     }
         .error { color: red; margin-bottom: 10px; }
+
+    /* Extracted inline styles from setup.php */
+    #database_path_custom {
+        display: none;
+        margin-top: 5px;
+    }
+
+    #database_path_custom + small {
+        display: block;
+        margin-top: 5px;
+        color: #666;
+    }

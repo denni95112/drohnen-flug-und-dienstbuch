@@ -90,16 +90,7 @@ $pilots = $stmt->execute();
     <title>Dienste hinzufügen</title>
     <link rel="stylesheet" href="css/add_events.css">
     <link rel="stylesheet" href="css/styles.css">
-    <script>
-        // Enforce 15-minute intervals for datetime-local inputs
-        function roundTo15Minutes(input) {
-            const value = new Date(input.value);
-            const roundedMinutes = Math.round(value.getMinutes() / 15) * 15;
-            value.setMinutes(roundedMinutes);
-            value.setSeconds(0);
-            input.value = toLocalTime(value.toISOString().slice(0, 16)); // Convert to YYYY-MM-DDTHH:mm format
-        }
-    </script>
+    <script src="js/add_events.js"></script>
 </head>
 <body>
     <?php include 'includes/header.php'; ?>
@@ -115,12 +106,12 @@ $pilots = $stmt->execute();
             <?php require_once __DIR__ . '/includes/csrf.php'; csrf_field(); ?>
             <div>
                 <label for="event_start_date">Startdatum und -zeit</label>
-                <input type="datetime-local" id="event_start_date" name="event_start_date" required onchange="roundTo15Minutes(this)">
+                <input type="datetime-local" id="event_start_date" name="event_start_date" required>
             </div>
             <br>
             <div>
                 <label for="event_end_date">Enddatum und -zeit</label>
-                <input type="datetime-local" id="event_end_date" name="event_end_date" required onchange="roundTo15Minutes(this)">
+                <input type="datetime-local" id="event_end_date" name="event_end_date" required>
             </div>
             <br>
             <div>

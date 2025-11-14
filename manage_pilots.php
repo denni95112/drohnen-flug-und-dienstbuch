@@ -60,6 +60,8 @@ $pilots = $stmt->execute();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Piloten verwalten</title>
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/manage_pilots.css">
+    <script src="js/manage_pilots.js"></script>
 </head>
 <body>
     <?php include 'includes/header.php'; ?>
@@ -100,21 +102,21 @@ $pilots = $stmt->execute();
                         <td><?= htmlspecialchars($pilot['id']); ?></td>
                         <td><?= htmlspecialchars($pilot['name']); ?></td>
                         <td>
-                            <form method="post" action="manage_pilots.php" style="display:inline;">
+                            <form method="post" action="manage_pilots.php">
                                 <?php require_once __DIR__ . '/includes/csrf.php'; csrf_field(); ?>
                                 <input type="hidden" name="action" value="update_num_flights">
                                 <input type="hidden" name="pilot_id" value="<?= $pilot['id']; ?>">
                                 <label for="minutes_of_flights_needed_<?= $pilot['id']; ?>">Flugminuten pro 3 Monate</label>
-                                <input type="number" name="minutes_of_flights_needed" id="minutes_of_flights_needed_<?= $pilot['id']; ?>" value="<?= $pilot['minutes_of_flights_needed'] ?? 3; ?>" min="1" required style="width:60px;">
+                                <input type="number" name="minutes_of_flights_needed" id="minutes_of_flights_needed_<?= $pilot['id']; ?>" value="<?= $pilot['minutes_of_flights_needed'] ?? 3; ?>" min="1" required>
                                 <button type="submit">Aktualisieren</button>
                             </form>
                         </td>
                         <td>
-                            <form method="post" action="manage_pilots.php" style="display:inline;">
+                            <form method="post" action="manage_pilots.php">
                                 <?php require_once __DIR__ . '/includes/csrf.php'; csrf_field(); ?>
                                 <input type="hidden" name="action" value="delete">
                                 <input type="hidden" name="pilot_id" value="<?= $pilot['id']; ?>">
-                                <button type="submit" class="button-full" onclick="return confirm('Pilot wirklich löschen?');">Löschen</button>
+                                <button type="submit" class="button-full delete-pilot-btn">Löschen</button>
                             </form>
                         </td>
                     </tr>

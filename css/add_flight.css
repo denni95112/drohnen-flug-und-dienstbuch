@@ -77,6 +77,11 @@ form button:hover {
     margin-bottom: 10px;
 }
 
+/* Extracted inline styles from add_flight.php */
+.error {
+    color: red;
+}
+
 footer {
     text-align: center;
     font-size: 14px;

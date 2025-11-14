@@ -112,24 +112,7 @@ function calculateDuration($start_date, $end_date) {
     <title>Events anzeigen</title>
     <link rel="stylesheet" href="css/view_events.css">
     <link rel="stylesheet" href="css/styles.css">
-    <script>
-        // Automatically submit the form when the year is changed
-        document.addEventListener("DOMContentLoaded", function () {
-            const yearSelect = document.getElementById("year");
-            yearSelect.addEventListener("change", function () {
-                this.form.submit();
-            });
-
-            // Accordion toggle
-            const accordions = document.querySelectorAll(".accordion-header");
-            accordions.forEach(header => {
-                header.addEventListener("click", function () {
-                    const body = this.nextElementSibling;
-                    body.style.display = body.style.display === "block" ? "none" : "block";
-                });
-            });
-        });
-    </script>
+    <script src="js/view_events.js"></script>
 </head>
 <body>
     <?php include 'includes/header.php'; ?>

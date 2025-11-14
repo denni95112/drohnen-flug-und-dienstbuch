@@ -143,26 +143,7 @@ PHP;
     <title>Setup - Flug- und Dienstbuch</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="css/setup.css">
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const dropdown = document.getElementById('database_path_dropdown');
-            const customInput = document.getElementById('database_path_custom');
-            
-            function toggleCustomInput() {
-                if (dropdown.value === 'custom') {
-                    customInput.style.display = 'block';
-                    customInput.required = true;
-                } else {
-                    customInput.style.display = 'none';
-                    customInput.required = false;
-                    customInput.value = '';
-                }
-            }
-            
-            dropdown.addEventListener('change', toggleCustomInput);
-            toggleCustomInput(); // Initialize on page load
-        });
-    </script>
+    <script src="js/setup.js"></script>
 </head>
 <body>
     <h1>Einrichtung</h1>
@@ -242,8 +223,8 @@ PHP;
         <?php endforeach; ?>
         <option value="custom">Eigener Pfad...</option>
     </select>
-    <input type="text" name="database_path_custom" id="database_path_custom" placeholder="Eigener Pfad eingeben..." style="display: none; margin-top: 5px;">
-    <small style="display: block; margin-top: 5px; color: #666;">
+    <input type="text" name="database_path_custom" id="database_path_custom" placeholder="Eigener Pfad eingeben...">
+    <small>
         <?php if ($isWindows): ?>
             Betriebssystem erkannt: Windows
         <?php else: ?>

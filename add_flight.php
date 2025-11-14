@@ -82,13 +82,14 @@ $drones = $stmt->execute();
     <title>Flug hinzufügen - Drohnenpiloten</title>
     <link rel="stylesheet" href="css/add_flight.css">
     <link rel="stylesheet" href="css/styles.css">
+    <script src="js/add_flight.js"></script>
 </head>
 <body>
     <?php include 'includes/header.php'; ?>
     <main>
         <h1>Flug hinzufügen</h1>
         <?php if (isset($error_message)): ?>
-            <div style="color: red;"><?= htmlspecialchars($error_message); ?></div>
+            <div class="error"><?= htmlspecialchars($error_message); ?></div>
         <?php endif; ?>
         <form method="post" action="add_flight.php">
             <?php require_once __DIR__ . '/includes/csrf.php'; csrf_field(); ?>
@@ -139,31 +140,5 @@ $drones = $stmt->execute();
     </main>
     <?php include 'includes/footer.php'; ?>
 
-    <script>
-        // Wait for the document to load
-        document.addEventListener("DOMContentLoaded", function () {
-            const flightDateInput = document.getElementById("flight_date");
-            const locationSelect = document.getElementById("location_id");
-
-            // Function to fetch locations based on selected flight date
-            function fetchLocationsByDate(flightDate) {
-                if (flightDate) {
-                    const xhr = new XMLHttpRequest();
-                    xhr.open('GET', 'fetch_locations.php?flight_date=' + flightDate, true);
-                    xhr.onload = function () {
-                        if (xhr.status === 200) {
-                            locationSelect.innerHTML = xhr.responseText;
-                        }
-                    };
-                    xhr.send();
-                }
-            }
-
-            // Listen for changes in the flight date input field
-            flightDateInput.addEventListener('change', function () {
-                fetchLocationsByDate(flightDateInput.value);
-            });
-        });
-    </script>
 </body>
 </html>

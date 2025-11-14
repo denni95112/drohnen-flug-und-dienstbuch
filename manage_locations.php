@@ -221,11 +221,8 @@ function convertToLocalTime($utcTime) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Flugstandorte verwalten</title>
     <link rel="stylesheet" href="css/styles.css">
-    <style>
-        .training-false {
-            background-color: #fff8e1;
-        }
-    </style>
+    <link rel="stylesheet" href="css/manage_locations.css">
+    <script src="js/manage_locations.js"></script>
 </head>
 <body>
     <?php include 'includes/header.php'; ?>
@@ -244,22 +241,22 @@ function convertToLocalTime($utcTime) {
             <?php require_once __DIR__ . '/includes/csrf.php'; csrf_field(); ?>
             <div>
                 <label for="location_name">Standortname</label>
-                <input type="text" id="location_name" name="location_name" placeholder="Name des Standorts" style="width: 100%;" required>
+                <input type="text" id="location_name" name="location_name" placeholder="Name des Standorts" required>
             </div>
             <br>
             <div>
                 <label for="latitude">Breitengrad</label>
-                <input type="text" id="latitude" name="latitude" style="width: 100%;" required>
+                <input type="text" id="latitude" name="latitude" required>
             </div>
             <div>
                 <label for="longitude">Längengrad</label>
-                <input type="text" id="longitude" name="longitude" style="width: 100%;" required>
+                <input type="text" id="longitude" name="longitude" required>
             </div>
             <br>
             <div>
                 <label for="description">Beschreibung (optional)</label>
                 <br>
-                <textarea id="description" name="description" placeholder="Beschreibung des Standorts" style="width: 100%; height: 150px"></textarea>
+                <textarea id="description" name="description" placeholder="Beschreibung des Standorts"></textarea>
             </div>
             <div>
                 <label>
@@ -268,9 +265,9 @@ function convertToLocalTime($utcTime) {
                 </label>
             </div>
             <br>
-            <button type="button" class="button-full" onclick="setLocation()" style="padding: 12px 20px; font-size: 16px; margin-bottom: 10px;">Position automatisch setzen</button>
+            <button type="button" class="button-full" id="set-location-btn">Position automatisch setzen</button>
             <br>
-            <button type="submit" class="button-full" style="padding: 12px 20px; font-size: 16px;">Standort hinzufügen</button>
+            <button type="submit" class="button-full">Standort hinzufügen</button>
         </form>
 
         <!-- Locations Table -->
@@ -343,21 +340,4 @@ function convertToLocalTime($utcTime) {
     </main>
     <?php include 'includes/footer.php'; ?>
 </body>
-
-<script>
-    function setLocation() {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(function(position) {
-                // Set latitude and longitude values
-                document.getElementById('latitude').value = position.coords.latitude;
-                document.getElementById('longitude').value = position.coords.longitude;
-            }, function(error) {
-                alert('Fehler beim Abrufen der GPS-Daten: ' + error.message);
-            });
-        } else {
-            alert('Geolocation wird von diesem Browser nicht unterstützt.');
-        }
-    }
-</script>
-
 </html>

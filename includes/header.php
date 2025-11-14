@@ -68,7 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['admin_password'])) {
     <nav>
         <div class="nav-header">
             <span class="nav-title"><?php echo $config['navigation_title']; ?>  <?php if ($is_admin): ?> - Admin <?php endif; ?></span>
-            <button class="nav-toggle" aria-label="Menu ein/ausklappen" onclick="toggleMenu()">☰</button>
+            <button class="nav-toggle" aria-label="Menu ein/ausklappen" id="nav-toggle-btn">☰</button>
         </div>
         <ul class="nav-menu" id="nav-menu">
             <li><a href="dashboard.php">Dashboard</a></li>
@@ -76,15 +76,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['admin_password'])) {
             <li><a href="view_flights.php">Alle Flüge anzeigen</a></li>
             <li><a href="battery_overview.php">Akku Übersicht</a></li>
             <li>
-                <button class="nav-dropdown-toggle" onclick="toggleDropdown()">Verwaltung ▼</button>
-                <ul class="nav-dropdown" id="nav-dropdown" style="display: none;">
+                <button class="nav-dropdown-toggle" id="nav-dropdown-toggle-btn">Verwaltung ▼</button>
+                <ul class="nav-dropdown" id="nav-dropdown">
                     <li><a href="add_flight.php">Manueller Eintrag</a></li>
                     <li><a href="delete_flights.php">Einträge löschen</a></li>
                     <li><a href="manage_pilots.php">Piloten verwalten</a></li>
                     <li><a href="manage_drones.php">Drohnen verwalten</a></li>
                     <li><a href="add_events.php">Dienst anlegen</a></li>
                     <li><a href="view_events.php">Dienste ansehen</a></li>
-                    <li><a href="#" onclick="openAdminModal()">Admin</a></li>
+                    <li><a href="#" id="admin-modal-link">Admin</a></li>
                 </ul>
             </li>
             <?php if (!empty($url)): ?>
@@ -99,7 +99,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['admin_password'])) {
 <!-- Admin Login Modal -->
 <div id="admin-modal" class="modal">
     <div class="modal-content">
-        <span class="close" onclick="closeAdminModal()">&times;</span>
+        <span class="close" id="admin-modal-close">&times;</span>
         <h2>Admin Login</h2>
         <form method="post" action="<?php echo $_SERVER['PHP_SELF']; ?>">
             <?php require_once __DIR__ . '/../includes/csrf.php'; csrf_field(); ?>
@@ -117,38 +117,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['admin_password'])) {
     </div>
 </div>
 
-<script>
-    function openAdminModal() {
-        document.getElementById('admin-modal').style.display = 'block';
-    }
-
-    function closeAdminModal() {
-        document.getElementById('admin-modal').style.display = 'none';
-    }
-
-    // Close modal on outside click
-    window.onclick = function(event) {
-        const modal = document.getElementById('admin-modal');
-        if (event.target === modal) {
-            modal.style.display = 'none';
-        }
-    };
-
-    function toggleMenu() {
-        const menu = document.getElementById('nav-menu');
-        if (menu.style.display === 'block') {
-            menu.style.display = 'none';
-        } else {
-            menu.style.display = 'block';
-        }
-    }
-
-    function toggleDropdown() {
-        const dropdown = document.getElementById('nav-dropdown');
-        if (dropdown.style.display === 'block') {
-            dropdown.style.display = 'none';
-        } else {
-            dropdown.style.display = 'block';
-        }
-    }
-</script>
+<script src="js/header.js"></script>

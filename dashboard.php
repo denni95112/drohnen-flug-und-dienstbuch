@@ -190,19 +190,9 @@ function convertToLocalTime($utcTime) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/dashboard.css">
     <link rel="manifest" href="manifest.json">
-    <script>
-    if ('serviceWorker' in navigator) {
-        console.log("index service")
-        navigator.serviceWorker.register('/service-worker.js')
-            .then((registration) => {
-                console.log('ServiceWorker registered:', registration);
-            })
-            .catch((error) => {
-                console.error('ServiceWorker registration failed:', error);
-            });
-    }
-    </script>
+    <script src="js/dashboard.js"></script>
 </head>
     <body>
         <?php include 'includes/header.php'; ?>
@@ -211,7 +201,7 @@ function convertToLocalTime($utcTime) {
 
             <!-- Show error message if validation fails -->
             <?php if ($error_message): ?>
-                <div style="color: red;"><?= htmlspecialchars($error_message); ?></div>
+                <div class="error-message"><?= htmlspecialchars($error_message); ?></div>
             <?php endif; ?>
 
             <div>

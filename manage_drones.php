@@ -51,6 +51,7 @@ $drones = $stmt->execute();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Drohnen verwalten</title>
     <link rel="stylesheet" href="css/styles.css">
+    <script src="js/manage_drones.js"></script>
 </head>
 <body>
     <?php include 'includes/header.php'; ?>
@@ -91,7 +92,7 @@ $drones = $stmt->execute();
                         <td><?= htmlspecialchars($drone['id']); ?></td>
                         <td><?= htmlspecialchars($drone['drone_name']); ?></td>
                         <td>
-                            <a href="manage_drones.php?delete_id=<?= $drone['id']; ?>" onclick="return confirm('Möchten Sie diese Drohne wirklich löschen?');">
+                            <a href="manage_drones.php?delete_id=<?= $drone['id']; ?>" class="delete-drone-link" data-drone-id="<?= $drone['id']; ?>">
                                 <button type="button">Löschen</button>
                             </a>
                         </td>

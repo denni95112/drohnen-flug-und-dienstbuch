@@ -1,0 +1,12 @@
+/* Extracted styles from manage_pilots.php */
+
+form[style*="display:inline"],
+form[method="post"][action="manage_pilots.php"] {
+    display: inline;
+}
+
+input[name="minutes_of_flights_needed"],
+input[type="number"][name="minutes_of_flights_needed"] {
+    width: 60px;
+}
+

@@ -108,18 +108,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="manifest" href="manifest.json">
 
 
-    <script>
-    if ('serviceWorker' in navigator) {
-        console.log("index service")
-        navigator.serviceWorker.register('/service-worker.js')
-            .then((registration) => {
-                console.log('ServiceWorker registered:', registration);
-            })
-            .catch((error) => {
-                console.error('ServiceWorker registration failed:', error);
-            });
-    }
-    </script>
+    <script src="js/index.js"></script>
 
 </head>
 <body>
