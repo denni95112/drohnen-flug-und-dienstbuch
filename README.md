@@ -165,12 +165,3 @@ Dieses Projekt ist unter der MIT-Lizenz lizenziert - siehe [LICENSE](LICENSE) Da
 
 - GitHub: [@denni95112](https://github.com/denni95112)
 - Repository: [drohnen-flug-und-dienstbuch](https://github.com/denni95112/drohnen-flug-und-dienstbuch)
-
-## Danksagungen
-
-- Entwickelt für Feuerwehren und Drohnenbetreiber
-- Entwickelt mit Fokus auf Sicherheit und Benutzerfreundlichkeit
-
-## Support
-
-Für Probleme, Fragen oder Beiträge öffnen Sie bitte ein Issue auf GitHub.
