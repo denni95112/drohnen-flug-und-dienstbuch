@@ -1,0 +1,335 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+main {
+    max-width: 600px;
+    margin: 2rem auto;
+    background: white;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+
+footer {
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    padding: 1em;
+}
+
+form button {
+    padding: 12px;
+    font-size: 16px;
+    background-color: #007BFF;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+form button:hover {
+    background-color: #007bffdc;
+}
+
+
+.bg-green {
+    background-color: green !important;
+    color: white !important;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+}
+
+.bg-red {
+    background-color: red !important;
+    color: white !important;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+}
+
+.bg-orange {
+    background-color: orange !important;
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+
+.pilot-container {
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 15px;
+    margin-bottom: 15px;
+    background-color: inherit; /* Allow background color classes to override */
+    transition: background-color 0.3s ease-in-out;
+}
+
+.pilot-container h3 {
+    margin: 0 0 10px;
+    font-size: 18px;
+}
+
+.pilot-container p {
+    margin: 5px 0;
+}
+
+.pilot-container form {
+    margin-top: 10px;
+}
+
+.pilot-container select {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 10px;
+}
+
+.pilot-container button {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    background-color: #333;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.pilot-container button:hover {
+    background-color: #555;
+}
+
+.training-false {
+    background-color: #ffcea6 !important;
+    transition: background-color 0.3s ease; 
+}
+
+.training-false:hover {
+    background-color: #ffe6cc; 
+}
+
+
+
+    /* Table Styles */
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        width: 100%;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0; /* Ensures proper spacing for borders */
+    }
+
+    th, td {
+        padding: 8px;
+        font-size: 12px;
+        word-wrap: break-word;
+        white-space: normal;
+        text-align: left;
+    }
+
+    table td, table th {
+        display: block;
+        border: 1px solid #ddd; /* Adds border around individual cells */
+        background-color: #fff;
+    }
+
+    table tr {
+        border: 1px solid #bbb; /* Adds a thicker border around the entire row */
+        margin-bottom: 10px; /* Adds space between rows for clarity */
+        display: block;
+        background-color: #f9f9f9; /* Optional: Light row background for better visibility */
+    }
+
+    table td[data-label]:before {
+        content: attr(data-label);
+        font-weight: bold;
+        display: block;
+        margin-bottom: 5px;
+    }
+
+    table thead {
+        display: none;
+    }
+
+    /* Form Group Styles */
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .form-group button {
+        width: 100%;
+    }
+
+    /* Upload Container Styles */
+    .upload-container {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .button-full {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    th {
+        font-size: 14px;
+        background-color: #f4f4f4;
+    }
+
+
+
+        /* Grundlegendes Styling */
+        nav {
+            background-color: #333;
+            color: #fff;
+            padding: 10px;
+        }
+    
+        .nav-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+    
+        .nav-title {
+            font-size: 1.5em;
+        }
+    
+        .nav-toggle {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.5em;
+            cursor: pointer;
+        }
+    
+        .nav-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: none;
+        }
+    
+        .nav-menu li {
+            margin: 10px 0;
+        }
+    
+        .nav-menu a {
+            color: #fff;
+            text-decoration: none;
+        }
+    
+        .nav-dropdown {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            margin-left: 20px;
+            display: none;
+        }
+    
+        .nav-dropdown-toggle {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 20px;
+            cursor: pointer;
+        }
+    
+        .admin-login-form {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+    
+        .admin-login-form input {
+            padding: 5px;
+            font-size: 14px;
+        }
+    
+        .admin-login-form button {
+            padding: 5px 10px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+    
+    
+        @media (min-width: 600px) {
+            .nav-menu {
+                display: flex;
+            }
+            .nav-menu li {
+                margin: 0 10px;
+            }
+        }
+    
+        
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+    
+        .modal-content {
+            background-color: #fff;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 400px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+    
+        .modal-content h2 {
+            margin-top: 0;
+        }
+    
+        .modal-content .close {
+            float: right;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+    
+    
+        .modal-content button {
+            width: 100%;
+            padding: 10px;
+            background-color: #333;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    
+        .modal-content button:hover {
+            background-color: #555;
+        }
+    
+        .admin-error {
+            color: red;
+            font-size: 14px;
+            margin-top: 10px;
+        }

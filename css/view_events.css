@@ -1,0 +1,87 @@
+main {
+    max-width: 600px;
+    margin: 2rem auto;
+    background: white;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f9f9f9;
+}
+
+h1 {
+    text-align: center;
+    margin-top: 1rem;
+}
+
+.events-container {
+    max-width: 800px;
+    margin: 1rem auto;
+    padding: 1rem;
+    background: #fff;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.event-card {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background: #fefefe;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.event-card h3 {
+    margin: 0 0 0.5rem 0;
+}
+
+.event-card p {
+    margin: 0.5rem 0;
+    font-size: 1rem;
+}
+
+.accordion {
+    margin-top: 1rem;
+    border-top: 1px solid #ddd;
+    padding-top: 0.5rem;
+}
+
+.accordion-header {
+    font-weight: bold;
+    cursor: pointer;
+    padding: 0.5rem;
+    background: #f4f4f4;
+    border-radius: 5px;
+    transition: background-color 0.2s;
+}
+
+.accordion-header:hover {
+    background: #eaeaea;
+}
+
+.accordion-body {
+    display: none; /* Hidden by default */
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    background: #f9f9f9;
+    border-radius: 5px;
+    font-size: 0.9rem;
+}
+
+.overview {
+    margin-bottom: 20px;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+.year-filter {
+    margin-bottom: 20px;
+}

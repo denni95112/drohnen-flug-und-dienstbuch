@@ -1,0 +1,71 @@
+# Configuration files (contain sensitive data)
+config/config.php
+manifest.json
+
+# Database files
+*.sqlite
+*.sqlite3
+*.db
+db/*.sqlite
+db/*.sqlite3
+db/*.db
+
+# Log files
+logs/*.log
+*.log
+
+# Uploaded files
+uploads/*
+!uploads/.gitkeep
+
+# OS-specific files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# Test/debug files
+minimal.php
+test.php
+error_test.php
+info.php
+simple_test.php
+debug_step_by_step.php
+
+# IIS configuration (may contain sensitive paths)
+web.config
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Composer (if used in future)
+vendor/
+composer.lock
+
+# Node modules (if used in future)
+node_modules/
+package-lock.json
+yarn.lock
+

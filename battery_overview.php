@@ -1,0 +1,127 @@
+<?php
+require_once __DIR__ . '/includes/error_reporting.php';
+require_once __DIR__ . '/includes/security_headers.php';
+require 'auth.php';
+requireAuth();
+
+// Set timezone from config
+$config = include __DIR__ . '/config/config.php';
+if (isset($config['timezone'])) {
+    date_default_timezone_set($config['timezone']);
+}
+
+require_once __DIR__ . '/includes/utils.php';
+$dbPath = getDatabasePath();
+$db = new SQLite3($dbPath);
+
+// Fetch all drones
+$stmt = $db->prepare("SELECT id, drone_name FROM drones ORDER BY id ASC");
+$drone_result = $stmt->execute();
+
+$drones = [];
+while ($row = $drone_result->fetchArray(SQLITE3_ASSOC)) {
+    $drones[$row['id']] = [
+        'id' => $row['id'],
+        'name' => $row['drone_name'],
+        'batteries' => [],
+        'total_flight_time' => 0
+    ];
+}
+
+// Fetch battery usage grouped by drone
+$stmt = $db->prepare("
+    SELECT 
+        f.drone_id,
+        f.battery_number,
+        COUNT(f.id) AS usage_count
+    FROM flights f
+    WHERE f.battery_number IS NOT NULL
+    GROUP BY f.drone_id, f.battery_number
+");
+$battery_result = $stmt->execute();
+
+while ($row = $battery_result->fetchArray(SQLITE3_ASSOC)) {
+    if (isset($drones[$row['drone_id']])) {
+        $drones[$row['drone_id']]['batteries'][] = [
+            'battery_number' => $row['battery_number'],
+            'usage_count' => $row['usage_count']
+        ];
+    }
+}
+
+// Fetch total flight time per drone
+$stmt = $db->prepare("
+    SELECT 
+        f.drone_id,
+        SUM(
+            CAST((julianday(f.flight_end_date) - julianday(f.flight_date)) * 24 * 60 * 60 AS INTEGER)
+        ) AS total_seconds
+    FROM flights f
+    WHERE f.flight_end_date IS NOT NULL
+    GROUP BY f.drone_id
+");
+$time_result = $stmt->execute();
+
+while ($row = $time_result->fetchArray(SQLITE3_ASSOC)) {
+    if (isset($drones[$row['drone_id']])) {
+        $drones[$row['drone_id']]['total_flight_time'] = (int)$row['total_seconds'];
+    }
+}
+
+// helper to format seconds into H:M:S
+function formatDuration($seconds) {
+    $hours = floor($seconds / 3600);
+    $minutes = floor(($seconds % 3600) / 60);
+    $secs = $seconds % 60;
+    return sprintf("%02dh %02dm", $hours, $minutes);
+}
+?>
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Batterienutzung Übersicht</title>
+    <link rel="stylesheet" href="css/battery_overview.css">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <?php include 'includes/header.php'; ?>
+    <main>
+        <div class="overview-container">
+            <?php if (empty($drones)): ?>
+                <p>Keine Drohnen verfügbar.</p>
+            <?php else: ?>
+                <?php foreach ($drones as $drone): ?>
+                    <div class="drone-section">
+                        <h2><?= htmlspecialchars($drone['name']); ?></h2>
+                        <p><strong>Gesamte Flugzeit:</strong> 
+                            <?= $drone['total_flight_time'] > 0 
+                                ? formatDuration($drone['total_flight_time']) 
+                                : 'Keine Flüge aufgezeichnet'; ?>
+                        </p>
+                        <?php if (empty($drone['batteries'])): ?>
+                            <p>Keine Batterienutzung aufgezeichnet.</p>
+                        <?php else: ?>
+                            <ul>
+                                <?php foreach ($drone['batteries'] as $battery): ?>
+                                    <li>
+                                        <span class="battery-number">
+                                            Batterie <?= htmlspecialchars($battery['battery_number']); ?>:
+                                        </span>
+                                        <span class="usage-count">
+                                            <?= htmlspecialchars($battery['usage_count']); ?> Nutzungen
+                                        </span>
+                                    </li>
+                                <?php endforeach; ?>
+                            </ul>
+                        <?php endif; ?>
+                    </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </div>
+    </main>
+    <?php include 'includes/footer.php'; ?>
+</body>
+</html>
