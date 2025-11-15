@@ -1,103 +1,181 @@
-/* General Styles */
-body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    background-color: #f4f4f4;
-    color: #333;
-}
+/* Modern Battery Overview Styles */
 
-header {
-    background-color: #333;
-    color: #fff;
-    text-align: center;
-    padding: 1em 0;
-}
-
-h1 {
-    margin: 0;
-    font-size: 1.5em;
-}
-
-main {
-    max-width: 600px;
-    margin: 2rem auto;
-    background: white;
-    padding: 2rem;
-    border-radius: 10px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-/* Overview Container */
 .overview-container {
     display: flex;
     flex-direction: column;
-    gap: 1.5em;
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+    border-radius: 16px;
+    border: 2px dashed #cbd5e0;
+}
+
+.empty-state p {
+    color: #64748b;
+    font-size: 1.1rem;
+    margin: 0;
 }
 
 .drone-section {
-    background-color: #fff;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 1.5em;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    background: #fff;
+    border: 2px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 1.75rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+
+.drone-section:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
+    border-color: #cbd5e0;
+}
+
+.drone-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.25rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #e2e8f0;
 }
 
 .drone-section h2 {
-    margin: 0 0 1em;
-    font-size: 1.2em;
-    color: #333;
-    border-bottom: 2px solid #ddd;
-    padding-bottom: 0.5em;
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1e3c72;
+    letter-spacing: -0.5px;
 }
 
-.drone-section ul {
+.flight-time-badge {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    white-space: nowrap;
+}
+
+.flight-time-info {
+    margin-bottom: 1.25rem;
+    padding: 0.875rem 1rem;
+    background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+    border-radius: 12px;
+    border-left: 4px solid #667eea;
+    font-size: 1rem;
+    color: #2d3748;
+}
+
+.flight-time-info strong {
+    color: #1e3c72;
+    font-weight: 600;
+}
+
+.no-batteries {
+    padding: 1.5rem;
+    text-align: center;
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border-radius: 12px;
+    border: 2px solid #fcd34d;
+}
+
+.no-batteries p {
+    margin: 0;
+    color: #92400e;
+    font-weight: 500;
+}
+
+.batteries-list {
+    margin-top: 1.25rem;
+}
+
+.batteries-list h3 {
+    margin: 0 0 1rem 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2d3748;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 0.875rem;
+    color: #64748b;
+}
+
+.batteries-list ul {
     list-style: none;
     margin: 0;
     padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
 }
 
-.drone-section li {
+.battery-item {
     display: flex;
     justify-content: space-between;
-    padding: 0.8em 0;
-    border-bottom: 1px solid #eee;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+    border-radius: 12px;
+    border: 2px solid #e2e8f0;
+    transition: all 0.2s ease;
 }
 
-.drone-section li:last-child {
-    border-bottom: none;
+.battery-item:hover {
+    border-color: #667eea;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+    transform: translateX(4px);
 }
 
 .battery-number {
-    font-weight: bold;
-    color: #555;
+    font-weight: 600;
+    color: #1e3c72;
+    font-size: 1rem;
 }
 
 .usage-count {
-    color: #666;
-    font-size: 0.9em;
+    color: #667eea;
+    font-weight: 600;
+    font-size: 0.95rem;
+    padding: 0.375rem 0.875rem;
+    background: rgba(102, 126, 234, 0.1);
+    border-radius: 8px;
 }
 
-footer {
-    background-color: #333;
-    color: #fff;
-    text-align: center;
-    padding: 1em;
+/* Responsive Design */
+@media (max-width: 768px) {
+    .drone-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .flight-time-badge {
+        align-self: flex-start;
+    }
+
+    .battery-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .usage-count {
+        align-self: flex-end;
+    }
 }
 
-/* Responsive Design for Larger Screens */
-@media (min-width: 768px) {
-    body {
-        font-size: 16px;
-    }
-
-    h1 {
-        font-size: 2em;
-    }
-
-    .drone-section {
-        max-width: 600px;
-        margin: 0 auto;
+@media (min-width: 1024px) {
+    .overview-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+        gap: 1.5rem;
     }
 }

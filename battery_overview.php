@@ -89,33 +89,49 @@ function formatDuration($seconds) {
 <body>
     <?php include 'includes/header.php'; ?>
     <main>
+        <h1>Akku Übersicht</h1>
         <div class="overview-container">
             <?php if (empty($drones)): ?>
-                <p>Keine Drohnen verfügbar.</p>
+                <div class="empty-state">
+                    <p>Keine Drohnen verfügbar.</p>
+                </div>
             <?php else: ?>
                 <?php foreach ($drones as $drone): ?>
                     <div class="drone-section">
-                        <h2><?= htmlspecialchars($drone['name']); ?></h2>
-                        <p><strong>Gesamte Flugzeit:</strong> 
+                        <div class="drone-header">
+                            <h2><?= htmlspecialchars($drone['name']); ?></h2>
+                            <div class="flight-time-badge">
+                                <?= $drone['total_flight_time'] > 0 
+                                    ? formatDuration($drone['total_flight_time']) 
+                                    : 'Keine Flüge'; ?>
+                            </div>
+                        </div>
+                        <div class="flight-time-info">
+                            <strong>Gesamte Flugzeit:</strong> 
                             <?= $drone['total_flight_time'] > 0 
                                 ? formatDuration($drone['total_flight_time']) 
                                 : 'Keine Flüge aufgezeichnet'; ?>
-                        </p>
+                        </div>
                         <?php if (empty($drone['batteries'])): ?>
-                            <p>Keine Batterienutzung aufgezeichnet.</p>
+                            <div class="no-batteries">
+                                <p>Keine Batterienutzung aufgezeichnet.</p>
+                            </div>
                         <?php else: ?>
-                            <ul>
-                                <?php foreach ($drone['batteries'] as $battery): ?>
-                                    <li>
-                                        <span class="battery-number">
-                                            Batterie <?= htmlspecialchars($battery['battery_number']); ?>:
-                                        </span>
-                                        <span class="usage-count">
-                                            <?= htmlspecialchars($battery['usage_count']); ?> Nutzungen
-                                        </span>
-                                    </li>
-                                <?php endforeach; ?>
-                            </ul>
+                            <div class="batteries-list">
+                                <h3>Batterienutzung</h3>
+                                <ul>
+                                    <?php foreach ($drone['batteries'] as $battery): ?>
+                                        <li class="battery-item">
+                                            <span class="battery-number">
+                                                Batterie <?= htmlspecialchars($battery['battery_number']); ?>
+                                            </span>
+                                            <span class="usage-count">
+                                                <?= htmlspecialchars($battery['usage_count']); ?> Nutzungen
+                                            </span>
+                                        </li>
+                                    <?php endforeach; ?>
+                                </ul>
+                            </div>
                         <?php endif; ?>
                     </div>
                 <?php endforeach; ?>

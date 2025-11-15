@@ -271,7 +271,6 @@ function convertToLocalTime($utcTime) {
                                         <?php endwhile; ?>
                                     </select>
                                 </div>
-                                <br>
                                 <div>
                                     <label for="drone_id_<?= $pilot['id']; ?>">Drohne</label>
                                     <select name="drone_id" id="drone_id_<?= $pilot['id']; ?>" required>
@@ -284,12 +283,10 @@ function convertToLocalTime($utcTime) {
                                         <?php endwhile; ?>
                                     </select>
                                 </div>
-                                <br>
                                 <div>
                                     <label for="battery_number_<?= $pilot['id']; ?>">Batterienummer</label>
                                     <input type="number" id="battery_number_<?= $pilot['id']; ?>" name="battery_number" min="1" required>
                                 </div>
-                                <br>
                                 <button type="submit">Flug beginnen</button>
                             <?php endif; ?>
                         </form>

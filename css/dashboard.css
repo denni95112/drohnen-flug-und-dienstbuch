@@ -1,12 +1,13 @@
 /* Dashboard Styles */
 
 .error-message {
-    color: red;
-    background-color: #fee;
-    border: 1px solid #fcc;
-    padding: 1rem;
-    border-radius: 8px;
-    margin-bottom: 1rem;
+    color: #dc2626;
+    background-color: #fef2f2;
+    border: 2px solid #fecaca;
+    padding: 1rem 1.25rem;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    font-weight: 500;
 }
 
 /* Welcome Section - Modern and Welcoming */

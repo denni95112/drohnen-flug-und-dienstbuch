@@ -104,17 +104,15 @@ $pilots = $stmt->execute();
 
         <form method="post" action="add_events.php">
             <?php require_once __DIR__ . '/includes/csrf.php'; csrf_field(); ?>
-            <div>
+            <div class="form-group">
                 <label for="event_start_date">Startdatum und -zeit</label>
                 <input type="datetime-local" id="event_start_date" name="event_start_date" required>
             </div>
-            <br>
-            <div>
+            <div class="form-group">
                 <label for="event_end_date">Enddatum und -zeit</label>
                 <input type="datetime-local" id="event_end_date" name="event_end_date" required>
             </div>
-            <br>
-            <div>
+            <div class="form-group">
                 <label for="type_id">Typ</label>
                 <select name="type_id" id="type_id" required>
                     <option value="">Bitte wählen</option>
@@ -123,22 +121,21 @@ $pilots = $stmt->execute();
                     <option value="3">Verwaltung</option>
                 </select>
             </div>
-            <br>
-            <div>
+            <div class="form-group">
                 <label for="notes">Notizen</label>
                 <textarea id="notes" name="notes" rows="5" required></textarea>
             </div>
-            <br>
-            <div>
-                <label>Anwesenheitsliste</label>
-                <?php while ($pilot = $pilots->fetchArray(SQLITE3_ASSOC)): ?>
-                    <div class="checkbox-group">
-                        <label for="pilot_<?= $pilot['id']; ?>"><?= htmlspecialchars($pilot['name']); ?></label>
-                        <input type="checkbox" id="pilot_<?= $pilot['id']; ?>" name="pilot_ids[]" value="<?= $pilot['id']; ?>">
-                    </div>
-                <?php endwhile; ?>
+            <div class="form-group">
+                <label class="section-label">Anwesenheitsliste</label>
+                <div class="checkbox-container">
+                    <?php while ($pilot = $pilots->fetchArray(SQLITE3_ASSOC)): ?>
+                        <div class="checkbox-group">
+                            <label for="pilot_<?= $pilot['id']; ?>"><?= htmlspecialchars($pilot['name']); ?></label>
+                            <input type="checkbox" id="pilot_<?= $pilot['id']; ?>" name="pilot_ids[]" value="<?= $pilot['id']; ?>">
+                        </div>
+                    <?php endwhile; ?>
+                </div>
             </div>
-            <br>
             <button type="submit" class="btn-submit">Dienst hinzufügen</button>
         </form>
     </main>
