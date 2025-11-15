@@ -197,7 +197,9 @@ function convertToLocalTime($utcTime) {
     <body>
         <?php include 'includes/header.php'; ?>
         <main>
+            <?php if (!empty($pilot_data)): ?>
             <h1>Dashboard</h1>
+            <?php endif; ?>
 
             <!-- Show error message if validation fails -->
             <?php if ($error_message): ?>
@@ -206,23 +208,26 @@ function convertToLocalTime($utcTime) {
 
             <div>
                 <?php if (empty($pilot_data)): ?>
-                    <h3>Willkommen zum Drohnenflug-Management Dashboard!</h3>
-                    <p>Es scheint, als ob du dein Dashboard gerade erst erstellt hast. Diese Dinge müssen noch erledigt werden.</p>
-                    <p>Vorweg ein paar Tips:</p>
-                    <ul>
-                        <li>Lege vor jedem Flug einen <a href="manage_locations.php">Flugstandort</a> an. Es werden nur die vom aktuellen Tag zur Auswahl gestellt. </li>
-                        <li>Nutzt du auch die Einsatzdoku? Diese übernimmt automatisch den zuletzt hinzugefügten Flugstandort. Danach übernimmt die Doku alles, du musst hier in der Zeit nichts mehr machen</li>
-                        <li>Flüge im Dashboard sollten am besten nur von einem Gerät gleichzeit gestartet und beendet werden.</li>
-                        <li>Das Dashboard ist eine WebApp, anstannt eine Verknüfung zu erstllen, kannst du sie aus dem Browser heraus installieren.</li>
-                        <li>Mit deinem Admin Passwort kannst du mehr Dinge tun.</li>
-                        <li>Diese WebApp ist nun Open Source. Sie entstand für die Anforderungen an eine Drohnegruppe durch dessen Leiter. Passt sie nicht ganz zu dir, steht es dir frei sie anzupassen.</li>
-                        <li>Diese Anwendung legt mehr Fokus aus Funktionaliät anstatt auf Aussehen</li>
-                        <li>Schau regelmäßg bei GIT Hub vorbei, für Anleitungen und Updates</li>
-                        <li>Sobald du Piloten eingefügt hast, verschwindet dieser Text</li>
-                    </ul>
-                    <p>Füge deine Drohnen unter <a href="manage_drones.php">Drohnen verwalten</a> hinzu</p>
-                    <p>Füge deine Drohnenpiloten unter <a href="manage_pilots.php">Piloten verwalten</a> hinzu.</p>
-                    <br>
+                    <div class="welcome-section">
+                        <h3>Willkommen zum Drohnenflug-Management Dashboard!</h3>
+                        <p>Es scheint, als ob du dein Dashboard gerade erst erstellt hast. Diese Dinge müssen noch erledigt werden.</p>
+                        <p>Vorweg ein paar Tips:</p>
+                        <ul class="welcome-tips">
+                            <li>Lege vor jedem Flug einen <a href="manage_locations.php">Flugstandort</a> an. Es werden nur die vom aktuellen Tag zur Auswahl gestellt.</li>
+                            <li>Nutzt du auch die Einsatzdoku? Diese übernimmt automatisch den zuletzt hinzugefügten Flugstandort. Danach übernimmt die Doku alles, du musst hier in der Zeit nichts mehr machen</li>
+                            <li>Flüge im Dashboard sollten am besten nur von einem Gerät gleichzeit gestartet und beendet werden.</li>
+                            <li>Das Dashboard ist eine WebApp, anstannt eine Verknüfung zu erstllen, kannst du sie aus dem Browser heraus installieren.</li>
+                            <li>Mit deinem Admin Passwort kannst du mehr Dinge tun.</li>
+                            <li>Diese WebApp ist nun Open Source. Sie entstand für die Anforderungen an eine Drohnegruppe durch dessen Leiter. Passt sie nicht ganz zu dir, steht es dir frei sie anzupassen.</li>
+                            <li>Diese Anwendung legt mehr Fokus aus Funktionaliät anstatt auf Aussehen</li>
+                            <li>Schau regelmäßg bei GIT Hub vorbei, für Anleitungen und Updates</li>
+                            <li>Sobald du Piloten eingefügt hast, verschwindet dieser Text</li>
+                        </ul>
+                        <div class="welcome-actions">
+                            <p>Füge deine Drohnen unter <a href="manage_drones.php">Drohnen verwalten</a> hinzu</p>
+                            <p>Füge deine Drohnenpiloten unter <a href="manage_pilots.php">Piloten verwalten</a> hinzu.</p>
+                        </div>
+                    </div>
                 <?php endif; ?>
                 <?php foreach ($pilot_data as $pilot): ?>
                     <?php 

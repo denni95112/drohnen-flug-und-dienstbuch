@@ -30,6 +30,7 @@ if ($isWindows) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $error = '';
     $name = trim($_POST['name']);
     $short_name = trim($_POST['short_name']);
     $navigation_title = trim($_POST['navigation_title']);
@@ -63,52 +64,133 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             mkdir(__DIR__ . '/config', 0755, true);
         }
 
-        // Generate random IV (16 bytes for AES-256-CBC)
-        $iv = bin2hex(random_bytes(8)); // 8 bytes = 16 hex chars (16 bytes total when used)
-
-        // Hash passwords using password_hash (bcrypt/argon2)
-        $password_hash = password_hash($password, PASSWORD_DEFAULT);
-        $admin_hash = password_hash($admin_password, PASSWORD_DEFAULT);
-
-        // Build token name from navigation_title (safe key)
-        $token_name = preg_replace('/[^a-z0-9]+/', '_', strtolower($navigation_title)) . '_token';
-
-        // Handle database path
-        // If empty, use default relative path
-        if (empty($database_path)) {
-            $database_path = 'db/drone-dashboard-database.sqlite';
+        // Handle logo upload (optional)
+        $logo_path = '';
+        if (isset($_FILES['logo']) && $_FILES['logo']['error'] === UPLOAD_ERR_OK) {
+            $logoDir = __DIR__ . '/uploads/logos';
+            
+            // Create uploads directory if it doesn't exist
+            if (!is_dir(__DIR__ . '/uploads')) {
+                if (!@mkdir(__DIR__ . '/uploads', 0755, true)) {
+                    $error = "Fehler: Das Verzeichnis 'uploads' konnte nicht erstellt werden.";
+                }
+            }
+            
+            // Create logos subdirectory if it doesn't exist
+            if (empty($error) && !is_dir($logoDir)) {
+                if (!@mkdir($logoDir, 0755, true)) {
+                    $error = "Fehler: Das Verzeichnis 'uploads/logos' konnte nicht erstellt werden.";
+                }
+            }
+            
+            if (empty($error)) {
+                $file = $_FILES['logo'];
+                $maxSize = 2 * 1024 * 1024; // 2MB
+                $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/svg+xml', 'image/webp'];
+                
+                // Validate file size
+                if ($file['size'] > $maxSize) {
+                    $error = "Logo-Datei ist zu groß. Maximale Größe: 2MB.";
+                } else {
+                    // Validate file type
+                    $mimeType = null;
+                    if (extension_loaded('fileinfo')) {
+                        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                        $mimeType = finfo_file($finfo, $file['tmp_name']);
+                        finfo_close($finfo);
+                    } else {
+                        $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+                        $extensionMap = [
+                            'jpg' => 'image/jpeg',
+                            'jpeg' => 'image/jpeg',
+                            'png' => 'image/png',
+                            'gif' => 'image/gif',
+                            'svg' => 'image/svg+xml',
+                            'webp' => 'image/webp'
+                        ];
+                        $mimeType = $extensionMap[$extension] ?? null;
+                    }
+                    
+                    if (!$mimeType || !in_array($mimeType, $allowedTypes)) {
+                        $error = "Logo-Dateityp nicht erlaubt. Erlaubte Typen: JPEG, PNG, GIF, SVG, WebP.";
+                    } else {
+                        // Generate safe filename
+                        $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+                        $safeName = 'logo_' . time() . '_' . uniqid() . '.' . $extension;
+                        $targetPath = $logoDir . '/' . $safeName;
+                        
+                        if (@move_uploaded_file($file['tmp_name'], $targetPath)) {
+                            $logo_path = 'uploads/logos/' . $safeName;
+                        } else {
+                            $error = "Fehler beim Speichern des Logos. Bitte überprüfen Sie die Schreibrechte für das Verzeichnis 'uploads/logos'.";
+                        }
+                    }
+                }
+            }
+        } elseif (isset($_FILES['logo']) && $_FILES['logo']['error'] !== UPLOAD_ERR_NO_FILE) {
+            // Handle other upload errors
+            $uploadErrors = [
+                UPLOAD_ERR_INI_SIZE => "Die Datei überschreitet die upload_max_filesize Direktive in php.ini.",
+                UPLOAD_ERR_FORM_SIZE => "Die Datei überschreitet die MAX_FILE_SIZE Direktive im HTML-Formular.",
+                UPLOAD_ERR_PARTIAL => "Die Datei wurde nur teilweise hochgeladen.",
+                UPLOAD_ERR_NO_TMP_DIR => "Fehlender temporärer Ordner.",
+                UPLOAD_ERR_CANT_WRITE => "Fehler beim Schreiben der Datei auf die Festplatte.",
+                UPLOAD_ERR_EXTENSION => "Eine PHP-Erweiterung hat den Upload gestoppt."
+            ];
+            $errorCode = $_FILES['logo']['error'];
+            $error = $uploadErrors[$errorCode] ?? "Unbekannter Fehler beim Hochladen der Datei (Fehlercode: {$errorCode}).";
         }
-        // Normalize path separators
-        $database_path = str_replace(['\\', '/'], DIRECTORY_SEPARATOR, $database_path);
-        // Escape for PHP string
-        $database_path_escaped = addslashes($database_path);
+        
+        // Only proceed if there are no errors
+        if (empty($error)) {
+            // Generate random IV (16 bytes for AES-256-CBC)
+            $iv = bin2hex(random_bytes(8)); // 8 bytes = 16 hex chars (16 bytes total when used)
 
-        // Create manifest.json
-        $manifest = [
-            'name' => $name,
-            'short_name' => $short_name,
-            'start_url' => 'index.php',
-            'display' => 'standalone',
-            'background_color' => '#ffffff',
-            'theme_color' => '#333333',
-            'orientation' => 'portrait',
-            'icons' => [
-                [
-                    'src' => 'icons/icon-192x192.png',
-                    'sizes' => '192x192',
-                    'type' => 'image/png'
-                ],
-                [
-                    'src' => 'icons/icon-512x512.png',
-                    'sizes' => '512x512',
-                    'type' => 'image/png'
+            // Hash passwords using password_hash (bcrypt/argon2)
+            $password_hash = password_hash($password, PASSWORD_DEFAULT);
+            $admin_hash = password_hash($admin_password, PASSWORD_DEFAULT);
+
+            // Build token name from navigation_title (safe key)
+            $token_name = preg_replace('/[^a-z0-9]+/', '_', strtolower($navigation_title)) . '_token';
+
+            // Handle database path
+            // If empty, use default relative path
+            if (empty($database_path)) {
+                $database_path = 'db/drone-dashboard-database.sqlite';
+            }
+            // Normalize path separators
+            $database_path = str_replace(['\\', '/'], DIRECTORY_SEPARATOR, $database_path);
+            // Escape for PHP string
+            $database_path_escaped = addslashes($database_path);
+            $logo_path_escaped = addslashes($logo_path);
+
+            // Create manifest.json
+            $manifest = [
+                'name' => $name,
+                'short_name' => $short_name,
+                'start_url' => 'index.php',
+                'display' => 'standalone',
+                'background_color' => '#ffffff',
+                'theme_color' => '#333333',
+                'orientation' => 'portrait',
+                'icons' => [
+                    [
+                        'src' => 'icons/icon-192x192.png',
+                        'sizes' => '192x192',
+                        'type' => 'image/png'
+                    ],
+                    [
+                        'src' => 'icons/icon-512x512.png',
+                        'sizes' => '512x512',
+                        'type' => 'image/png'
+                    ]
                 ]
-            ]
-        ];
-        file_put_contents($manifestPath, json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+            ];
+            file_put_contents($manifestPath, json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
 
-        // Create config.php
-        $config = <<<PHP
+            // Create config.php
+            $logoConfigLine = !empty($logo_path) ? "    'logo_path' => '{$logo_path_escaped}'," : '';
+            $config = <<<PHP
 <?php
 return [
     'navigation_title' => '{$navigation_title}',
@@ -117,6 +199,7 @@ return [
     'debugMode' => false,
     'timezone' => 'Europe/Berlin',
     'database_path' => '{$database_path_escaped}',
+{$logoConfigLine}
     'encryption' => [
         'method' => 'aes-256-cbc',
         'iv' => '{$iv}',
@@ -125,13 +208,16 @@ return [
     'admin_hash' => '{$admin_hash}',
 ];
 PHP;
-        file_put_contents($configPath, $config);
+            file_put_contents($configPath, $config);
 
-        // Redirect to setup_database.php
-        header('Location: setup_database.php');
-        exit;
+            // Redirect to setup_database.php
+            header('Location: setup_database.php');
+            exit;
+        }
     } else {
-        $error = "Please fill in all fields.";
+        if (empty($error)) {
+            $error = "Bitte füllen Sie alle erforderlichen Felder aus.";
+        }
     }
 }
 ?>
@@ -152,7 +238,15 @@ PHP;
         <div class="error"><?= htmlspecialchars($error) ?></div>
     <?php endif; ?>
 
-    <form method="post">
+    <form method="post" enctype="multipart/form-data">
+    <label>
+        Logo (Optional)
+        <span class="tooltip">?
+            <span class="tooltiptext">Lade ein Logo hoch, das vor dem Navigations-Titel angezeigt wird. Erlaubte Formate: JPEG, PNG, GIF, SVG, WebP (max. 2MB)</span>
+        </span>
+    </label>
+    <input type="file" name="logo" accept="image/jpeg,image/png,image/gif,image/svg+xml,image/webp">
+
     <label>
         WebApp Name
         <span class="tooltip">?
@@ -202,7 +296,7 @@ PHP;
     <input type="text" name="external_documentation_url">
 
     <label>
-        Datenbank-Pfad
+        Datenbank-Pfad (Merke dir den Pfad, wenn du auch das Einsatztagebuch verwendest)
         <span class="tooltip">?
             <span class="tooltiptext">
                 <strong>Sicherheitshinweis:</strong> Speichere die Datenbank außerhalb des Web-Verzeichnisses!<br><br>

@@ -183,6 +183,7 @@ form button:hover {
     .button-full {
         width: 100%;
         max-width: 100%;
+        margin-bottom: 10px;
     }
 
     th {
@@ -190,94 +191,6 @@ form button:hover {
         background-color: #f4f4f4;
     }
 
-
-
-        /* Grundlegendes Styling */
-        nav {
-            background-color: #333;
-            color: #fff;
-            padding: 10px;
-        }
-    
-        .nav-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-    
-        .nav-title {
-            font-size: 1.5em;
-        }
-    
-        .nav-toggle {
-            background: none;
-            border: none;
-            color: #fff;
-            font-size: 1.5em;
-            cursor: pointer;
-        }
-    
-        .nav-menu {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            display: none;
-        }
-    
-        .nav-menu li {
-            margin: 10px 0;
-        }
-    
-        .nav-menu a {
-            color: #fff;
-            text-decoration: none;
-        }
-    
-        .nav-dropdown {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            margin-left: 20px;
-            display: none;
-        }
-    
-        .nav-dropdown-toggle {
-            background: none;
-            border: none;
-            color: #fff;
-            font-size: 20px;
-            cursor: pointer;
-        }
-    
-        .admin-login-form {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-top: 10px;
-        }
-    
-        .admin-login-form input {
-            padding: 5px;
-            font-size: 14px;
-        }
-    
-        .admin-login-form button {
-            padding: 5px 10px;
-            font-size: 14px;
-            cursor: pointer;
-        }
-    
-    
-        @media (min-width: 600px) {
-            .nav-menu {
-                display: flex;
-            }
-            .nav-menu li {
-                margin: 0 10px;
-            }
-        }
-    
-        
         /* Modal Styles */
         .modal {
             display: none;

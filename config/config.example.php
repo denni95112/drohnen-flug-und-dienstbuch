@@ -17,6 +17,11 @@ return [
     // External documentation URL (optional)
     'external_documentation_url' => '',
     
+    // Logo path (optional) - path to logo image file relative to project root
+    // Example: 'uploads/logos/logo_1234567890_abc123.png'
+    // Logo will be displayed before the navigation title
+    'logo_path' => '',
+    
     // Debug mode - set to true to see PHP errors on all pages
     // WARNING: Set to false in production!
     'debugMode' => false,

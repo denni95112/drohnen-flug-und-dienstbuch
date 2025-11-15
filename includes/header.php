@@ -64,11 +64,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['admin_password'])) {
     }
 }
 ?>
+<link rel="stylesheet" href="css/navigation.css">
 <header>
+    <div class="nav-backdrop" id="nav-backdrop"></div>
     <nav>
         <div class="nav-header">
-            <span class="nav-title"><?php echo $config['navigation_title']; ?>  <?php if ($is_admin): ?> - Admin <?php endif; ?></span>
-            <button class="nav-toggle" aria-label="Menu ein/ausklappen" id="nav-toggle-btn">☰</button>
+            <div class="nav-title-container">
+                <?php 
+                $logo_path = $config['logo_path'] ?? '';
+                if (!empty($logo_path) && file_exists(__DIR__ . '/../' . $logo_path)): 
+                ?>
+                    <img src="<?php echo htmlspecialchars($logo_path, ENT_QUOTES, 'UTF-8'); ?>" alt="Logo" class="nav-logo">
+                <?php endif; ?>
+                <span class="nav-title"><?php echo $config['navigation_title']; ?>  <?php if ($is_admin): ?> - Admin <?php endif; ?></span>
+            </div>
+            <button class="nav-toggle" aria-label="Menu ein/ausklappen" id="nav-toggle-btn" aria-expanded="false">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </button>
         </div>
         <ul class="nav-menu" id="nav-menu">
             <li><a href="dashboard.php">Dashboard</a></li>
@@ -76,7 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['admin_password'])) {
             <li><a href="view_flights.php">Alle Flüge anzeigen</a></li>
             <li><a href="battery_overview.php">Akku Übersicht</a></li>
             <li>
-                <button class="nav-dropdown-toggle" id="nav-dropdown-toggle-btn">Verwaltung ▼</button>
+                <button class="nav-dropdown-toggle" id="nav-dropdown-toggle-btn">Verwaltung</button>
                 <ul class="nav-dropdown" id="nav-dropdown">
                     <li><a href="add_flight.php">Manueller Eintrag</a></li>
                     <li><a href="delete_flights.php">Einträge löschen</a></li>
