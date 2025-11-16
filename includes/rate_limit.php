@@ -36,25 +36,20 @@ function checkRateLimit($action = 'login', $maxAttempts = 5, $timeWindow = 900) 
             UNIQUE(ip_address, action)
         )');
         
-        // Clean up old entries
         $db->exec('DELETE FROM rate_limits WHERE last_attempt < datetime("now", "-' . ($timeWindow * 2) . ' seconds")');
         
-        // Check current status
         $stmt = $db->prepare('SELECT attempts, first_attempt, blocked_until FROM rate_limits WHERE ip_address = :ip AND action = :action');
         $stmt->bindValue(':ip', $ip, SQLITE3_TEXT);
         $stmt->bindValue(':action', $action, SQLITE3_TEXT);
         $result = $stmt->execute()->fetchArray(SQLITE3_ASSOC);
         
         if ($result) {
-            // Check if currently blocked
             if ($result['blocked_until'] && strtotime($result['blocked_until']) > time()) {
-                return true; // Rate limit exceeded
+                return true;
             }
             
-            // Check if time window has passed
             $firstAttempt = strtotime($result['first_attempt']);
             if (time() - $firstAttempt > $timeWindow) {
-                // Reset attempts
                 $stmt = $db->prepare('UPDATE rate_limits SET attempts = 1, first_attempt = datetime("now"), last_attempt = datetime("now"), blocked_until = NULL WHERE ip_address = :ip AND action = :action');
                 $stmt->bindValue(':ip', $ip, SQLITE3_TEXT);
                 $stmt->bindValue(':action', $action, SQLITE3_TEXT);
@@ -62,9 +57,7 @@ function checkRateLimit($action = 'login', $maxAttempts = 5, $timeWindow = 900) 
                 return false;
             }
             
-            // Check if max attempts reached
             if ($result['attempts'] >= $maxAttempts) {
-                // Block for exponential backoff (15 minutes * attempt number, max 2 hours)
                 $blockDuration = min(15 * 60 * $result['attempts'], 2 * 60 * 60);
                 $blockedUntil = date('Y-m-d H:i:s', time() + $blockDuration);
                 
@@ -74,13 +67,12 @@ function checkRateLimit($action = 'login', $maxAttempts = 5, $timeWindow = 900) 
                 $stmt->bindValue(':action', $action, SQLITE3_TEXT);
                 $stmt->execute();
                 
-                return true; // Rate limit exceeded
+                return true;
             }
         }
         
-        return false; // Not rate limited
+        return false;
     } catch (Exception $e) {
-        // On error, fail securely (allow request but log error)
         error_log("Rate limit check failed: " . $e->getMessage());
         return false;
     }
@@ -110,7 +102,6 @@ function recordFailedAttempt($action = 'login') {
             UNIQUE(ip_address, action)
         )');
         
-        // Insert or update attempt
         $stmt = $db->prepare('INSERT INTO rate_limits (ip_address, action, attempts, first_attempt, last_attempt) 
                               VALUES (:ip, :action, 1, datetime("now"), datetime("now"))
                               ON CONFLICT(ip_address, action) DO UPDATE SET 
@@ -140,7 +131,6 @@ function clearRateLimit($action = 'login') {
         $stmt->bindValue(':action', $action, SQLITE3_TEXT);
         $stmt->execute();
     } catch (Exception $e) {
-        // Ignore errors
     }
 }
 

@@ -10,7 +10,6 @@ try {
     die("Error loading error_reporting.php: " . htmlspecialchars($e->getMessage()) . " in " . $e->getFile() . ":" . $e->getLine());
 }
 
-// Check if config exists before trying to include it
 if (!file_exists(__DIR__ . '/config/config.php')) {
     header('Location: setup.php');
     exit;
@@ -33,19 +32,16 @@ try {
 
 session_start();
 
-// Set timezone from config
 if (isset($config['timezone'])) {
     date_default_timezone_set($config['timezone']);
 }
 $error = '';
 
-// Include the auth.php file where setLoginCookie is defined
 try {
     include('auth.php');
 } catch (Throwable $e) {
     die("Error loading auth.php: " . htmlspecialchars($e->getMessage()) . " in " . $e->getFile() . ":" . $e->getLine());
 }
-
 
 if(isAuthenticated()){
     header('Location: dashboard.php');
@@ -55,32 +51,22 @@ if(isAuthenticated()){
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     require_once __DIR__ . '/includes/rate_limit.php';
     
-    // Check rate limit
     if (checkRateLimit('login', 5, 900)) {
         $error = 'Zu viele fehlgeschlagene Anmeldeversuche. Bitte versuchen Sie es später erneut.';
     } else {
         $password = $_POST['password'] ?? '';
 
-        // Verify password using password_verify (supports both old SHA-256 and new password_hash)
         $passwordValid = false;
         
-        // Try password_verify first (new method)
         if (password_verify($password, $config['password_hash'])) {
             $passwordValid = true;
-        } 
-        // Fallback for old SHA-256 hashes (for migration)
-        elseif (hash('sha256', $password) === $config['password_hash']) {
+        } elseif (hash('sha256', $password) === $config['password_hash']) {
             $passwordValid = true;
-            // Rehash with new method for future use
             $newHash = password_hash($password, PASSWORD_DEFAULT);
-            // Note: Could update config here, but requires write access
         }
         
         if ($passwordValid) {
-            // Clear rate limit on successful login
             clearRateLimit('login');
-            
-            // Regenerate session ID for security
             session_regenerate_id(true);
             $_SESSION['loggedin'] = true;
             $_SESSION['login_time'] = time();
@@ -88,10 +74,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header('Location: dashboard.php');
             exit();
         } else {
-            // Record failed attempt
             recordFailedAttempt('login');
             $error = 'Falsches Passwort!';
-            // Small delay to prevent brute force
             sleep(1);
         }
     }

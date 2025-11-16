@@ -2,10 +2,8 @@
 require_once __DIR__ . '/includes/error_reporting.php';
 require_once __DIR__ . '/includes/utils.php';
 
-// Get database path from config
 $dbPath = getDatabasePath();
 
-// Ensure directory exists
 $dbDir = dirname($dbPath);
 if (!is_dir($dbDir)) {
     if (!@mkdir($dbDir, 0755, true)) {
@@ -35,7 +33,6 @@ if (!is_writable($dbDir)) {
     die("<pre>" . $error . "</pre>");
 }
 
-// Try to create/open database
 try {
     $db = new SQLite3($dbPath);
 } catch (Exception $e) {
@@ -60,7 +57,6 @@ try {
     die("<pre>" . $error . "</pre>");
 }
 
-// Enable foreign key constraints
 try {
     $db->exec('PRAGMA foreign_keys = ON');
 } catch (Exception $e) {
@@ -141,7 +137,6 @@ $db->exec('CREATE TABLE IF NOT EXISTS rate_limits (
     UNIQUE(ip_address, action)
 )');
 
-// Create indexes for performance
 $db->exec('CREATE INDEX IF NOT EXISTS idx_flights_pilot_date ON flights(pilot_id, flight_date)');
 $db->exec('CREATE INDEX IF NOT EXISTS idx_flights_drone ON flights(drone_id)');
 $db->exec('CREATE INDEX IF NOT EXISTS idx_flights_location ON flights(flight_location_id)');

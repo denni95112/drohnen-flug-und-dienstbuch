@@ -69,6 +69,7 @@ body, html {
     font-size: 1rem;
     font-family: inherit;
     transition: all 0.2s ease;
+    box-sizing: border-box;
 }
 
 .form-group input:focus {

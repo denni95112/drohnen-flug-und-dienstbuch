@@ -4,7 +4,6 @@ require_once __DIR__ . '/includes/security_headers.php';
 require 'auth.php';
 requireAuth();
 
-// Set timezone from config
 $config = include __DIR__ . '/config/config.php';
 if (isset($config['timezone'])) {
     date_default_timezone_set($config['timezone']);
@@ -14,7 +13,6 @@ require_once __DIR__ . '/includes/utils.php';
 $dbPath = getDatabasePath();
 $db = new SQLite3($dbPath);
 
-// Fetch all drones
 $stmt = $db->prepare("SELECT id, drone_name FROM drones ORDER BY id ASC");
 $drone_result = $stmt->execute();
 
@@ -28,7 +26,6 @@ while ($row = $drone_result->fetchArray(SQLITE3_ASSOC)) {
     ];
 }
 
-// Fetch battery usage grouped by drone
 $stmt = $db->prepare("
     SELECT 
         f.drone_id,
@@ -49,7 +46,6 @@ while ($row = $battery_result->fetchArray(SQLITE3_ASSOC)) {
     }
 }
 
-// Fetch total flight time per drone
 $stmt = $db->prepare("
     SELECT 
         f.drone_id,
@@ -68,7 +64,11 @@ while ($row = $time_result->fetchArray(SQLITE3_ASSOC)) {
     }
 }
 
-// helper to format seconds into H:M:S
+/**
+ * Format seconds into hours and minutes
+ * @param int $seconds Total seconds
+ * @return string Formatted duration string (e.g., "02h 30m")
+ */
 function formatDuration($seconds) {
     $hours = floor($seconds / 3600);
     $minutes = floor(($seconds % 3600) / 60);

@@ -4,7 +4,6 @@ require_once __DIR__ . '/includes/security_headers.php';
 require 'auth.php';
 requireAuth();
 
-// Set timezone from config
 $config = include __DIR__ . '/config/config.php';
 if (isset($config['timezone'])) {
     date_default_timezone_set($config['timezone']);
@@ -14,7 +13,11 @@ require_once __DIR__ . '/includes/utils.php';
 $dbPath = getDatabasePath();
 $db = new SQLite3($dbPath);
 
-// Convert datetime to UTC for storage
+/**
+ * Convert datetime to UTC for storage
+ * @param string $datetime Local datetime string
+ * @return string UTC datetime string
+ */
 function toUTC($datetime) {
     global $config;
     $timezone = $config['timezone'] ?? 'Europe/Berlin';
@@ -23,7 +26,11 @@ function toUTC($datetime) {
     return $date->format('Y-m-d H:i:s');
 }
 
-// Convert datetime from UTC to local for display
+/**
+ * Convert datetime from UTC to local for display
+ * @param string $datetime UTC datetime string
+ * @return string Local datetime string
+ */
 function toLocalTime($datetime) {
     global $config;
     $timezone = $config['timezone'] ?? 'Europe/Berlin';
@@ -32,7 +39,6 @@ function toLocalTime($datetime) {
     return $date->format('Y-m-d\TH:i');
 }
 
-// Handle form submission
 $error_message = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     require_once __DIR__ . '/includes/csrf.php';
@@ -52,11 +58,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (empty($pilot_ids)) {
         $error_message = 'Bitte mindestens einen Piloten auswählen.';
     } else {
-        // Convert times to UTC for storage
         $event_start_date_utc = toUTC($event_start_date);
         $event_end_date_utc = toUTC($event_end_date);
 
-        // Insert the event
         $stmt = $db->prepare('INSERT INTO events (event_start_date, event_end_date, type_id, notes) VALUES (:event_start_date, :event_end_date, :type_id, :notes)');
         $stmt->bindValue(':event_start_date', $event_start_date_utc, SQLITE3_TEXT);
         $stmt->bindValue(':event_end_date', $event_end_date_utc, SQLITE3_TEXT);
@@ -65,7 +69,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute();
         $event_id = $db->lastInsertRowID();
 
-        // Insert pilot-event relationships
         foreach ($pilot_ids as $pilot_id) {
             $stmt = $db->prepare('INSERT INTO pilot_events (event_id, pilot_id) VALUES (:event_id, :pilot_id)');
             $stmt->bindValue(':event_id', $event_id, SQLITE3_INTEGER);
@@ -77,7 +80,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Fetch pilots
 $stmt = $db->prepare('SELECT * FROM pilots ORDER BY name');
 $pilots = $stmt->execute();
 ?>

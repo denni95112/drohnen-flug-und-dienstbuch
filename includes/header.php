@@ -1,10 +1,8 @@
 <?php
 require_once __DIR__ . '/../includes/error_reporting.php';
 
-// Check if config exists before trying to include it
 $configFile = dirname(__DIR__) . '/config/config.php';
 if (!file_exists($configFile)) {
-    // Config doesn't exist, redirect to setup
     header('Location: ' . dirname($_SERVER['PHP_SELF']) . '/setup.php');
     exit;
 }
@@ -12,7 +10,6 @@ if (!file_exists($configFile)) {
 require_once __DIR__ . '/../includes/security_headers.php';
 $config = include $configFile;
 
-// Set timezone from config
 if (isset($config['timezone'])) {
     date_default_timezone_set($config['timezone']);
 }
@@ -22,44 +19,34 @@ $is_admin = isAdmin();
 
 $url = trim($config['external_documentation_url'] ?? '');
 
-// Handle admin login form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['admin_password'])) {
     require_once __DIR__ . '/../includes/csrf.php';
     require_once __DIR__ . '/../includes/rate_limit.php';
     verify_csrf();
     
-    // Check rate limit for admin login
     if (checkRateLimit('admin_login', 3, 1800)) {
         $admin_error = 'Zu viele fehlgeschlagene Admin-Anmeldeversuche. Bitte versuchen Sie es später erneut.';
     } else {
         $admin_password = $_POST['admin_password'] ?? '';
         
-        // Verify password using password_verify (supports both old SHA-256 and new password_hash)
         $passwordValid = false;
         
-        // Try password_verify first (new method)
         if (password_verify($admin_password, $config['admin_hash'])) {
             $passwordValid = true;
-        } 
-        // Fallback for old SHA-256 hashes (for migration)
-        elseif (hash('sha256', $admin_password) === $config['admin_hash']) {
+        } elseif (hash('sha256', $admin_password) === $config['admin_hash']) {
             $passwordValid = true;
         }
         
         if ($passwordValid) {
-            // Clear rate limit on successful login
             clearRateLimit('admin_login');
-            
-            // Regenerate session ID for security on privilege escalation
             session_regenerate_id(true);
             setAdminStatus(true);
             header("Location: " . $_SERVER['PHP_SELF']);
             exit();
         } else {
-            // Record failed attempt
             recordFailedAttempt('admin_login');
             $admin_error = 'Falsches Admin-Passwort!';
-            sleep(1); // Small delay to prevent brute force
+            sleep(1);
         }
     }
 }

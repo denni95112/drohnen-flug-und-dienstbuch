@@ -4,17 +4,15 @@ require_once __DIR__ . '/includes/security_headers.php';
 require 'auth.php';
 requireAuth();
 
-// Set timezone from config
 $config = include __DIR__ . '/config/config.php';
 if (isset($config['timezone'])) {
     date_default_timezone_set($config['timezone']);
 }
 
-
 require_once __DIR__ . '/includes/utils.php';
 $dbPath = getDatabasePath();
 $db = new SQLite3($dbPath);
-$error_message = ''; // Initialize error message variable
+$error_message = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['pilot_id'], $_POST['action'])) {
     require_once __DIR__ . '/includes/csrf.php';
@@ -22,16 +20,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['pilot_id'], $_POST['a
     
     $pilot_id = intval($_POST['pilot_id']);
     $action = $_POST['action'];
-    $flight_date = date('Y-m-d H:i:s'); // Current timestamp
+    $flight_date = date('Y-m-d H:i:s');
 
     if ($action === 'start') {
-        // Handle flight start
         if (isset($_POST['drone_id'], $_POST['location_id'], $_POST['battery_number'])) {
             $drone_id = intval($_POST['drone_id']);
             $flight_location_id = intval($_POST['location_id']);
             $battery_number = intval($_POST['battery_number']);
 
-            // Validate inputs
             if ($battery_number <= 0) {
                 $error_message = "Bitte geben Sie eine gültige Batterienummer ein.";
             } else {
@@ -52,7 +48,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['pilot_id'], $_POST['a
             $error_message = "Alle Felder sind erforderlich, um den Flug zu starten.";
         }
     } elseif ($action === 'end') {
-        // Handle flight end
         if (isset($_POST['flight_id'])) {
             $flight_id = intval($_POST['flight_id']);
 
@@ -71,55 +66,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['pilot_id'], $_POST['a
     }
 }
 
-// Function to calculate the next flight due date based on total flight time
+/**
+ * Calculate the next flight due date based on total flight time
+ * @param SQLite3 $db Database connection
+ * @param int $pilot_id Pilot ID
+ * @return string Next flight due date in Y-m-d format
+ */
 function getNextDueDate($db, $pilot_id) {
-    // Fetch the required total flight minutes for this pilot
     $stmt = $db->prepare("SELECT minutes_of_flights_needed FROM pilots WHERE id = :pilot_id");
     $stmt->bindValue(':pilot_id', $pilot_id, SQLITE3_INTEGER);
     $required_minutes = $stmt->execute()->fetchArray(SQLITE3_NUM)[0] ?? null;
 
     if (!$required_minutes) {
-        $required_minutes = 60; // Default: 60 minutes every 3 months
+        $required_minutes = 60;
     }
 
     $stmt = $db->prepare("SELECT flight_date, flight_end_date FROM flights WHERE pilot_id = :pilot_id AND flight_end_date IS NOT NULL AND flight_date >= DATE('now', '-6 months') ORDER BY flight_end_date DESC");
     $stmt->bindValue(':pilot_id', $pilot_id, SQLITE3_INTEGER);
     $flights = $stmt->execute();
 
-    
     $total_minutes = 0;
     $last_counted_flight_date = null;
     
     while ($row = $flights->fetchArray(SQLITE3_ASSOC)) {
         $start_time = strtotime($row['flight_date']);
         $end_time   = strtotime($row['flight_end_date']);
-        $duration   = ($end_time - $start_time) / 60; // minutes
+        $duration   = ($end_time - $start_time) / 60;
 
-        // calculate cutoff (3 months ago)
         $cutoff = strtotime("-3 months");
 
         if ($start_time >= $cutoff) {
             $total_minutes += $duration;
-            
         }
         
         if($duration  <=  $required_minutes){
             $last_counted_flight_date = $row['flight_date'];
         }
         
-        // Stop once required minutes are reached
         if ($total_minutes >= $required_minutes) {
             break;
         }
     }
     
-    // Use the date of the last counted flight as the base
     $next_due_date = date('Y-m-d', strtotime($last_counted_flight_date . ' + 3 months'));
 
     return $next_due_date;
 }
 
-
+/**
+ * Get total flight time in minutes for a pilot in the last 3 months
+ * @param SQLite3 $db Database connection
+ * @param int $pilot_id Pilot ID
+ * @return int Total flight minutes rounded
+ */
 function getPilotFlightTime($db, $pilot_id) {
     $stmt = $db->prepare("SELECT flight_date, flight_end_date FROM flights WHERE pilot_id = :pilot_id AND flight_end_date IS NOT NULL AND flight_date >= DATE('now', '-3 months')");
     $stmt->bindValue(':pilot_id', $pilot_id, SQLITE3_INTEGER);
@@ -130,16 +129,14 @@ function getPilotFlightTime($db, $pilot_id) {
     while ($row = $flights->fetchArray(SQLITE3_ASSOC)) {
         $start_time = strtotime($row['flight_date']);
         $end_time   = strtotime($row['flight_end_date']);
-        $duration   = ($end_time - $start_time) / 60; // minutes
+        $duration   = ($end_time - $start_time) / 60;
 
         $total_minutes += $duration;
     }
 
-    return round($total_minutes); 
-
+    return round($total_minutes);
 }
 
-// Fetch pilot data with ongoing flight information
 $pilot_data = [];
 $stmt = $db->prepare('SELECT * FROM pilots ORDER BY name');
 $pilots = $stmt->execute();
@@ -147,32 +144,33 @@ $pilots = $stmt->execute();
 while ($row = $pilots->fetchArray(SQLITE3_ASSOC)) {
     $pilot_id = $row['id'];
 
-    // Check for ongoing flight
     $stmt = $db->prepare("SELECT id, flight_date FROM flights WHERE pilot_id = :pilot_id AND flight_end_date IS NULL ORDER BY flight_date DESC LIMIT 1");
     $stmt->bindValue(':pilot_id', $pilot_id, SQLITE3_INTEGER);
     $ongoing_result = $stmt->execute();
     $ongoing_flight = $ongoing_result->fetchArray(SQLITE3_ASSOC);
 
-    // Calculate flight count for the last 3 months
     $stmt = $db->prepare("SELECT COUNT(*) FROM flights WHERE pilot_id = :pilot_id AND flight_date >= DATE('now', '-3 months')");
     $stmt->bindValue(':pilot_id', $pilot_id, SQLITE3_INTEGER);
     $flight_count = $stmt->execute()->fetchArray(SQLITE3_NUM)[0] ?? 0;
 
-    // Calculate next flight due date
     $next_flight_due = getNextDueDate($db, $pilot_id);
     $flightTime = getPilotFlightTime($db, $pilot_id);
-    // Add pilot data
     $pilot_data[] = [
         'id' => $row['id'],
         'name' => $row['name'],
-        'flight_count' => $flightTime, // Add flight count
-        'has_enough_flights' => $flight_count >= 3, // Check if the pilot has enough flights
-        'next_flight_due' => $next_flight_due, // Add next flight due date
-        'ongoing_flight' => $ongoing_flight, // Contains flight ID and date if ongoing
+        'flight_count' => $flightTime,
+        'has_enough_flights' => $flight_count >= 3,
+        'next_flight_due' => $next_flight_due,
+        'ongoing_flight' => $ongoing_flight,
         'required_minutes' => $row['minutes_of_flights_needed']
     ];
 }
 
+/**
+ * Convert UTC time to local timezone
+ * @param string $utcTime UTC time string
+ * @return string Local time string
+ */
 function convertToLocalTime($utcTime) {
     global $config;
     $timezone = $config['timezone'] ?? 'Europe/Berlin';
@@ -231,7 +229,6 @@ function convertToLocalTime($utcTime) {
                 <?php endif; ?>
                 <?php foreach ($pilot_data as $pilot): ?>
                     <?php 
-                    // Determine color based on flight minutes requirement
                     $has_enough_minutes = $pilot['flight_count'] >= $pilot['required_minutes'];
                     $color_class = $has_enough_minutes ? 'bg-green' : 'bg-red';
                     ?>

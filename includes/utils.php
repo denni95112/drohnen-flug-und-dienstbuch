@@ -112,40 +112,31 @@ function getDatabasePath() {
         }
     }
     
-    // Get path from config, or use default
     $dbPath = $config['database_path'] ?? null;
     
     if ($dbPath) {
-        // Normalize path separators (handle both Windows and Linux)
-        // First, normalize to forward slashes for easier processing
         $dbPath = str_replace('\\', '/', $dbPath);
         
-        // Check if it's an absolute path
         $isAbsolute = false;
         if (DIRECTORY_SEPARATOR === '\\') {
-            // Windows: Check for drive letter (C:, D:, etc.) or UNC path (\\)
             $isAbsolute = preg_match('/^[A-Za-z]:\/|^\/\/|^\\\\/', $dbPath);
         } else {
-            // Linux/Unix: Check if starts with /
             $isAbsolute = strpos($dbPath, '/') === 0;
         }
         
         if (!$isAbsolute) {
-            // Relative path - make it relative to project root
             $projectRoot = realpath(__DIR__ . '/..');
             if ($projectRoot === false) {
                 $projectRoot = __DIR__ . '/..';
             }
             $dbPath = $projectRoot . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $dbPath);
         } else {
-            // Absolute path - just normalize separators
             $dbPath = str_replace('/', DIRECTORY_SEPARATOR, $dbPath);
         }
         
         return $dbPath;
     }
     
-    // Default fallback
     return __DIR__ . '/../db/drone-dashboard-database.sqlite';
 }
 
@@ -159,7 +150,6 @@ function getDB() {
     }
     $db = new SQLite3($dbPath);
     $db->enableExceptions(true);
-    // Enable foreign key constraints
     $db->exec('PRAGMA foreign_keys = ON');
     return $db;
 }

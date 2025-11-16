@@ -4,7 +4,6 @@ require_once __DIR__ . '/includes/security_headers.php';
 require 'auth.php';
 requireAuth();
 
-// Set timezone from config
 $config = include __DIR__ . '/config/config.php';
 if (isset($config['timezone'])) {
     date_default_timezone_set($config['timezone']);
@@ -14,10 +13,8 @@ require_once __DIR__ . '/includes/utils.php';
 $dbPath = getDatabasePath();
 $db = new SQLite3($dbPath);
 
-// Check if admin=true is present in the URL
 $is_admin = isset($_GET['admin']) && $_GET['admin'] === 'true';
 
-// Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['pilot_id'], $_POST['flight_date'], $_POST['flight_end_date'], $_POST['drone_id'], $_POST['battery_number'])) {
     require_once __DIR__ . '/includes/csrf.php';
     verify_csrf();
@@ -28,20 +25,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['pilot_id'], $_POST['f
     $drone_id = intval($_POST['drone_id']);
     $battery_number = intval($_POST['battery_number']);
 
-    // If location is required and provided, handle it, otherwise, set it to NULL
     $location_id = isset($_POST['location_id']) ? intval($_POST['location_id']) : NULL;
 
-    // Validate inputs
     if ($battery_number <= 0) {
         $error_message = 'Bitte geben Sie eine gültige Batterienummer ein.';
     } elseif (strtotime($flight_end_date) <= strtotime($flight_date)) {
         $error_message = 'Das Enddatum muss nach dem Startdatum liegen.';
     } else {
-        // Convert datetime-local format to database format
         $flight_date_db = date('Y-m-d H:i:s', strtotime($flight_date));
         $flight_end_date_db = date('Y-m-d H:i:s', strtotime($flight_end_date));
         
-        // Insert the flight into the database using prepared statement
         $stmt = $db->prepare("INSERT INTO flights (pilot_id, flight_date, flight_end_date, flight_location_id, drone_id, battery_number) VALUES (:pilot_id, :flight_date, :flight_end_date, :location_id, :drone_id, :battery_number)");
         $stmt->bindValue(':pilot_id', $pilot_id, SQLITE3_INTEGER);
         $stmt->bindValue(':flight_date', $flight_date_db, SQLITE3_TEXT);
@@ -55,7 +48,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['pilot_id'], $_POST['f
             $error_message = 'Fehler beim Eintragen des Flugs.';
             error_log("Flight insert error: " . $db->lastErrorMsg());
         } else {
-            // Update the pilot's last flight date
             $stmt = $db->prepare("UPDATE pilots SET last_flight = :flight_date WHERE id = :pilot_id");
             $stmt->bindValue(':flight_date', $flight_date_db, SQLITE3_TEXT);
             $stmt->bindValue(':pilot_id', $pilot_id, SQLITE3_INTEGER);
@@ -64,11 +56,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['pilot_id'], $_POST['f
     }
 }
 
-// Fetch pilots
 $stmt = $db->prepare('SELECT * FROM pilots ORDER BY name');
 $pilots = $stmt->execute();
 
-// Fetch drones
 $stmt = $db->prepare('SELECT * FROM drones ORDER BY id');
 $drones = $stmt->execute();
 ?>
@@ -127,7 +117,6 @@ $drones = $stmt->execute();
                 <input type="number" id="battery_number" name="battery_number" min="1" required>
             </div>
             <br>
-            <!-- Location is optional for manual entries -->
             <div>
                 <label for="location_id">Standort (optional)</label>
                 <select name="location_id" id="location_id">
