@@ -109,7 +109,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <button type="submit" class="btn-login">Einloggen</button>
         </form>
         <footer>
-            <p>&copy; <?php echo date("Y"); ?> Dennis Bögner</p>
+            <p>MIT License - Erstellt von Dennis Bögner</p>
+            <p>Version 1.0.0</p>
         </footer>
     </div>
 </body>
