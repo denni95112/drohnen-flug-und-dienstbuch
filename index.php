@@ -22,6 +22,12 @@ try {
 }
 
 try {
+    require_once __DIR__ . '/version.php';
+} catch (Throwable $e) {
+    die("Error loading version.php: " . htmlspecialchars($e->getMessage()) . " in " . $e->getFile() . ":" . $e->getLine());
+}
+
+try {
     $config = include __DIR__ . '/config/config.php';
     if (!is_array($config)) {
         die("Config file did not return an array. Please check config/config.php");
@@ -110,7 +116,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </form>
         <footer>
             <p>MIT License - Erstellt von Dennis Bögner</p>
-            <p>Version 1.0.0</p>
+            <p>Version <?php echo APP_VERSION; ?></p>
         </footer>
     </div>
 </body>

@@ -168,3 +168,95 @@ function logError($message, $context = []) {
     error_log("[$timestamp] $message$contextStr\n", 3, $logFile);
 }
 
+/**
+ * Check if a newer version is available on GitHub
+ * @param string $currentVersion Current application version
+ * @param string $owner GitHub repository owner
+ * @param string $repo GitHub repository name
+ * @return array|null Returns array with 'available' (bool), 'version' (string), 'url' (string) or null on error
+ */
+function checkGitHubVersion($currentVersion, $owner, $repo) {
+    $cacheFile = __DIR__ . '/../logs/github_version_cache.json';
+    $cacheTime = 3600;
+    
+    if (file_exists($cacheFile)) {
+        $cache = json_decode(file_get_contents($cacheFile), true);
+        if ($cache && isset($cache['timestamp']) && (time() - $cache['timestamp']) < $cacheTime) {
+            return $cache['data'];
+        }
+    }
+    
+    $url = "https://api.github.com/repos/{$owner}/{$repo}/releases/latest";
+    $response = null;
+    $httpCode = 0;
+    
+    if (function_exists('curl_init')) {
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'User-Agent: Drohnen-Flug-und-Dienstbuch',
+            'Accept: application/vnd.github.v3+json'
+        ]);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+    } elseif (ini_get('allow_url_fopen')) {
+        $context = stream_context_create([
+            'http' => [
+                'method' => 'GET',
+                'header' => [
+                    'User-Agent: Drohnen-Flug-und-Dienstbuch',
+                    'Accept: application/vnd.github.v3+json'
+                ],
+                'timeout' => 5
+            ]
+        ]);
+        
+        $response = @file_get_contents($url, false, $context);
+        if ($response !== false) {
+            $httpCode = 200;
+        }
+    }
+    
+    if ($httpCode !== 200 || !$response) {
+        if (file_exists($cacheFile)) {
+            $cache = json_decode(file_get_contents($cacheFile), true);
+            if ($cache && isset($cache['data'])) {
+                return $cache['data'];
+            }
+        }
+        return null;
+    }
+    
+    $data = json_decode($response, true);
+    if (!$data || !isset($data['tag_name'])) {
+        return null;
+    }
+    
+    $latestVersion = ltrim($data['tag_name'], 'v');
+    $available = version_compare($latestVersion, $currentVersion, '>');
+    
+    $result = [
+        'available' => $available,
+        'version' => $latestVersion,
+        'url' => $data['html_url'] ?? "https://github.com/{$owner}/{$repo}/releases/latest"
+    ];
+    
+    $cacheDir = dirname($cacheFile);
+    if (!is_dir($cacheDir)) {
+        @mkdir($cacheDir, 0755, true);
+    }
+    
+    @file_put_contents($cacheFile, json_encode([
+        'timestamp' => time(),
+        'data' => $result
+    ]));
+    
+    return $result;
+}
+

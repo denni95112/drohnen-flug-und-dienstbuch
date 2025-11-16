@@ -8,6 +8,8 @@ if (!file_exists($configFile)) {
 }
 
 require_once __DIR__ . '/../includes/security_headers.php';
+require_once __DIR__ . '/../version.php';
+require_once __DIR__ . '/../includes/utils.php';
 $config = include $configFile;
 
 if (isset($config['timezone'])) {
@@ -16,6 +18,32 @@ if (isset($config['timezone'])) {
 
 require_once __DIR__ . '/../auth.php';
 $is_admin = isAdmin();
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+if (isset($_GET['test_version'])) {
+    if ($_GET['test_version'] === '1') {
+        $_SESSION['test_version_update'] = true;
+    } elseif ($_GET['test_version'] === '0') {
+        unset($_SESSION['test_version_update']);
+    }
+}
+
+$testVersionUpdate = isset($_SESSION['test_version_update']) && $_SESSION['test_version_update'] === true;
+
+if ($testVersionUpdate) {
+    $versionCheck = [
+        'available' => true,
+        'version' => '1.1.0',
+        'url' => 'https://github.com/' . GITHUB_REPO_OWNER . '/' . GITHUB_REPO_NAME . '/releases/latest'
+    ];
+    $hasUpdate = true;
+} else {
+    $versionCheck = checkGitHubVersion(APP_VERSION, GITHUB_REPO_OWNER, GITHUB_REPO_NAME);
+    $hasUpdate = $versionCheck && $versionCheck['available'];
+}
 
 $url = trim($config['external_documentation_url'] ?? '');
 
@@ -64,6 +92,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['admin_password'])) {
                     <a href="dashboard.php"><img src="<?php echo htmlspecialchars($logo_path, ENT_QUOTES, 'UTF-8'); ?>" alt="Logo" class="nav-logo"></a>
                 <?php endif; ?>
                 <span class="nav-title"><?php echo $config['navigation_title']; ?>  <?php if ($is_admin): ?> - Admin <?php endif; ?></span>
+            </div>
+            <div class="nav-actions">
+                <?php if ($hasUpdate): ?>
+                    <a href="<?php echo htmlspecialchars($versionCheck['url'], ENT_QUOTES, 'UTF-8'); ?>" 
+                       target="_blank" 
+                       rel="noopener noreferrer"
+                       class="version-notification" 
+                       title="Neue Version <?php echo htmlspecialchars($versionCheck['version'], ENT_QUOTES, 'UTF-8'); ?> verfügbar! Klicken Sie, um zur GitHub-Seite zu gehen.">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                        </svg>
+                        <span class="version-badge">v<?php echo htmlspecialchars($versionCheck['version'], ENT_QUOTES, 'UTF-8'); ?></span>
+                    </a>
+                <?php endif; ?>
             </div>
             <button class="nav-toggle" aria-label="Menu ein/ausklappen" id="nav-toggle-btn" aria-expanded="false">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

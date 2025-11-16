@@ -41,6 +41,68 @@ nav {
     color: #fff;
 }
 
+.nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-right: 0.5rem;
+}
+
+.version-notification {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: #fff;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+    position: relative;
+    animation: pulse 2s infinite;
+}
+
+.version-notification:hover {
+    background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+}
+
+.version-notification svg {
+    flex-shrink: 0;
+}
+
+.version-badge {
+    white-space: nowrap;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.9;
+    }
+}
+
+@media (max-width: 767px) {
+    .nav-actions {
+        margin-right: 0;
+    }
+    
+    .version-notification {
+        padding: 0.4rem 0.6rem;
+        font-size: 0.8rem;
+    }
+    
+    .version-notification .version-badge {
+        display: none;
+    }
+}
+
 .nav-toggle {
     background: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.2);
@@ -337,6 +399,10 @@ nav {
     .nav-logo {
         height: 50px;
         max-width: 300px;
+    }
+    
+    .nav-actions {
+        margin-right: 1rem;
     }
 }
 
