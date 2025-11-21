@@ -13,6 +13,21 @@ Eine Progressive Web App (PWA) zur Verwaltung von Drohnen-Flugprotokollen, Pilot
 - 📱 **PWA-Unterstützung**: Installierbar als mobile/Desktop-App
 - 🌍 **Multi-Plattform**: Funktioniert auf Windows- und Linux-Servern
 
+## Screenshots 
+
+<p float="left">
+   <img src="https://github.com/user-attachments/assets/07de6c74-dc8a-4746-9fbe-101998a8f5d9" width="150" />
+   <img src="https://github.com/user-attachments/assets/625e8bb9-9485-442f-ad31-0f6a1f5d4b3d" width="150" />
+   <img src="https://github.com/user-attachments/assets/2dd989d9-cc3d-4f84-a162-525ec71fa360" width="150" />
+   <img src="https://github.com/user-attachments/assets/591f6b35-9737-4032-9757-8fe449710238" width="150" />
+   <img src="https://github.com/user-attachments/assets/02bb5f7e-3e60-4668-8733-0bcd1ded68e7" width="150" />
+   <img src="https://github.com/user-attachments/assets/00aa9c68-4618-4dbd-9d57-df6be941291a" width="150" />
+   <img src="https://github.com/user-attachments/assets/45752509-dde8-47d8-8bda-91aa61d3257c" width="150" />
+   <img src="https://github.com/user-attachments/assets/800f5b66-d8d3-4085-ab3a-52a588091afc" width="150" />
+   <img src="https://github.com/user-attachments/assets/4f86f898-8aff-413e-9e54-1abdf46f0d52" width="150" />  
+   <img src="https://github.com/user-attachments/assets/1f14e56f-400f-4da9-bb1a-5b722406eb8c" width="150" />
+</p>
+
 ## Anforderungen
 
 - PHP 7.4 oder höher
@@ -65,8 +80,6 @@ Nach dem Setup wird die Konfiguration in `config/config.php` gespeichert. Sie k�
 - `database_path`: Datenbankspeicherort aktualisieren
 - `external_documentation_url`: Link zur externen Dokumentation
 
-**Wichtig**: Committen Sie niemals `config/config.php` in die Versionskontrolle, da sie sensible Daten enthält (Passwort-Hashes, Verschlüsselungsschlüssel).
-
 ## Sicherheitsfunktionen
 
 - ✅ SQL-Injection-Schutz (Prepared Statements)
@@ -114,7 +127,7 @@ drohnen-flug-und-dienstbuch/
 ├── manage_locations.php
 ├── manage_pilots.php
 ├── setup.php              # Initialer Setup-Assistent
-│   setup_database.php     # Datenbankinitialisierung
+├── setup_database.php     # Datenbankinitialisierung
 ├── service-worker.js      # PWA Service Worker
 ├── view_events.php
 └── view_flights.php
