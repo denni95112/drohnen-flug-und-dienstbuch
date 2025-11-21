@@ -55,6 +55,17 @@ footer {
     box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
 }
 
+footer a {
+    color: #a5d8ff;
+    text-decoration: underline;
+    transition: color 0.2s ease;
+}
+
+footer a:hover {
+    color: #fff;
+    text-decoration: underline;
+}
+
 /* ===== Buttons ===== */
 button,
 input[type="submit"],
