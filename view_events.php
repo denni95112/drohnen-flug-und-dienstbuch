@@ -11,6 +11,7 @@ if (isset($config['timezone'])) {
 }
 
 require_once __DIR__ . '/includes/utils.php';
+require_once __DIR__ . '/version.php';
 $dbPath = getDatabasePath();
 $db = new SQLite3($dbPath);
 
@@ -110,8 +111,8 @@ function calculateDuration($start_date, $end_date) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Events anzeigen</title>
-    <link rel="stylesheet" href="css/view_events.css">
-    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/view_events.css?v=<?php echo APP_VERSION; ?>">
+    <link rel="stylesheet" href="css/styles.css?v=<?php echo APP_VERSION; ?>">
     <script src="js/view_events.js"></script>
 </head>
 <body>

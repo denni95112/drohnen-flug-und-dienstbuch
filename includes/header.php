@@ -79,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['admin_password'])) {
     }
 }
 ?>
-<link rel="stylesheet" href="css/navigation.css">
+<link rel="stylesheet" href="css/navigation.css?v=<?php echo APP_VERSION; ?>">
 <header>
     <div class="nav-backdrop" id="nav-backdrop"></div>
     <nav>

@@ -10,6 +10,7 @@ if (isset($config['timezone'])) {
 }
 
 require_once __DIR__ . '/includes/utils.php';
+require_once __DIR__ . '/version.php';
 $dbPath = getDatabasePath();
 $db = new SQLite3($dbPath);
 
@@ -90,8 +91,8 @@ $pilots = $stmt->execute();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dienste hinzufügen</title>
-    <link rel="stylesheet" href="css/add_events.css">
-    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/add_events.css?v=<?php echo APP_VERSION; ?>">
+    <link rel="stylesheet" href="css/styles.css?v=<?php echo APP_VERSION; ?>">
     <script src="js/add_events.js"></script>
 </head>
 <body>

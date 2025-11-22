@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/includes/error_reporting.php';
+require_once __DIR__ . '/version.php';
 // setup.php
 
 // Detect OS
@@ -228,7 +229,7 @@ PHP;
     <meta charset="UTF-8">
     <title>Setup - Flug- und Dienstbuch</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="css/setup.css">
+    <link rel="stylesheet" href="css/setup.css?v=<?php echo APP_VERSION; ?>">
     <script src="js/setup.js"></script>
 </head>
 <body>

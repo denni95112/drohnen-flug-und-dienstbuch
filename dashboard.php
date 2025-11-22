@@ -10,6 +10,7 @@ if (isset($config['timezone'])) {
 }
 
 require_once __DIR__ . '/includes/utils.php';
+require_once __DIR__ . '/version.php';
 $dbPath = getDatabasePath();
 $db = new SQLite3($dbPath);
 $error_message = '';
@@ -187,8 +188,8 @@ function convertToLocalTime($utcTime) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
-    <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/styles.css?v=<?php echo APP_VERSION; ?>">
+    <link rel="stylesheet" href="css/dashboard.css?v=<?php echo APP_VERSION; ?>">
     <link rel="manifest" href="manifest.json">
     <script src="js/dashboard.js"></script>
 </head>

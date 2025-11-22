@@ -10,6 +10,7 @@
 
 require_once __DIR__ . '/includes/error_reporting.php';
 require_once __DIR__ . '/includes/utils.php';
+require_once __DIR__ . '/version.php';
 
 $dbPath = getDatabasePath();
 
@@ -344,7 +345,7 @@ try {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Datenbank-Migration</title>
-    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/styles.css?v=<?php echo APP_VERSION; ?>">
     <style>
         .migration-container {
             max-width: 800px;

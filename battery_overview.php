@@ -10,6 +10,7 @@ if (isset($config['timezone'])) {
 }
 
 require_once __DIR__ . '/includes/utils.php';
+require_once __DIR__ . '/version.php';
 $dbPath = getDatabasePath();
 $db = new SQLite3($dbPath);
 
@@ -83,8 +84,8 @@ function formatDuration($seconds) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Batterienutzung Übersicht</title>
-    <link rel="stylesheet" href="css/battery_overview.css">
-    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/battery_overview.css?v=<?php echo APP_VERSION; ?>">
+    <link rel="stylesheet" href="css/styles.css?v=<?php echo APP_VERSION; ?>">
 </head>
 <body>
     <?php include 'includes/header.php'; ?>

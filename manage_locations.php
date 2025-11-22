@@ -12,6 +12,7 @@ if (isset($config['timezone'])) {
 }
 
 require_once __DIR__ . '/includes/utils.php';
+require_once __DIR__ . '/version.php';
 $dbPath = getDatabasePath();
 $db = new SQLite3($dbPath);
 
@@ -220,8 +221,8 @@ function convertToLocalTime($utcTime) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Flugstandorte verwalten</title>
-    <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/manage_locations.css">
+    <link rel="stylesheet" href="css/styles.css?v=<?php echo APP_VERSION; ?>">
+    <link rel="stylesheet" href="css/manage_locations.css?v=<?php echo APP_VERSION; ?>">
     <script src="js/manage_locations.js"></script>
 </head>
 <body>
