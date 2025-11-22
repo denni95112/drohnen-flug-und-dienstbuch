@@ -252,7 +252,10 @@ function convertToLocalTime($utcTime) {
                 <label for="longitude">Längengrad</label>
                 <input type="text" id="longitude" name="longitude" required>
             </div>
-            <br>
+            <button type="button" class="button-full" id="set-location-btn">
+                <span id="set-location-text">Position automatisch setzen</span>
+                <span id="location-spinner" class="spinner" style="display: none;"></span>
+            </button>
             <div>
                 <label for="description">Beschreibung (optional)</label>
                 <br>
@@ -264,27 +267,22 @@ function convertToLocalTime($utcTime) {
                     Ist ein Übungsflug
                 </label>
             </div>
-            <br>
-            <button type="button" class="button-full" id="set-location-btn">
-                <span id="set-location-text">Position automatisch setzen</span>
-                <span id="location-spinner" class="spinner" style="display: none;"></span>
-            </button>
-            <br>
+
             <button type="submit" class="button-full">Standort hinzufügen</button>
         </form>
 
         <!-- Locations Table -->
         <h2>Vorhandene Standorte</h2>
 
-        <form method="get" action="manage_locations.php">
-            <label for="filter_training">Nur Einsätze anzeigen:</label>
-            <input type="checkbox" name="filter_training" value="false" <?= $filter_training ? 'checked' : ''; ?>>
-            <br>
-            <br>
-            <button class="button-full" type="submit">Filter anwenden</button>
-        </form>
-        <br>
-        <br>
+        <div class="filter-container">
+            <form method="get" action="manage_locations.php" class="filter-form">
+                <div class="filter-checkbox-group">
+                    <input type="checkbox" id="filter_training" name="filter_training" value="false" <?= $filter_training ? 'checked' : ''; ?>>
+                    <label for="filter_training">Nur Einsätze anzeigen</label>
+                </div>
+                <button class="button-full" type="submit">Filter anwenden</button>
+            </form>
+        </div>
 
         <table>
             <thead>

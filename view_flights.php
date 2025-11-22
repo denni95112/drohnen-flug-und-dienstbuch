@@ -102,10 +102,7 @@ function convertToLocalTime($utcTime) {
                 }
                 ?>
             </select>
-            <br>
-            <br>
             <button type="submit" class="button-full">Filter</button>
-            <br>
             <br>
         </form>
 
