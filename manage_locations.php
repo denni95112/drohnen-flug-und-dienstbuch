@@ -265,7 +265,10 @@ function convertToLocalTime($utcTime) {
                 </label>
             </div>
             <br>
-            <button type="button" class="button-full" id="set-location-btn">Position automatisch setzen</button>
+            <button type="button" class="button-full" id="set-location-btn">
+                <span id="set-location-text">Position automatisch setzen</span>
+                <span id="location-spinner" class="spinner" style="display: none;"></span>
+            </button>
             <br>
             <button type="submit" class="button-full">Standort hinzufügen</button>
         </form>
