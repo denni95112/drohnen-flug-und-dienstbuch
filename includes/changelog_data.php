@@ -7,19 +7,21 @@
 $changelog = [
     [
         'version' => '1.0.1',
-        'date' => '2026-01-XX',
+        'date' => '2026-01-07',
         'changes' => [
             'Admin-Login Info Icon (Schloss in Header) hinzugefügt',
             'Wechsel zurück zum normalen Benutzer Button hinzugefügt'
 
         ],
         'bugfixes' => [
-            'Zeitzonenproblem behoben'
+            'Zeitzonenproblem behoben',
+            'Cache-Problem im Service Worker behoben'
         ],
         'new_features' => [
             'Buy Me a Coffee Button hinzugefügt',
-            'Dialog für Frage ob Entwickler über Installtion benachrichtigt werden darf',
-            'Neue Installtion Info-Dialog'
+            'Dialog für Frage ob Entwickler über Installation benachrichtigt werden darf',
+            'Neue Installation Info-Dialog',
+            'Löschen / Bearbeiten von Diensten als Admin'
         ]
     ],
     [

@@ -12,9 +12,20 @@ self.addEventListener('install', (event) => {
     console.log('Service Worker installing.');
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
-            return cache.addAll(urlsToCache);
+            // Cache each URL individually to handle failures gracefully
+            return Promise.allSettled(
+                urlsToCache.map((url) => {
+                    return cache.add(url).catch((error) => {
+                        console.warn(`Failed to cache ${url}:`, error);
+                        // Return null to indicate failure, but don't throw
+                        return null;
+                    });
+                })
+            );
         })
     );
+    // Skip waiting to activate immediately
+    self.skipWaiting();
 });
 
 // Activate the service worker

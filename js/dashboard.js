@@ -1,12 +1,16 @@
 // Extracted JavaScript from dashboard.php
 if ('serviceWorker' in navigator) {
-    console.log("index service")
-    navigator.serviceWorker.register('/service-worker.js')
+    // Use relative path to avoid redirect issues
+    const swPath = './service-worker.js';
+    navigator.serviceWorker.register(swPath)
         .then((registration) => {
             console.log('ServiceWorker registered:', registration);
         })
         .catch((error) => {
-            console.error('ServiceWorker registration failed:', error);
+            // Only log if it's not a redirect error (which is common with some server configs)
+            if (!error.message.includes('redirect')) {
+                console.warn('ServiceWorker registration failed:', error.message);
+            }
         });
 }
 
