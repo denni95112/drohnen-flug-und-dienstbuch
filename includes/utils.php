@@ -186,7 +186,9 @@ function checkGitHubVersion($currentVersion, $owner, $repo) {
         }
     }
     
-    $url = "https://api.github.com/repos/{$owner}/{$repo}/releases/latest";
+    // Fetch all releases to find the latest non-draft, non-prerelease release
+    // This is more reliable than /releases/latest which can be cached
+    $url = "https://api.github.com/repos/{$owner}/{$repo}/releases";
     $response = null;
     $httpCode = 0;
     
@@ -201,10 +203,44 @@ function checkGitHubVersion($currentVersion, $owner, $repo) {
         curl_setopt($ch, CURLOPT_TIMEOUT, 5);
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+        
+        // Try to use system CA bundle if available
+        $caBundlePaths = [
+            __DIR__ . '/../cacert.pem',
+            ini_get('curl.cainfo'),
+            getenv('SSL_CERT_FILE')
+        ];
+        foreach ($caBundlePaths as $caPath) {
+            if ($caPath && file_exists($caPath)) {
+                curl_setopt($ch, CURLOPT_CAINFO, $caPath);
+                break;
+            }
+        }
         
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlError = curl_error($ch);
         curl_close($ch);
+        
+        // If SSL verification failed, try again without verification (less secure but works)
+        if ($httpCode === 0 && strpos($curlError, 'SSL') !== false) {
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'User-Agent: Drohnen-Flug-und-Dienstbuch',
+                'Accept: application/vnd.github.v3+json'
+            ]);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+            
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+        }
     } elseif (ini_get('allow_url_fopen')) {
         $context = stream_context_create([
             'http' => [
@@ -233,18 +269,38 @@ function checkGitHubVersion($currentVersion, $owner, $repo) {
         return null;
     }
     
-    $data = json_decode($response, true);
-    if (!$data || !isset($data['tag_name'])) {
+    $releases = json_decode($response, true);
+    if (!is_array($releases) || empty($releases)) {
         return null;
     }
     
-    $latestVersion = ltrim($data['tag_name'], 'v');
+    // Find the latest non-draft, non-prerelease release
+    $latestRelease = null;
+    foreach ($releases as $release) {
+        if (isset($release['draft']) && $release['draft'] === true) {
+            continue;
+        }
+        if (isset($release['prerelease']) && $release['prerelease'] === true) {
+            continue;
+        }
+        if (!isset($release['tag_name'])) {
+            continue;
+        }
+        $latestRelease = $release;
+        break; // Releases are already sorted by date, newest first
+    }
+    
+    if (!$latestRelease || !isset($latestRelease['tag_name'])) {
+        return null;
+    }
+    
+    $latestVersion = ltrim($latestRelease['tag_name'], 'v');
     $available = version_compare($latestVersion, $currentVersion, '>');
     
     $result = [
         'available' => $available,
         'version' => $latestVersion,
-        'url' => $data['html_url'] ?? "https://github.com/{$owner}/{$repo}/releases/latest"
+        'url' => $latestRelease['html_url'] ?? "https://github.com/{$owner}/{$repo}/releases/latest"
     ];
     
     $cacheDir = dirname($cacheFile);

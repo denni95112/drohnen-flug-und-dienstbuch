@@ -13,6 +13,7 @@ db/*.db
 # Log files
 logs/*.log
 *.log
+logs/github_version_cache.json
 
 # Uploaded files
 uploads/*
