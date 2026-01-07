@@ -92,10 +92,10 @@ function getEventType($type_id) {
     return $types[$type_id] ?? 'Unbekannt';
 }
 
-// Calculate duration between two datetime strings
-function calculateDuration($start_date, $end_date) {
-    $start = new DateTime($start_date);
-    $end = new DateTime($end_date);
+// Calculate duration between two UTC datetime strings
+function calculateDuration($start_date_utc, $end_date_utc) {
+    $start = new DateTime($start_date_utc, new DateTimeZone('UTC'));
+    $end = new DateTime($end_date_utc, new DateTimeZone('UTC'));
     $interval = $start->diff($end);
 
     $hours = $interval->h + ($interval->days * 24);
@@ -176,8 +176,8 @@ function calculateDuration($start_date, $end_date) {
         <div class="events-container">
             <?php while ($event = $events->fetchArray(SQLITE3_ASSOC)): ?>
                 <div class="event-card">
-                    <p><strong>Start:</strong> <?= htmlspecialchars($event['event_start_date']); ?></p>
-                    <p><strong>Ende:</strong> <?= htmlspecialchars($event['event_end_date']); ?></p>
+                    <p><strong>Start:</strong> <?= htmlspecialchars(toLocalTime($event['event_start_date'])); ?></p>
+                    <p><strong>Ende:</strong> <?= htmlspecialchars(toLocalTime($event['event_end_date'])); ?></p>
                     <p><strong>Dauer:</strong> <?= calculateDuration($event['event_start_date'], $event['event_end_date']); ?></p>
                     <p><strong>Typ:</strong> <?= htmlspecialchars(getEventType($event['type_id'])); ?></p>
                     <p><strong>Notizen:</strong> <?= htmlspecialchars($event['notes']); ?></p>

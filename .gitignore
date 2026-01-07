@@ -51,6 +51,7 @@ error_test.php
 info.php
 simple_test.php
 debug_step_by_step.php
+debug_passwords.php
 
 # IIS configuration (may contain sensitive paths)
 web.config

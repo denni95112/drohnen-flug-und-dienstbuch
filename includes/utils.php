@@ -260,3 +260,99 @@ function checkGitHubVersion($currentVersion, $owner, $repo) {
     return $result;
 }
 
+/**
+ * Convert datetime from local timezone to UTC for storage
+ * @param string $datetime Local datetime string (format: 'Y-m-d H:i:s' or 'Y-m-d\TH:i')
+ * @return string UTC datetime string in 'Y-m-d H:i:s' format
+ */
+function toUTC($datetime) {
+    $config = [];
+    $configFile = __DIR__ . '/../config/config.php';
+    if (file_exists($configFile)) {
+        $config = @include $configFile;
+        if (!is_array($config)) {
+            $config = [];
+        }
+    }
+    
+    $timezone = $config['timezone'] ?? 'Europe/Berlin';
+    
+    // Handle both 'Y-m-d H:i:s' and 'Y-m-d\TH:i' formats
+    $date = null;
+    if (strpos($datetime, 'T') !== false) {
+        // Format: 'Y-m-d\TH:i' (from datetime-local input)
+        $date = DateTime::createFromFormat('Y-m-d\TH:i', $datetime, new DateTimeZone($timezone));
+    } else {
+        // Format: 'Y-m-d H:i:s' or 'Y-m-d'
+        $date = DateTime::createFromFormat('Y-m-d H:i:s', $datetime, new DateTimeZone($timezone));
+        if (!$date) {
+            $date = DateTime::createFromFormat('Y-m-d', $datetime, new DateTimeZone($timezone));
+        }
+    }
+    
+    if (!$date) {
+        // Fallback: try to parse with strtotime
+        $timestamp = strtotime($datetime);
+        if ($timestamp === false) {
+            throw new InvalidArgumentException("Invalid datetime format: $datetime");
+        }
+        $date = new DateTime('@' . $timestamp);
+        $date->setTimezone(new DateTimeZone($timezone));
+    }
+    
+    $date->setTimezone(new DateTimeZone('UTC'));
+    return $date->format('Y-m-d H:i:s');
+}
+
+/**
+ * Convert datetime from UTC to local timezone for display
+ * @param string $utcTime UTC datetime string (format: 'Y-m-d H:i:s')
+ * @param string $format Output format (default: 'Y-m-d H:i:s')
+ * @return string Local datetime string
+ */
+function toLocalTime($utcTime, $format = 'Y-m-d H:i:s') {
+    $config = [];
+    $configFile = __DIR__ . '/../config/config.php';
+    if (file_exists($configFile)) {
+        $config = @include $configFile;
+        if (!is_array($config)) {
+            $config = [];
+        }
+    }
+    
+    $timezone = $config['timezone'] ?? 'Europe/Berlin';
+    
+    // Handle null or empty strings
+    if (empty($utcTime)) {
+        return '';
+    }
+    
+    // Parse UTC datetime
+    $date = DateTime::createFromFormat('Y-m-d H:i:s', $utcTime, new DateTimeZone('UTC'));
+    if (!$date) {
+        // Try parsing as-is (might already be in a different format)
+        $date = new DateTime($utcTime, new DateTimeZone('UTC'));
+    }
+    
+    $date->setTimezone(new DateTimeZone($timezone));
+    return $date->format($format);
+}
+
+/**
+ * Convert datetime from UTC to local timezone for datetime-local input
+ * @param string $utcTime UTC datetime string (format: 'Y-m-d H:i:s')
+ * @return string Local datetime string in 'Y-m-d\TH:i' format
+ */
+function toLocalTimeForInput($utcTime) {
+    return toLocalTime($utcTime, 'Y-m-d\TH:i');
+}
+
+/**
+ * Get current datetime in UTC
+ * @return string UTC datetime string in 'Y-m-d H:i:s' format
+ */
+function getCurrentUTC() {
+    $date = new DateTime('now', new DateTimeZone('UTC'));
+    return $date->format('Y-m-d H:i:s');
+}
+

@@ -68,14 +68,7 @@ if (!$flights) {
     die("Fehler beim Laden der Flüge.");
 }
 
-// Function to convert UTC to local time
-function convertToLocalTime($utcTime) {
-    global $config;
-    $timezone = $config['timezone'] ?? 'Europe/Berlin';
-    $date = new DateTime($utcTime, new DateTimeZone('UTC'));
-    $date->setTimezone(new DateTimeZone($timezone));
-    return $date->format('Y-m-d H:i:s');
-}
+// Use centralized toLocalTime function from utils.php
 ?>
 
 <!DOCTYPE html>
@@ -128,7 +121,7 @@ function convertToLocalTime($utcTime) {
                     <?php while ($flight = $flights->fetchArray(SQLITE3_ASSOC)): ?>
                         <tr>
                             <td><?= htmlspecialchars($flight['pilot_name']); ?></td>
-                            <td><?= htmlspecialchars(convertToLocalTime($flight['flight_date'])); ?> bis <?= htmlspecialchars(convertToLocalTime($flight['flight_end_date'])); ?></td>
+                            <td><?= htmlspecialchars(toLocalTime($flight['flight_date'])); ?> bis <?= htmlspecialchars(toLocalTime($flight['flight_end_date'])); ?></td>
                             <td><?= htmlspecialchars($flight['location_name'] ?? 'Nicht verfügbar'); ?></td>
                             <td><?= htmlspecialchars($flight['latitude'] ?? ''); ?></td>
                             <td><?= htmlspecialchars($flight['longitude'] ?? ''); ?></td>

@@ -1,22 +1,37 @@
-// Extracted JavaScript from add_events.php
-// Note: toLocalTime is a PHP function, so we'll use a JavaScript equivalent
-function toLocalTime(isoString) {
-    const date = new Date(isoString);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
-}
-
 // Enforce 15-minute intervals for datetime-local inputs
+// datetime-local inputs work with local time, so we need to work directly with local time
 function roundTo15Minutes(input) {
-    const value = new Date(input.value);
-    const roundedMinutes = Math.round(value.getMinutes() / 15) * 15;
-    value.setMinutes(roundedMinutes);
-    value.setSeconds(0);
-    input.value = toLocalTime(value.toISOString().slice(0, 16)); // Convert to YYYY-MM-DDTHH:mm format
+    if (!input.value) {
+        return;
+    }
+    
+    // Parse the datetime-local value (format: YYYY-MM-DDTHH:mm)
+    // This is already in local time, so we parse it as local time
+    const [datePart, timePart] = input.value.split('T');
+    if (!datePart || !timePart) {
+        return;
+    }
+    
+    const [year, month, day] = datePart.split('-').map(Number);
+    const [hours, minutes] = timePart.split(':').map(Number);
+    
+    // Create a date object in local time
+    const localDate = new Date(year, month - 1, day, hours, minutes, 0, 0);
+    
+    // Round to nearest 15 minutes
+    const roundedMinutes = Math.round(localDate.getMinutes() / 15) * 15;
+    localDate.setMinutes(roundedMinutes);
+    localDate.setSeconds(0);
+    localDate.setMilliseconds(0);
+    
+    // Format back to datetime-local format (YYYY-MM-DDTHH:mm) in local time
+    const formattedYear = localDate.getFullYear();
+    const formattedMonth = String(localDate.getMonth() + 1).padStart(2, '0');
+    const formattedDay = String(localDate.getDate()).padStart(2, '0');
+    const formattedHours = String(localDate.getHours()).padStart(2, '0');
+    const formattedMinutes = String(localDate.getMinutes()).padStart(2, '0');
+    
+    input.value = `${formattedYear}-${formattedMonth}-${formattedDay}T${formattedHours}:${formattedMinutes}`;
 }
 
 // Attach event listeners when DOM is ready

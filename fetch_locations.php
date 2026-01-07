@@ -18,17 +18,29 @@ $db = new SQLite3($dbPath);
 $flight_date = isset($_GET['flight_date']) ? $_GET['flight_date'] : null;
 
 if ($flight_date) {
-    // Validate date format
+    // Validate date format - flight_date is in local time from datetime-local input
     $date_obj = DateTime::createFromFormat('Y-m-d\TH:i', $flight_date);
     if (!$date_obj) {
         $date_obj = DateTime::createFromFormat('Y-m-d', $flight_date);
     }
     
     if ($date_obj) {
+        // Get the date part in local time
         $date_str = $date_obj->format('Y-m-d');
-        // Fetch locations that match the selected flight date using prepared statement
-        $stmt = $db->prepare("SELECT * FROM flight_locations WHERE DATE(created_at) = DATE(:flight_date)");
-        $stmt->bindValue(':flight_date', $date_str, SQLITE3_TEXT);
+        
+        // Convert local date to UTC range for database comparison
+        // Start of day in local time
+        $start_local = $date_str . ' 00:00:00';
+        $start_utc = toUTC($start_local);
+        
+        // End of day in local time
+        $end_local = $date_str . ' 23:59:59';
+        $end_utc = toUTC($end_local);
+        
+        // Fetch locations that match the selected flight date (stored in UTC)
+        $stmt = $db->prepare("SELECT * FROM flight_locations WHERE created_at >= :start_date AND created_at <= :end_date");
+        $stmt->bindValue(':start_date', $start_utc, SQLITE3_TEXT);
+        $stmt->bindValue(':end_date', $end_utc, SQLITE3_TEXT);
         $locations = $stmt->execute();
     } else {
         $locations = false;

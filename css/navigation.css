@@ -48,6 +48,32 @@ nav {
     margin-right: 0.5rem;
 }
 
+.admin-icon {
+    display: flex;
+    align-items: center;
+    color: #fff;
+    opacity: 0.8;
+    transition: opacity 0.3s ease;
+    cursor: default;
+}
+
+.admin-icon.clickable {
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.admin-icon.clickable:hover {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(1.1);
+}
+
+.admin-icon svg {
+    flex-shrink: 0;
+}
+
 .version-notification {
     display: flex;
     align-items: center;
@@ -91,6 +117,15 @@ nav {
 @media (max-width: 767px) {
     .nav-actions {
         margin-right: 0;
+    }
+    
+    .admin-icon {
+        padding: 0.4rem;
+    }
+    
+    .admin-icon svg {
+        width: 18px;
+        height: 18px;
     }
     
     .version-notification {

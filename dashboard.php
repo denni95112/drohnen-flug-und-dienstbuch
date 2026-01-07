@@ -21,7 +21,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['pilot_id'], $_POST['a
     
     $pilot_id = intval($_POST['pilot_id']);
     $action = $_POST['action'];
-    $flight_date = date('Y-m-d H:i:s');
+    // Get current time in UTC
+    $flight_date = getCurrentUTC();
 
     if ($action === 'start') {
         if (isset($_POST['drone_id'], $_POST['location_id'], $_POST['battery_number'])) {
@@ -82,25 +83,35 @@ function getNextDueDate($db, $pilot_id) {
         $required_minutes = 60;
     }
 
-    $stmt = $db->prepare("SELECT flight_date, flight_end_date FROM flights WHERE pilot_id = :pilot_id AND flight_end_date IS NOT NULL AND flight_date >= DATE('now', '-6 months') ORDER BY flight_end_date DESC");
+    // Calculate cutoff date (3 months ago) in UTC
+    $cutoffDate = new DateTime('now', new DateTimeZone('UTC'));
+    $cutoffDate->modify('-6 months');
+    $cutoffDateUTC = $cutoffDate->format('Y-m-d H:i:s');
+    
+    $stmt = $db->prepare("SELECT flight_date, flight_end_date FROM flights WHERE pilot_id = :pilot_id AND flight_end_date IS NOT NULL AND flight_date >= :cutoff_date ORDER BY flight_end_date DESC");
     $stmt->bindValue(':pilot_id', $pilot_id, SQLITE3_INTEGER);
+    $stmt->bindValue(':cutoff_date', $cutoffDateUTC, SQLITE3_TEXT);
     $flights = $stmt->execute();
 
     $total_minutes = 0;
     $last_counted_flight_date = null;
     
+    // Calculate 3 months cutoff in UTC
+    $threeMonthsCutoff = new DateTime('now', new DateTimeZone('UTC'));
+    $threeMonthsCutoff->modify('-3 months');
+    $threeMonthsCutoffUTC = $threeMonthsCutoff->format('Y-m-d H:i:s');
+    
     while ($row = $flights->fetchArray(SQLITE3_ASSOC)) {
-        $start_time = strtotime($row['flight_date']);
-        $end_time   = strtotime($row['flight_end_date']);
-        $duration   = ($end_time - $start_time) / 60;
+        // Parse UTC dates
+        $start_date = new DateTime($row['flight_date'], new DateTimeZone('UTC'));
+        $end_date = new DateTime($row['flight_end_date'], new DateTimeZone('UTC'));
+        $duration = ($end_date->getTimestamp() - $start_date->getTimestamp()) / 60;
 
-        $cutoff = strtotime("-3 months");
-
-        if ($start_time >= $cutoff) {
+        if ($start_date->format('Y-m-d H:i:s') >= $threeMonthsCutoffUTC) {
             $total_minutes += $duration;
         }
         
-        if($duration  <=  $required_minutes){
+        if($duration <= $required_minutes){
             $last_counted_flight_date = $row['flight_date'];
         }
         
@@ -109,7 +120,14 @@ function getNextDueDate($db, $pilot_id) {
         }
     }
     
-    $next_due_date = date('Y-m-d', strtotime($last_counted_flight_date . ' + 3 months'));
+    if ($last_counted_flight_date) {
+        // Parse UTC date, add 3 months, convert to local date
+        $lastDate = new DateTime($last_counted_flight_date, new DateTimeZone('UTC'));
+        $lastDate->modify('+3 months');
+        $next_due_date = toLocalTime($lastDate->format('Y-m-d H:i:s'), 'Y-m-d');
+    } else {
+        $next_due_date = null;
+    }
 
     return $next_due_date;
 }
@@ -121,16 +139,23 @@ function getNextDueDate($db, $pilot_id) {
  * @return int Total flight minutes rounded
  */
 function getPilotFlightTime($db, $pilot_id) {
-    $stmt = $db->prepare("SELECT flight_date, flight_end_date FROM flights WHERE pilot_id = :pilot_id AND flight_end_date IS NOT NULL AND flight_date >= DATE('now', '-3 months')");
+    // Calculate cutoff date (3 months ago) in UTC
+    $cutoffDate = new DateTime('now', new DateTimeZone('UTC'));
+    $cutoffDate->modify('-3 months');
+    $cutoffDateUTC = $cutoffDate->format('Y-m-d H:i:s');
+    
+    $stmt = $db->prepare("SELECT flight_date, flight_end_date FROM flights WHERE pilot_id = :pilot_id AND flight_end_date IS NOT NULL AND flight_date >= :cutoff_date");
     $stmt->bindValue(':pilot_id', $pilot_id, SQLITE3_INTEGER);
+    $stmt->bindValue(':cutoff_date', $cutoffDateUTC, SQLITE3_TEXT);
     $flights = $stmt->execute();
 
     $total_minutes = 0;
 
     while ($row = $flights->fetchArray(SQLITE3_ASSOC)) {
-        $start_time = strtotime($row['flight_date']);
-        $end_time   = strtotime($row['flight_end_date']);
-        $duration   = ($end_time - $start_time) / 60;
+        // Parse UTC dates
+        $start_date = new DateTime($row['flight_date'], new DateTimeZone('UTC'));
+        $end_date = new DateTime($row['flight_end_date'], new DateTimeZone('UTC'));
+        $duration = ($end_date->getTimestamp() - $start_date->getTimestamp()) / 60;
 
         $total_minutes += $duration;
     }
@@ -150,8 +175,14 @@ while ($row = $pilots->fetchArray(SQLITE3_ASSOC)) {
     $ongoing_result = $stmt->execute();
     $ongoing_flight = $ongoing_result->fetchArray(SQLITE3_ASSOC);
 
-    $stmt = $db->prepare("SELECT COUNT(*) FROM flights WHERE pilot_id = :pilot_id AND flight_date >= DATE('now', '-3 months')");
+    // Calculate cutoff date (3 months ago) in UTC
+    $cutoffDate = new DateTime('now', new DateTimeZone('UTC'));
+    $cutoffDate->modify('-3 months');
+    $cutoffDateUTC = $cutoffDate->format('Y-m-d H:i:s');
+    
+    $stmt = $db->prepare("SELECT COUNT(*) FROM flights WHERE pilot_id = :pilot_id AND flight_date >= :cutoff_date");
     $stmt->bindValue(':pilot_id', $pilot_id, SQLITE3_INTEGER);
+    $stmt->bindValue(':cutoff_date', $cutoffDateUTC, SQLITE3_TEXT);
     $flight_count = $stmt->execute()->fetchArray(SQLITE3_NUM)[0] ?? 0;
 
     $next_flight_due = getNextDueDate($db, $pilot_id);
@@ -167,18 +198,7 @@ while ($row = $pilots->fetchArray(SQLITE3_ASSOC)) {
     ];
 }
 
-/**
- * Convert UTC time to local timezone
- * @param string $utcTime UTC time string
- * @return string Local time string
- */
-function convertToLocalTime($utcTime) {
-    global $config;
-    $timezone = $config['timezone'] ?? 'Europe/Berlin';
-    $date = new DateTime($utcTime, new DateTimeZone('UTC'));
-    $date->setTimezone(new DateTimeZone($timezone));
-    return $date->format('Y-m-d H:i:s');
-}
+// Use centralized toLocalTime function from utils.php
 
 ?>
 
@@ -238,12 +258,18 @@ function convertToLocalTime($utcTime) {
                         <?php if (!$pilot['ongoing_flight']): ?>
                             <p>Flugminuten der letzten 3 Monate: <?= htmlspecialchars($pilot['flight_count']); ?></p>
                             <p>Benötigte Flugminuten: <?= htmlspecialchars($pilot['required_minutes']); ?></p>
-                            <?php if ($has_enough_minutes && isset($pilot['next_flight_due']) && strtotime($pilot['next_flight_due']) >= time()): ?>
-                                <p>Nächster Flug fällig: <?= htmlspecialchars($pilot['next_flight_due'] ?? 'Nicht genug Flüge'); ?></p>
+                            <?php if ($has_enough_minutes && isset($pilot['next_flight_due']) && $pilot['next_flight_due']): ?>
+                                <?php
+                                // Convert local date to UTC for comparison
+                                $nextDueUTC = toUTC($pilot['next_flight_due'] . ' 00:00:00');
+                                $currentUTC = getCurrentUTC();
+                                if ($nextDueUTC >= $currentUTC): ?>
+                                    <p>Nächster Flug fällig: <?= htmlspecialchars($pilot['next_flight_due']); ?></p>
+                                <?php endif; ?>
                             <?php endif; ?>
                         <?php endif; ?>
                         <?php if ($pilot['ongoing_flight']): ?>
-                            <p>Flug gestartet um: <?= htmlspecialchars(convertToLocalTime($pilot['ongoing_flight']['flight_date'])); ?></p>
+                            <p>Flug gestartet um: <?= htmlspecialchars(toLocalTime($pilot['ongoing_flight']['flight_date'])); ?></p>
                             <br><br>
                         <?php endif; ?>
 
@@ -262,7 +288,15 @@ function convertToLocalTime($utcTime) {
                                     <select name="location_id" id="location_id_<?= $pilot['id']; ?>" required>
                                         <option value="">Bitte wählen</option>
                                         <?php
-                                        $stmt = $db->prepare("SELECT id, location_name FROM flight_locations WHERE DATE(created_at) = DATE('now')");
+                                        // Get current date in UTC for comparison
+                                        $currentDateUTC = getCurrentUTC();
+                                        $currentDateLocal = toLocalTime($currentDateUTC, 'Y-m-d');
+                                        // Convert local date to UTC for database comparison
+                                        $currentDateUTCStart = toUTC($currentDateLocal . ' 00:00:00');
+                                        $currentDateUTCEnd = toUTC($currentDateLocal . ' 23:59:59');
+                                        $stmt = $db->prepare("SELECT id, location_name FROM flight_locations WHERE created_at >= :start_date AND created_at <= :end_date");
+                                        $stmt->bindValue(':start_date', $currentDateUTCStart, SQLITE3_TEXT);
+                                        $stmt->bindValue(':end_date', $currentDateUTCEnd, SQLITE3_TEXT);
                                         $locations = $stmt->execute();
                                         while ($location = $locations->fetchArray(SQLITE3_ASSOC)): ?>
                                             <option value="<?= $location['id']; ?>"><?= htmlspecialchars($location['location_name']); ?></option>

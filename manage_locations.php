@@ -27,7 +27,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['location_name'])) {
     $longitude = isset($_POST['longitude']) ? validateLongitude($_POST['longitude']) : false;
     $description = isset($_POST['description']) ? trim($_POST['description']) : null;
     $training = isset($_POST['training']) ? 1 : 0;
-    $created_at = date('Y-m-d H:i:s');
+    // Store in UTC
+    $created_at = getCurrentUTC();
 
     if (!empty($location_name) && $latitude !== false && $longitude !== false) {
         $stmt = $db->prepare('INSERT INTO flight_locations (location_name, latitude, longitude, description, training, created_at) VALUES (:location_name, :latitude, :longitude, :description, :training, :created_at)');
@@ -205,13 +206,7 @@ if ($filter_training) {
 }
 $locations = $stmt->execute();
 
-function convertToLocalTime($utcTime) {
-    global $config;
-    $timezone = $config['timezone'] ?? 'Europe/Berlin';
-    $date = new DateTime($utcTime, new DateTimeZone('UTC'));
-    $date->setTimezone(new DateTimeZone($timezone));
-    return $date->format('Y-m-d H:i:s');
-}
+// Use centralized toLocalTime function from utils.php
 
 ?>
 
@@ -307,7 +302,7 @@ function convertToLocalTime($utcTime) {
                         <td data-label="Breitengrad"><?= htmlspecialchars($location['latitude']); ?></td>
                         <td data-label="Längengrad"><?= htmlspecialchars($location['longitude']); ?></td>
                         <td data-label="Beschreibung"><?= htmlspecialchars($location['description']); ?></td>
-                        <td data-label="Erstellt am"><?= htmlspecialchars(convertToLocalTime($location['created_at'])); ?></td>
+                        <td data-label="Erstellt am"><?= htmlspecialchars(toLocalTime($location['created_at'])); ?></td>
                         <td data-label="Einsatz"><?= !$location['training'] ? 'Ja' : 'Nein'; ?></td>
 
                         <!-- File upload and download -->

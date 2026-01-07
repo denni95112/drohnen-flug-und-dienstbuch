@@ -33,8 +33,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['pilot_id'], $_POST['f
     } elseif (strtotime($flight_end_date) <= strtotime($flight_date)) {
         $error_message = 'Das Enddatum muss nach dem Startdatum liegen.';
     } else {
-        $flight_date_db = date('Y-m-d H:i:s', strtotime($flight_date));
-        $flight_end_date_db = date('Y-m-d H:i:s', strtotime($flight_end_date));
+        // Convert local datetime to UTC for storage
+        $flight_date_db = toUTC($flight_date);
+        $flight_end_date_db = toUTC($flight_end_date);
         
         $stmt = $db->prepare("INSERT INTO flights (pilot_id, flight_date, flight_end_date, flight_location_id, drone_id, battery_number) VALUES (:pilot_id, :flight_date, :flight_end_date, :location_id, :drone_id, :battery_number)");
         $stmt->bindValue(':pilot_id', $pilot_id, SQLITE3_INTEGER);

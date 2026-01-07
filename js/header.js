@@ -1,10 +1,47 @@
 // Modern Navigation JavaScript
-function openAdminModal() {
-    document.getElementById('admin-modal').style.display = 'block';
+function htmlEscape(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function openAdminModal(isLogout = false) {
+    const modal = document.getElementById('admin-modal');
+    const loginContent = document.getElementById('admin-login-content');
+    const logoutContent = document.getElementById('admin-logout-content');
+    const modalTitle = document.getElementById('admin-modal-title');
+    const messageContainer = document.getElementById('admin-message-container');
+    const logoutMessageContainer = document.getElementById('admin-logout-message-container');
+    
+    // Clear any previous messages
+    if (messageContainer) messageContainer.innerHTML = '';
+    if (logoutMessageContainer) logoutMessageContainer.innerHTML = '';
+    
+    if (isLogout) {
+        // Show logout content
+        if (loginContent) loginContent.style.display = 'none';
+        if (logoutContent) logoutContent.style.display = 'block';
+        if (modalTitle) modalTitle.textContent = 'Zu normalem Benutzer wechseln';
+    } else {
+        // Show login content
+        if (loginContent) loginContent.style.display = 'block';
+        if (logoutContent) logoutContent.style.display = 'none';
+        if (modalTitle) modalTitle.textContent = 'Admin Login';
+    }
+    
+    modal.style.display = 'block';
 }
 
 function closeAdminModal() {
-    document.getElementById('admin-modal').style.display = 'none';
+    const modal = document.getElementById('admin-modal');
+    const messageContainer = document.getElementById('admin-message-container');
+    const logoutMessageContainer = document.getElementById('admin-logout-message-container');
+    
+    // Clear messages when closing
+    if (messageContainer) messageContainer.innerHTML = '';
+    if (logoutMessageContainer) logoutMessageContainer.innerHTML = '';
+    
+    modal.style.display = 'none';
 }
 
 // Close modal on outside click
@@ -114,6 +151,247 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (adminModalClose) {
         adminModalClose.addEventListener('click', closeAdminModal);
+    }
+    
+    // Handle admin icon click (for logout when already admin)
+    const adminLogoutIcon = document.getElementById('admin-logout-icon');
+    if (adminLogoutIcon) {
+        adminLogoutIcon.addEventListener('click', function(e) {
+            e.preventDefault();
+            openAdminModal(true);
+        });
+    }
+    
+    // Handle admin logout form submission via AJAX
+    const adminLogoutConfirm = document.getElementById('admin-logout-confirm');
+    if (adminLogoutConfirm) {
+        adminLogoutConfirm.addEventListener('click', async function(e) {
+            e.preventDefault();
+            
+            const logoutMessageContainer = document.getElementById('admin-logout-message-container');
+            const logoutButton = adminLogoutConfirm;
+            
+            // Clear previous messages
+            if (logoutMessageContainer) {
+                logoutMessageContainer.innerHTML = '';
+            }
+            
+            // Disable button during request
+            if (logoutButton) {
+                logoutButton.disabled = true;
+                logoutButton.textContent = 'Wird verarbeitet...';
+            }
+            
+            try {
+                const formData = new FormData();
+                formData.append('admin_logout', '1');
+                
+                // Get CSRF token from the form (it should be in the admin-login-form)
+                const csrfInput = document.querySelector('#admin-login-form input[name="csrf_token"]');
+                if (!csrfInput) {
+                    throw new Error('CSRF-Token nicht gefunden. Bitte Seite neu laden.');
+                }
+                formData.append('csrf_token', csrfInput.value);
+                
+                const response = await fetch('admin_api.php', {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: formData
+                });
+                
+                // Get response text first (can only read once)
+                const responseText = await response.text();
+                
+                // Check if response is OK
+                if (!response.ok) {
+                    throw new Error(responseText || `HTTP Fehler: ${response.status}`);
+                }
+                
+                // Check content type before parsing JSON
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    // If we got HTML, it means the page output HTML before processing the request
+                    throw new Error('Server hat HTML statt JSON zurückgegeben. Möglicherweise wurde die Seite vor der Verarbeitung der Anfrage ausgegeben.');
+                }
+                
+                // Parse JSON
+                let data;
+                try {
+                    data = JSON.parse(responseText);
+                } catch (parseError) {
+                    throw new Error('Ungültige JSON-Antwort vom Server: ' + responseText.substring(0, 100));
+                }
+                
+                if (data.success) {
+                    // Show success message
+                    if (logoutMessageContainer) {
+                        logoutMessageContainer.innerHTML = '<p class="admin-success">' + 
+                            htmlEscape(data.message || 'Erfolgreich zu normalem Benutzer zurückgewechselt!') + 
+                            '</p>';
+                    }
+                    
+                    // Close modal after a short delay to show success message
+                    setTimeout(() => {
+                        closeAdminModal();
+                        // Reload page to update admin status
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    // Show error message
+                    if (logoutMessageContainer) {
+                        logoutMessageContainer.innerHTML = '<p class="admin-error">' + 
+                            (data.error || 'Ein Fehler ist aufgetreten.') + 
+                            '</p>';
+                    }
+                    
+                    // Re-enable button
+                    if (logoutButton) {
+                        logoutButton.disabled = false;
+                        logoutButton.textContent = 'Zu normalem Benutzer wechseln';
+                    }
+                }
+            } catch (error) {
+                // Show error message with actual error details
+                let errorMessage = 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.';
+                if (error.message) {
+                    errorMessage = error.message;
+                }
+                
+                if (logoutMessageContainer) {
+                    logoutMessageContainer.innerHTML = '<p class="admin-error">' + 
+                        htmlEscape(errorMessage) + 
+                        '</p>';
+                }
+                
+                // Re-enable button
+                if (logoutButton) {
+                    logoutButton.disabled = false;
+                    logoutButton.textContent = 'Zu normalem Benutzer wechseln';
+                }
+                
+                console.error('Admin logout error:', error);
+            }
+        });
+    }
+    
+    // Handle admin login form submission via AJAX
+    const adminLoginForm = document.getElementById('admin-login-form');
+    if (adminLoginForm) {
+        adminLoginForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Only process if login content is visible (not logout)
+            const loginContent = document.getElementById('admin-login-content');
+            if (loginContent && loginContent.style.display === 'none') {
+                return;
+            }
+            
+            const formData = new FormData(adminLoginForm);
+            const messageContainer = document.getElementById('admin-message-container');
+            const submitButton = adminLoginForm.querySelector('button[type="submit"]');
+            const passwordInput = document.getElementById('admin_password');
+            
+            // Clear previous messages
+            if (messageContainer) {
+                messageContainer.innerHTML = '';
+            }
+            
+            // Disable submit button during request
+            if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.textContent = 'Wird verarbeitet...';
+            }
+            
+            try {
+                const response = await fetch('admin_api.php', {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: formData
+                });
+                
+                // Get response text first (can only read once)
+                const responseText = await response.text();
+                
+                // Check if response is OK
+                if (!response.ok) {
+                    // Try to parse as JSON for error message
+                    try {
+                        const errorData = JSON.parse(responseText);
+                        throw new Error(errorData.error || `HTTP Fehler: ${response.status}`);
+                    } catch (parseError) {
+                        throw new Error(responseText || `HTTP Fehler: ${response.status}`);
+                    }
+                }
+                
+                // Parse JSON
+                let data;
+                try {
+                    data = JSON.parse(responseText);
+                } catch (parseError) {
+                    throw new Error('Ungültige JSON-Antwort vom Server: ' + responseText.substring(0, 100));
+                }
+                
+                if (data.success) {
+                    // Show success message
+                    if (messageContainer) {
+                        messageContainer.innerHTML = '<p class="admin-success">' + 
+                            htmlEscape(data.message || 'Erfolgreich als Admin angemeldet!') + 
+                            '</p>';
+                    }
+                    
+                    // Clear password field
+                    if (passwordInput) {
+                        passwordInput.value = '';
+                    }
+                    
+                    // Close modal after a short delay to show success message
+                    setTimeout(() => {
+                        closeAdminModal();
+                        // Reload page to update admin status
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    // Show error message
+                    if (messageContainer) {
+                        messageContainer.innerHTML = '<p class="admin-error">' + 
+                            htmlEscape(data.error || 'Ein Fehler ist aufgetreten.') + 
+                            '</p>';
+                    }
+                    
+                    // Re-enable submit button
+                    if (submitButton) {
+                        submitButton.disabled = false;
+                        submitButton.textContent = 'Als Admin anmelden';
+                    }
+                    
+                    // Keep modal open - don't close it
+                }
+            } catch (error) {
+                // Show error message with actual error details
+                let errorMessage = 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.';
+                if (error.message) {
+                    errorMessage = error.message;
+                }
+                
+                if (messageContainer) {
+                    messageContainer.innerHTML = '<p class="admin-error">' + 
+                        htmlEscape(errorMessage) + 
+                        '</p>';
+                }
+                
+                // Re-enable submit button
+                if (submitButton) {
+                    submitButton.disabled = false;
+                    submitButton.textContent = 'Als Admin anmelden';
+                }
+                
+                console.error('Admin login error:', error);
+            }
+        });
     }
     
     // Set active menu item

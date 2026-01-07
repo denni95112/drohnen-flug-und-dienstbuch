@@ -456,6 +456,27 @@ th {
     box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
 }
 
+.modal-content button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.modal-content button.modal-button {
+    width: 100%;
+    padding: 0.875rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    margin-top: 1rem;
+}
+
 .admin-error {
     color: #dc2626;
     font-size: 0.9rem;
@@ -464,6 +485,16 @@ th {
     background: #fef2f2;
     border-radius: 8px;
     border-left: 4px solid #dc2626;
+}
+
+.admin-success {
+    color: #059669;
+    font-size: 0.9rem;
+    margin-top: 1rem;
+    padding: 0.75rem;
+    background: #ecfdf5;
+    border-radius: 8px;
+    border-left: 4px solid #059669;
 }
 
 /* ===== Links ===== */

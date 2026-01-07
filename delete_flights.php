@@ -30,8 +30,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['flight_id'])) {
     exit();
 }
 
-// Alle Flüge der letzten drei Monate abrufen
-$stmt = $db->prepare("SELECT flights.id as flight_id, pilots.name as pilot_name, flights.flight_date FROM flights JOIN pilots ON flights.pilot_id = pilots.id WHERE flights.flight_date >= DATE('now', '-3 months') ORDER BY flights.flight_date DESC");
+// Alle Flüge der letzten drei Monate abrufen (using UTC)
+$cutoffDate = new DateTime('now', new DateTimeZone('UTC'));
+$cutoffDate->modify('-3 months');
+$cutoffDateUTC = $cutoffDate->format('Y-m-d H:i:s');
+
+$stmt = $db->prepare("SELECT flights.id as flight_id, pilots.name as pilot_name, flights.flight_date FROM flights JOIN pilots ON flights.pilot_id = pilots.id WHERE flights.flight_date >= :cutoff_date ORDER BY flights.flight_date DESC");
+$stmt->bindValue(':cutoff_date', $cutoffDateUTC, SQLITE3_TEXT);
 $flights = $stmt->execute();
 ?>
 
@@ -59,7 +64,7 @@ $flights = $stmt->execute();
                 <?php while ($row = $flights->fetchArray(SQLITE3_ASSOC)): ?>
                     <tr>
                         <td><?= htmlspecialchars($row['pilot_name']); ?></td>
-                        <td><?= htmlspecialchars($row['flight_date']); ?></td>
+                        <td><?= htmlspecialchars(toLocalTime($row['flight_date'])); ?></td>
                         <td>
                             <form method="post" action="delete_flights.php">
                                 <?php require_once __DIR__ . '/includes/csrf.php'; csrf_field(); ?>

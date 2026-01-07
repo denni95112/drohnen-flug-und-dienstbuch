@@ -14,31 +14,7 @@ require_once __DIR__ . '/version.php';
 $dbPath = getDatabasePath();
 $db = new SQLite3($dbPath);
 
-/**
- * Convert datetime to UTC for storage
- * @param string $datetime Local datetime string
- * @return string UTC datetime string
- */
-function toUTC($datetime) {
-    global $config;
-    $timezone = $config['timezone'] ?? 'Europe/Berlin';
-    $date = new DateTime($datetime, new DateTimeZone($timezone));
-    $date->setTimezone(new DateTimeZone('UTC'));
-    return $date->format('Y-m-d H:i:s');
-}
-
-/**
- * Convert datetime from UTC to local for display
- * @param string $datetime UTC datetime string
- * @return string Local datetime string
- */
-function toLocalTime($datetime) {
-    global $config;
-    $timezone = $config['timezone'] ?? 'Europe/Berlin';
-    $date = new DateTime($datetime, new DateTimeZone('UTC'));
-    $date->setTimezone(new DateTimeZone($timezone));
-    return $date->format('Y-m-d\TH:i');
-}
+// Use centralized UTC conversion functions from utils.php
 
 $error_message = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
