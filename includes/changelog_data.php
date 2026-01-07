@@ -6,6 +6,19 @@
 
 $changelog = [
     [
+        'version' => '1.0.2',
+        'date' => '2026-01-07',
+        'changes' => [
+
+        ],
+        'bugfixes' => [
+            'Benachrichtigung für neue Version',
+        ],
+        'new_features' => [
+
+        ]
+    ],
+    [
         'version' => '1.0.1',
         'date' => '2026-01-07',
         'changes' => [
