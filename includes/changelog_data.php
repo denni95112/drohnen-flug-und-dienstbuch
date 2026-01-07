@@ -6,6 +6,41 @@
 
 $changelog = [
     [
+        'version' => '1.1.0',
+        'date' => '2026-01-07',
+        'changes' => [
+            'Major Refactor: API-basierte Architektur implementiert',
+            'Alle Seiten verwenden jetzt RESTful API-Endpunkte',
+            'Dashboard mit Auto-Refresh (30 Sekunden)',
+            'Multi-User-Support mit Concurrency Control',
+            'Request-Deduplizierung verhindert doppelte Operationen',
+            'Datenbank-Migrationssystem hinzugefügt',
+            'Migration-Benachrichtigung in Header',
+            'Verbesserte Fehlerbehandlung und Benutzer-Feedback',
+            'Separation of Concerns: API und UI getrennt'
+        ],
+        'bugfixes' => [
+            'Multi-User-Konflikte beim Starten/Beenden von Flügen behoben',
+            'Race Conditions bei gleichzeitigen Operationen behoben',
+            'Doppelte Requests werden jetzt verhindert'
+        ],
+        'new_features' => [
+            'API-Endpunkte für alle Datenoperationen',
+            'Auto-Refresh im Dashboard',
+            'Datenbank-Migrationssystem',
+            'Migration-Verwaltungsseite (migrations.php)',
+            'Request-Deduplizierung',
+            'Optimistic Locking für Concurrency Control',
+            'Verbesserte JavaScript-Integration für alle Seiten',
+            'API-Dokumentation im README'
+        ],
+        'migration_notes' => [
+            'Führen Sie die Migrationen aus migrations.php aus',
+            'Migration 001 erstellt schema_migrations Tabelle',
+            'Migration 002 erstellt request_log Tabelle für Request-Deduplizierung'
+        ]
+    ],
+    [
         'version' => '1.0.2',
         'date' => '2026-01-07',
         'changes' => [

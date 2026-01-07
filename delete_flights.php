@@ -12,32 +12,9 @@ if (isset($config['timezone'])) {
 
 require_once __DIR__ . '/includes/utils.php';
 require_once __DIR__ . '/version.php';
-$dbPath = getDatabasePath();
-$db = new SQLite3($dbPath);
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['flight_id'])) {
-    require_once __DIR__ . '/includes/csrf.php';
-    verify_csrf();
-    
-    $flight_id = intval($_POST['flight_id']);
-    // Flug löschen using prepared statement
-    $stmt = $db->prepare("DELETE FROM flights WHERE id = :flight_id");
-    $stmt->bindValue(':flight_id', $flight_id, SQLITE3_INTEGER);
-    $stmt->execute();
-
-    // Weiterleitung zur Seite, um die Tabelle zu aktualisieren
-    header('Location: delete_flights.php');
-    exit();
-}
-
-// Alle Flüge der letzten drei Monate abrufen (using UTC)
-$cutoffDate = new DateTime('now', new DateTimeZone('UTC'));
-$cutoffDate->modify('-3 months');
-$cutoffDateUTC = $cutoffDate->format('Y-m-d H:i:s');
-
-$stmt = $db->prepare("SELECT flights.id as flight_id, pilots.name as pilot_name, flights.flight_date FROM flights JOIN pilots ON flights.pilot_id = pilots.id WHERE flights.flight_date >= :cutoff_date ORDER BY flights.flight_date DESC");
-$stmt->bindValue(':cutoff_date', $cutoffDateUTC, SQLITE3_TEXT);
-$flights = $stmt->execute();
+// Note: POST handling has been moved to api/flights.php
+// This page now only renders HTML. Data is fetched via API in delete_flights.js
 ?>
 
 <!DOCTYPE html>
@@ -47,12 +24,20 @@ $flights = $stmt->execute();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>M30T Flüge löschen - Drohnenpiloten</title>
     <link rel="stylesheet" href="css/styles.css?v=<?php echo APP_VERSION; ?>">
+    <script src="js/delete_flights.js"></script>
 </head>
 <body>
     <?php include 'includes/header.php'; ?>
     <main>
         <h1>Flüge löschen</h1>
-        <table>
+        
+        <!-- Message containers -->
+        <div id="message-container"></div>
+        <div id="error-container"></div>
+        
+        <div id="loading-indicator" style="display: none;">Lade Daten...</div>
+        
+        <table id="flights-table">
             <thead>
                 <tr>
                     <th>Pilot</th>
@@ -60,20 +45,8 @@ $flights = $stmt->execute();
                     <th>Aktion</th>
                 </tr>
             </thead>
-            <tbody>
-                <?php while ($row = $flights->fetchArray(SQLITE3_ASSOC)): ?>
-                    <tr>
-                        <td><?= htmlspecialchars($row['pilot_name']); ?></td>
-                        <td><?= htmlspecialchars(toLocalTime($row['flight_date'])); ?></td>
-                        <td>
-                            <form method="post" action="delete_flights.php">
-                                <?php require_once __DIR__ . '/includes/csrf.php'; csrf_field(); ?>
-                                <input type="hidden" name="flight_id" value="<?= $row['flight_id']; ?>">
-                                <button type="submit" class="button-full">Löschen</button>
-                            </form>
-                        </td>
-                    </tr>
-                <?php endwhile; ?>
+            <tbody id="flights-tbody">
+                <!-- Will be populated by JavaScript -->
             </tbody>
         </table>
     </main>

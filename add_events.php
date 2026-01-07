@@ -11,54 +11,9 @@ if (isset($config['timezone'])) {
 
 require_once __DIR__ . '/includes/utils.php';
 require_once __DIR__ . '/version.php';
-$dbPath = getDatabasePath();
-$db = new SQLite3($dbPath);
 
-// Use centralized UTC conversion functions from utils.php
-
-$error_message = '';
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    require_once __DIR__ . '/includes/csrf.php';
-    verify_csrf();
-    $event_start_date = $_POST['event_start_date'];
-    $event_end_date = $_POST['event_end_date'];
-    $type_id = intval($_POST['type_id']);
-    $notes = trim($_POST['notes']);
-    $pilot_ids = isset($_POST['pilot_ids']) ? $_POST['pilot_ids'] : [];
-
-    if (empty($event_start_date) || empty($event_end_date) || empty($type_id) || empty($notes)) {
-        $error_message = 'Bitte füllen Sie alle erforderlichen Felder aus.';
-    } elseif (!in_array($type_id, [1, 2, 3])) {
-        $error_message = 'Ungültiger Ereignistyp.';
-    } elseif (strtotime($event_end_date) <= strtotime($event_start_date)) {
-        $error_message = 'Das Enddatum muss nach dem Startdatum liegen.';
-    } elseif (empty($pilot_ids)) {
-        $error_message = 'Bitte mindestens einen Piloten auswählen.';
-    } else {
-        $event_start_date_utc = toUTC($event_start_date);
-        $event_end_date_utc = toUTC($event_end_date);
-
-        $stmt = $db->prepare('INSERT INTO events (event_start_date, event_end_date, type_id, notes) VALUES (:event_start_date, :event_end_date, :type_id, :notes)');
-        $stmt->bindValue(':event_start_date', $event_start_date_utc, SQLITE3_TEXT);
-        $stmt->bindValue(':event_end_date', $event_end_date_utc, SQLITE3_TEXT);
-        $stmt->bindValue(':type_id', $type_id, SQLITE3_INTEGER);
-        $stmt->bindValue(':notes', $notes, SQLITE3_TEXT);
-        $stmt->execute();
-        $event_id = $db->lastInsertRowID();
-
-        foreach ($pilot_ids as $pilot_id) {
-            $stmt = $db->prepare('INSERT INTO pilot_events (event_id, pilot_id) VALUES (:event_id, :pilot_id)');
-            $stmt->bindValue(':event_id', $event_id, SQLITE3_INTEGER);
-            $stmt->bindValue(':pilot_id', intval($pilot_id), SQLITE3_INTEGER);
-            $stmt->execute();
-        }
-
-        $success_message = 'Das Ereignis wurde erfolgreich hinzugefügt.';
-    }
-}
-
-$stmt = $db->prepare('SELECT * FROM pilots ORDER BY name');
-$pilots = $stmt->execute();
+// Note: POST handling has been moved to api/events.php
+// This page now only renders HTML. Data is fetched via API in add_events.js
 ?>
 
 <!DOCTYPE html>
@@ -75,13 +30,11 @@ $pilots = $stmt->execute();
     <?php include 'includes/header.php'; ?>
     <main>
         <h1>Dienst hinzufügen</h1>
-        <?php if (!empty($error_message)): ?>
-            <div class="error-message"><?= htmlspecialchars($error_message); ?></div>
-        <?php elseif (!empty($success_message)): ?>
-            <div class="success-message"><?= htmlspecialchars($success_message); ?></div>
-        <?php endif; ?>
+        <!-- Message containers -->
+        <div id="error-container" class="error-message" style="display: none;"></div>
+        <div id="success-container" class="success-message" style="display: none;"></div>
 
-        <form method="post" action="add_events.php">
+        <form id="add-event-form">
             <?php require_once __DIR__ . '/includes/csrf.php'; csrf_field(); ?>
             <div class="form-group">
                 <label for="event_start_date">Startdatum und -zeit</label>
@@ -106,13 +59,9 @@ $pilots = $stmt->execute();
             </div>
             <div class="form-group">
                 <label class="section-label">Anwesenheitsliste</label>
-                <div class="checkbox-container">
-                    <?php while ($pilot = $pilots->fetchArray(SQLITE3_ASSOC)): ?>
-                        <div class="checkbox-group">
-                            <label for="pilot_<?= $pilot['id']; ?>"><?= htmlspecialchars($pilot['name']); ?></label>
-                            <input type="checkbox" id="pilot_<?= $pilot['id']; ?>" name="pilot_ids[]" value="<?= $pilot['id']; ?>">
-                        </div>
-                    <?php endwhile; ?>
+                <div id="loading-pilots" style="display: none;">Lade Piloten...</div>
+                <div class="checkbox-container" id="pilots-checkbox-container">
+                    <!-- Will be populated by JavaScript -->
                 </div>
             </div>
             <button type="submit" class="btn-submit">Dienst hinzufügen</button>

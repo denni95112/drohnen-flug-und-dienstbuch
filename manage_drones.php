@@ -12,37 +12,9 @@ if (isset($config['timezone'])) {
 
 require_once __DIR__ . '/includes/utils.php';
 require_once __DIR__ . '/version.php';
-$dbPath = getDatabasePath();
-$db = new SQLite3($dbPath);
 
-// Handle adding a drone
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['drone_name'])) {
-    require_once __DIR__ . '/includes/csrf.php';
-    verify_csrf();
-    $drone_name = trim($_POST['drone_name']);
-    
-    if (!empty($drone_name)) {
-        $stmt = $db->prepare('INSERT INTO drones (drone_name) VALUES (:drone_name)');
-        $stmt->bindValue(':drone_name', $drone_name, SQLITE3_TEXT);
-        $stmt->execute();
-        $message = "Drohne erfolgreich hinzugefügt.";
-    } else {
-        $error = "Bitte geben Sie einen Namen für die Drohne ein.";
-    }
-}
-
-// Handle deleting a drone
-if (isset($_GET['delete_id'])) {
-    $delete_id = intval($_GET['delete_id']);
-    $stmt = $db->prepare('DELETE FROM drones WHERE id = :id');
-    $stmt->bindValue(':id', $delete_id, SQLITE3_INTEGER);
-    $stmt->execute();
-    $message = "Drohne erfolgreich gelöscht.";
-}
-
-// Fetch all drones
-$stmt = $db->prepare('SELECT * FROM drones ORDER BY drone_name ASC');
-$drones = $stmt->execute();
+// Note: POST/GET handling has been moved to api/drones.php
+// This page now only renders HTML. Data is fetched via API in manage_drones.js
 ?>
 
 <!DOCTYPE html>
@@ -59,15 +31,12 @@ $drones = $stmt->execute();
     <main>
         <h1>Drohnen verwalten</h1>
 
-        <?php if (isset($message)): ?>
-            <p class="message"><?= htmlspecialchars($message); ?></p>
-        <?php endif; ?>
-        <?php if (isset($error)): ?>
-            <p class="error"><?= htmlspecialchars($error); ?></p>
-        <?php endif; ?>
+        <!-- Message containers -->
+        <div id="message-container"></div>
+        <div id="error-container"></div>
 
         <!-- Add Drone Form -->
-        <form method="post" action="manage_drones.php">
+        <form id="add-drone-form">
             <?php require_once __DIR__ . '/includes/csrf.php'; csrf_field(); ?>
             <div>
                 <label for="drone_name">Drohnenname</label>
@@ -79,7 +48,8 @@ $drones = $stmt->execute();
 
         <!-- Drones Table -->
         <h2>Vorhandene Drohnen</h2>
-        <table>
+        <div id="loading-indicator" style="display: none;">Lade Daten...</div>
+        <table id="drones-table">
             <thead>
                 <tr>
                     <th>ID</th>
@@ -87,18 +57,8 @@ $drones = $stmt->execute();
                     <th>Aktionen</th>
                 </tr>
             </thead>
-            <tbody>
-                <?php while ($drone = $drones->fetchArray(SQLITE3_ASSOC)): ?>
-                    <tr>
-                        <td><?= htmlspecialchars($drone['id']); ?></td>
-                        <td><?= htmlspecialchars($drone['drone_name']); ?></td>
-                        <td>
-                            <a href="manage_drones.php?delete_id=<?= $drone['id']; ?>" class="delete-drone-link" data-drone-id="<?= $drone['id']; ?>">
-                                <button type="button">Löschen</button>
-                            </a>
-                        </td>
-                    </tr>
-                <?php endwhile; ?>
+            <tbody id="drones-tbody">
+                <!-- Will be populated by JavaScript -->
             </tbody>
         </table>
     </main>

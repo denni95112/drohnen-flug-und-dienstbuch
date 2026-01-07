@@ -26,6 +26,16 @@ if (isset($config['timezone'])) {
 require_once __DIR__ . '/../auth.php';
 $is_admin = isAdmin();
 
+// Check for pending migrations
+$hasPendingMigrations = false;
+try {
+    require_once __DIR__ . '/migration_runner.php';
+    $hasPendingMigrations = hasPendingMigrations();
+} catch (Exception $e) {
+    // Silently fail if database doesn't exist yet
+    $hasPendingMigrations = false;
+}
+
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -137,6 +147,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['admin_password'])) {
                         </svg>
                     </span>
                 <?php endif; ?>
+                <?php if ($hasPendingMigrations): ?>
+                    <a href="migrations.php" 
+                       class="migration-notification" 
+                       title="Datenbank-Update verfügbar. Klicken Sie, um zur Update-Seite zu gehen.">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                        </svg>
+                        <span class="migration-badge"></span>
+                    </a>
+                <?php endif; ?>
                 <?php if ($hasUpdate): ?>
                     <a href="<?php echo htmlspecialchars($versionCheck['url'], ENT_QUOTES, 'UTF-8'); ?>" 
                        target="_blank" 
@@ -173,6 +194,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['admin_password'])) {
                     <li><a href="manage_drones.php">Drohnen verwalten</a></li>
                     <li><a href="add_events.php">Dienst anlegen</a></li>
                     <li><a href="view_events.php">Dienste ansehen</a></li>
+                    <li><a href="migrations.php">Datenbank Update</a></li>
                     <?php if (!$is_admin): ?>
                         <li><a href="#" id="admin-modal-link">Admin</a></li>
                     <?php endif; ?>

@@ -16,126 +16,8 @@ require_once __DIR__ . '/version.php';
 $dbPath = getDatabasePath();
 $db = new SQLite3($dbPath);
 
-// Handle adding a location
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['location_name'])) {
-    require_once __DIR__ . '/includes/csrf.php';
-    verify_csrf();
-    require_once __DIR__ . '/includes/utils.php';
-    
-    $location_name = trim($_POST['location_name']);
-    $latitude = isset($_POST['latitude']) ? validateLatitude($_POST['latitude']) : false;
-    $longitude = isset($_POST['longitude']) ? validateLongitude($_POST['longitude']) : false;
-    $description = isset($_POST['description']) ? trim($_POST['description']) : null;
-    $training = isset($_POST['training']) ? 1 : 0;
-    // Store in UTC
-    $created_at = getCurrentUTC();
-
-    if (!empty($location_name) && $latitude !== false && $longitude !== false) {
-        $stmt = $db->prepare('INSERT INTO flight_locations (location_name, latitude, longitude, description, training, created_at) VALUES (:location_name, :latitude, :longitude, :description, :training, :created_at)');
-        $stmt->bindValue(':location_name', $location_name, SQLITE3_TEXT);
-        $stmt->bindValue(':latitude', $latitude, SQLITE3_FLOAT);
-        $stmt->bindValue(':longitude', $longitude, SQLITE3_FLOAT);
-        $stmt->bindValue(':description', $description, SQLITE3_TEXT);
-        $stmt->bindValue(':training', $training, SQLITE3_INTEGER);
-        $stmt->bindValue(':created_at', $created_at, SQLITE3_TEXT);
-        $stmt->execute();
-        $message = "Standort erfolgreich hinzugefügt.";
-    } else {
-        $error = "Bitte füllen Sie alle erforderlichen Felder aus.";
-    }
-}
-
-// Handle file upload for existing locations
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['location_id']) && isset($_FILES['location_file'])) {
-    require_once __DIR__ . '/includes/csrf.php';
-    verify_csrf();
-    
-    $location_id = intval($_POST['location_id']);
-    $file = $_FILES['location_file'];
-    
-    // Validate file upload
-    if ($file['error'] !== UPLOAD_ERR_OK) {
-        $error = "Fehler beim Hochladen der Datei (Error Code: " . $file['error'] . ").";
-    } else {
-        // File size limit: 10MB
-        $maxSize = 10 * 1024 * 1024; // 10MB
-        if ($file['size'] > $maxSize) {
-            $error = "Die Datei ist zu groß. Maximale Größe: 10MB.";
-        } else {
-            // Validate file type (whitelist)
-            $allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/gif', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-            
-            // Try to get MIME type using fileinfo extension if available
-            $mimeType = null;
-            if (extension_loaded('fileinfo')) {
-                $finfo = finfo_open(FILEINFO_MIME_TYPE);
-                $mimeType = finfo_file($finfo, $file['tmp_name']);
-                finfo_close($finfo);
-            } else {
-                // Fallback: use file extension if fileinfo is not available
-                $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-                $extensionMap = [
-                    'pdf' => 'application/pdf',
-                    'jpg' => 'image/jpeg',
-                    'jpeg' => 'image/jpeg',
-                    'png' => 'image/png',
-                    'gif' => 'image/gif',
-                    'doc' => 'application/msword',
-                    'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-                ];
-                $mimeType = $extensionMap[$extension] ?? null;
-            }
-            
-            if (!$mimeType || !in_array($mimeType, $allowedTypes)) {
-                $error = "Dateityp nicht erlaubt. Erlaubte Typen: PDF, Bilder (JPEG, PNG, GIF), Word-Dokumente.";
-            } else {
-                // Sanitize filename
-                $originalName = basename($file['name']);
-                $safeName = preg_replace('/[^a-zA-Z0-9._-]/', '_', $originalName);
-                $safeName = substr($safeName, 0, 255); // Limit length
-                
-                // Read the file content
-                $fileContent = file_get_contents($file['tmp_name']);
-                
-                // Get encryption key from session (not cookie)
-                $encryptionKey = getEncryptionKey();
-                $encryptionMethod = $config['encryption']['method'];
-                
-                // Generate unique IV for each file
-                $iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length($encryptionMethod));
-                $ivHex = bin2hex($iv);
-                
-                // Encrypt the file content
-                $encryptedContent = openssl_encrypt($fileContent, $encryptionMethod, $encryptionKey, 0, $iv);
-                
-                if ($encryptedContent === false) {
-                    $error = "Fehler beim Verschlüsseln der Datei.";
-                } else {
-                    // Ensure uploads directory exists
-                    $uploadDir = __DIR__ . '/uploads/';
-                    if (!is_dir($uploadDir)) {
-                        mkdir($uploadDir, 0755, true);
-                    }
-                    
-                    // Save encrypted content with unique filename
-                    $uniqueId = bin2hex(random_bytes(8));
-                    $encryptedFilePath = 'uploads/' . $uniqueId . '_' . $safeName . '.enc';
-                    $fullPath = __DIR__ . '/' . $encryptedFilePath;
-                    
-                    // Store IV with encrypted file (prepend to file)
-                    file_put_contents($fullPath, $ivHex . ':' . $encryptedContent);
-                    
-                    // Update database with file path and IV
-                    $stmt = $db->prepare('UPDATE flight_locations SET file_path = :file_path WHERE id = :id');
-                    $stmt->bindValue(':file_path', $encryptedFilePath, SQLITE3_TEXT);
-                    $stmt->bindValue(':id', $location_id, SQLITE3_INTEGER);
-                    $stmt->execute();
-                    $message = "Datei erfolgreich hochgeladen und verschlüsselt.";
-                }
-            }
-        }
-    }
-}
+// Note: POST handling for location creation and file upload has been moved to api/locations.php
+// File downloads still handled here (decryption requires session key)
 
 // Handle download request
 if (isset($_GET['download_file']) && isset($_GET['location_id'])) {
@@ -197,15 +79,7 @@ if (isset($_GET['download_file']) && isset($_GET['location_id'])) {
     exit; // Stop further execution
 }
 
-// Fetch all locations
-$filter_training = isset($_GET['filter_training']) && $_GET['filter_training'] === 'false';
-if ($filter_training) {
-    $stmt = $db->prepare('SELECT * FROM flight_locations WHERE training = 0 ORDER BY created_at DESC');
-} else {
-    $stmt = $db->prepare('SELECT * FROM flight_locations ORDER BY created_at DESC');
-}
-$locations = $stmt->execute();
-
+// Note: Location listing is now handled via API in manage_locations.js
 // Use centralized toLocalTime function from utils.php
 
 ?>
@@ -225,15 +99,12 @@ $locations = $stmt->execute();
     <main>
         <h1>Flugstandorte verwalten</h1>
 
-        <?php if (isset($message)): ?>
-            <p class="message"><?= htmlspecialchars($message); ?></p>
-        <?php endif; ?>
-        <?php if (isset($error)): ?>
-            <p class="error"><?= htmlspecialchars($error); ?></p>
-        <?php endif; ?>
+        <!-- Message containers -->
+        <div id="message-container"></div>
+        <div id="error-container"></div>
 
         <!-- Add Location Form -->
-        <form method="post" action="manage_locations.php">
+        <form id="add-location-form">
             <?php require_once __DIR__ . '/includes/csrf.php'; csrf_field(); ?>
             <div>
                 <label for="location_name">Standortname</label>
@@ -271,16 +142,18 @@ $locations = $stmt->execute();
         <h2>Vorhandene Standorte</h2>
 
         <div class="filter-container">
-            <form method="get" action="manage_locations.php" class="filter-form">
+            <div class="filter-form">
                 <div class="filter-checkbox-group">
-                    <input type="checkbox" id="filter_training" name="filter_training" value="false" <?= $filter_training ? 'checked' : ''; ?>>
+                    <input type="checkbox" id="filter_training" name="filter_training">
                     <label for="filter_training">Nur Einsätze anzeigen</label>
                 </div>
-                <button class="button-full" type="submit">Filter anwenden</button>
-            </form>
+                <button class="button-full" type="button" id="apply-filter-btn">Filter anwenden</button>
+            </div>
         </div>
 
-        <table>
+        <div id="loading-indicator" style="display: none;">Lade Daten...</div>
+
+        <table id="locations-table">
             <thead>
                 <tr>
                     <th>ID</th>
@@ -292,46 +165,11 @@ $locations = $stmt->execute();
                     <th>Einsatz</th>
                     <th>Datei hochladen</th>
                     <th>Datei herunterladen</th>
+                    <th>Aktionen</th>
                 </tr>
             </thead>
-            <tbody>
-                <?php while ($location = $locations->fetchArray(SQLITE3_ASSOC)): ?>
-                    <tr class="<?= !$location['training'] ? 'training-false' : ''; ?>">
-                        <td data-label="ID"><?= htmlspecialchars($location['id']); ?></td>
-                        <td data-label="Standortname"><?= htmlspecialchars($location['location_name']); ?></td>
-                        <td data-label="Breitengrad"><?= htmlspecialchars($location['latitude']); ?></td>
-                        <td data-label="Längengrad"><?= htmlspecialchars($location['longitude']); ?></td>
-                        <td data-label="Beschreibung"><?= htmlspecialchars($location['description']); ?></td>
-                        <td data-label="Erstellt am"><?= htmlspecialchars(toLocalTime($location['created_at'])); ?></td>
-                        <td data-label="Einsatz"><?= !$location['training'] ? 'Ja' : 'Nein'; ?></td>
-
-                        <!-- File upload and download -->
-                        <td data-label="Datei hochladen">
-                            <?php if (!$location['file_path']): ?>
-                                <form method="post" enctype="multipart/form-data">
-                                    <?php require_once __DIR__ . '/includes/csrf.php'; csrf_field(); ?>
-                                    <input type="hidden" name="location_id" value="<?= $location['id']; ?>">
-                                    <input type="file" name="location_file" accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx" required>
-                                    <br>
-                                    <br>
-                                    <button type="submit" class="button-full">Hochladen</button>
-                                </form>
-                            <?php else: ?>
-                                <p>Datei bereits hochgeladen</p>
-                            <?php endif; ?>
-                        </td>
-
-                        <td data-label="Datei herunterladen">
-                            <?php if ($location['file_path']): ?>
-                                <a href="manage_locations.php?download_file=true&location_id=<?= $location['id']; ?>">
-                                    <button type="button" class="button-full">Herunterladen</button>
-                                </a>
-                            <?php else: ?>
-                                <button type="button" disabled>Keine Datei</button>
-                            <?php endif; ?>
-                        </td>
-                    </tr>
-                <?php endwhile; ?>
+            <tbody id="locations-tbody">
+                <!-- Will be populated by JavaScript -->
             </tbody>
         </table>
     </main>

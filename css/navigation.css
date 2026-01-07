@@ -105,6 +105,43 @@ nav {
     white-space: nowrap;
 }
 
+.migration-notification {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    padding: 0.5rem;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    position: relative;
+    opacity: 0.9;
+}
+
+.migration-notification:hover {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(1.1);
+}
+
+.migration-notification svg {
+    flex-shrink: 0;
+    position: relative;
+}
+
+.migration-badge {
+    position: absolute;
+    top: 0.25rem;
+    right: 0.25rem;
+    width: 8px;
+    height: 8px;
+    background-color: #ff9800;
+    border-radius: 50%;
+    border: 2px solid #1e3c72;
+    display: block;
+    box-shadow: 0 0 0 2px rgba(255, 152, 0, 0.3);
+}
+
 @keyframes pulse {
     0%, 100% {
         opacity: 1;
