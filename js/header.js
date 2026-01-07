@@ -353,6 +353,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         closeAdminModal();
                         // Reload page to update admin status
                         window.location.reload();
+                        
+                        // Check if we should show install notification dialog after reload
+                        if (data.show_install_notification) {
+                            // The dialog will be shown automatically by install_notification.js after page reload
+                        }
                     }, 1500);
                 } else {
                     // Show error message

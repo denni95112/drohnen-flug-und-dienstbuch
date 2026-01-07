@@ -356,3 +356,66 @@ function getCurrentUTC() {
     return $date->format('Y-m-d H:i:s');
 }
 
+/**
+ * Update config.php with a new key-value pair
+ * @param string $key Config key to add/update
+ * @param mixed $value Config value
+ * @return bool True on success, false on failure
+ */
+function updateConfig($key, $value) {
+    $configFile = __DIR__ . '/../config/config.php';
+    if (!file_exists($configFile)) {
+        return false;
+    }
+    
+    // Read current config
+    $config = include $configFile;
+    if (!is_array($config)) {
+        return false;
+    }
+    
+    // Update the value
+    $config[$key] = $value;
+    
+    // Write back to file, preserving structure
+    $content = "<?php\nreturn [\n";
+    
+    foreach ($config as $k => $v) {
+        if (is_array($v)) {
+            $content .= "    '{$k}' => [\n";
+            foreach ($v as $subKey => $subValue) {
+                $subValueEscaped = addslashes($subValue);
+                $content .= "        '{$subKey}' => '{$subValueEscaped}',\n";
+            }
+            $content .= "    ],\n";
+        } elseif (is_bool($v)) {
+            $content .= "    '{$k}' => " . ($v ? 'true' : 'false') . ",\n";
+        } elseif (is_numeric($v) && !is_string($v)) {
+            $content .= "    '{$k}' => {$v},\n";
+        } else {
+            // Handle special cases for existing config keys
+            $vEscaped = addslashes($v);
+            $comment = '';
+            if ($k === 'password_hash') {
+                $comment = ' // password_hash (bcrypt/argon2)';
+            }
+            $content .= "    '{$k}' => '{$vEscaped}',{$comment}\n";
+        }
+    }
+    
+    $content .= "];\n";
+    
+    // Create backup before writing
+    $backupFile = $configFile . '.backup.' . time();
+    @copy($configFile, $backupFile);
+    
+    $result = file_put_contents($configFile, $content) !== false;
+    
+    // Remove backup if write was successful
+    if ($result && file_exists($backupFile)) {
+        @unlink($backupFile);
+    }
+    
+    return $result;
+}
+

@@ -477,6 +477,50 @@ th {
     margin-top: 1rem;
 }
 
+.modal-buttons {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.modal-buttons .modal-button {
+    flex: 1;
+    min-width: 100px;
+    margin-top: 0;
+}
+
+.modal-buttons .modal-button:first-child {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.modal-buttons .modal-button:first-child:hover {
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+}
+
+.modal-buttons .modal-button-no {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
+}
+
+.modal-buttons .modal-button-no:hover {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
+    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4) !important;
+}
+
+#install-notification-message-container .success {
+    color: #10b981;
+    font-weight: 500;
+    margin-top: 1rem;
+}
+
+#install-notification-message-container .error {
+    color: #ef4444;
+    font-weight: 500;
+    margin-top: 1rem;
+}
+
 .admin-error {
     color: #dc2626;
     font-size: 0.9rem;

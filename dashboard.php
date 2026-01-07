@@ -294,13 +294,26 @@ while ($row = $pilots->fetchArray(SQLITE3_ASSOC)) {
                                         // Convert local date to UTC for database comparison
                                         $currentDateUTCStart = toUTC($currentDateLocal . ' 00:00:00');
                                         $currentDateUTCEnd = toUTC($currentDateLocal . ' 23:59:59');
-                                        $stmt = $db->prepare("SELECT id, location_name FROM flight_locations WHERE created_at >= :start_date AND created_at <= :end_date");
-                                        $stmt->bindValue(':start_date', $currentDateUTCStart, SQLITE3_TEXT);
-                                        $stmt->bindValue(':end_date', $currentDateUTCEnd, SQLITE3_TEXT);
-                                        $locations = $stmt->execute();
-                                        while ($location = $locations->fetchArray(SQLITE3_ASSOC)): ?>
-                                            <option value="<?= $location['id']; ?>"><?= htmlspecialchars($location['location_name']); ?></option>
-                                        <?php endwhile; ?>
+                                        
+                                        // Check if table exists and prepare query
+                                        $tableExists = $db->querySingle("SELECT name FROM sqlite_master WHERE type='table' AND name='flight_locations'");
+                                        $locations = false;
+                                        if ($tableExists) {
+                                            $stmt = $db->prepare("SELECT id, location_name FROM flight_locations WHERE created_at >= :start_date AND created_at <= :end_date");
+                                            if ($stmt !== false) {
+                                                $stmt->bindValue(':start_date', $currentDateUTCStart, SQLITE3_TEXT);
+                                                $stmt->bindValue(':end_date', $currentDateUTCEnd, SQLITE3_TEXT);
+                                                $locations = $stmt->execute();
+                                            } else {
+                                                error_log("Failed to prepare location query: " . $db->lastErrorMsg());
+                                            }
+                                        }
+                                        
+                                        if ($locations !== false):
+                                            while ($location = $locations->fetchArray(SQLITE3_ASSOC)): ?>
+                                                <option value="<?= $location['id']; ?>"><?= htmlspecialchars($location['location_name']); ?></option>
+                                            <?php endwhile;
+                                        endif; ?>
                                     </select>
                                 </div>
                                 <div>
@@ -308,11 +321,23 @@ while ($row = $pilots->fetchArray(SQLITE3_ASSOC)) {
                                     <select name="drone_id" id="drone_id_<?= $pilot['id']; ?>" required>
                                         <option value="">Bitte wählen</option>
                                         <?php
-                                        $stmt = $db->prepare("SELECT id, drone_name FROM drones ORDER BY id");
-                                        $drones = $stmt->execute();
-                                        while ($drone = $drones->fetchArray(SQLITE3_ASSOC)): ?>
-                                            <option value="<?= $drone['id']; ?>"><?= htmlspecialchars($drone['drone_name']); ?></option>
-                                        <?php endwhile; ?>
+                                        // Check if table exists and prepare query
+                                        $dronesTableExists = $db->querySingle("SELECT name FROM sqlite_master WHERE type='table' AND name='drones'");
+                                        $drones = false;
+                                        if ($dronesTableExists) {
+                                            $stmt = $db->prepare("SELECT id, drone_name FROM drones ORDER BY id");
+                                            if ($stmt !== false) {
+                                                $drones = $stmt->execute();
+                                            } else {
+                                                error_log("Failed to prepare drones query: " . $db->lastErrorMsg());
+                                            }
+                                        }
+                                        
+                                        if ($drones !== false):
+                                            while ($drone = $drones->fetchArray(SQLITE3_ASSOC)): ?>
+                                                <option value="<?= $drone['id']; ?>"><?= htmlspecialchars($drone['drone_name']); ?></option>
+                                            <?php endwhile;
+                                        endif; ?>
                                     </select>
                                 </div>
                                 <div>

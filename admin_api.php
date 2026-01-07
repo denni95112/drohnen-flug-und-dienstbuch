@@ -34,9 +34,17 @@ if (session_status() === PHP_SESSION_NONE) {
 require_once __DIR__ . '/includes/csrf.php';
 require_once __DIR__ . '/includes/rate_limit.php';
 require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/includes/utils.php';
 require_once __DIR__ . '/config/config.php';
 
 $config = include $configFile;
+
+// For older installations: add ask_for_install_notification config option if it doesn't exist
+if (!isset($config['ask_for_install_notification'])) {
+    updateConfig('ask_for_install_notification', true);
+    // Reload config after update
+    $config = include $configFile;
+}
 
 if (isset($config['timezone'])) {
     date_default_timezone_set($config['timezone']);
@@ -89,7 +97,16 @@ if (isset($_POST['admin_password'])) {
         clearRateLimit('admin_login');
         session_regenerate_id(true);
         setAdminStatus(true);
-        echo json_encode(['success' => true, 'message' => 'Erfolgreich als Admin angemeldet!']);
+        
+        // Set session flag to show install notification dialog after admin login
+        if (isset($config['ask_for_install_notification']) && $config['ask_for_install_notification'] === true) {
+            $_SESSION['show_install_notification'] = true;
+        }
+        
+        echo json_encode([
+            'success' => true, 
+            'message' => 'Erfolgreich als Admin angemeldet!'
+        ]);
         exit();
     } else {
         recordFailedAttempt('admin_login');

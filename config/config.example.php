@@ -48,5 +48,8 @@ return [
     // These use password_hash() with PASSWORD_DEFAULT (bcrypt/argon2)
     'password_hash' => '', // Main application password
     'admin_hash' => '',    // Admin password
+    
+    // Ask for install notification - set to true to show dialog asking user if they want to notify developer about installation
+    'ask_for_install_notification' => true,
 ];
 

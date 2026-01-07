@@ -18,7 +18,8 @@ $changelog = [
         ],
         'new_features' => [
             'Buy Me a Coffee Button hinzugefügt',
-            'Dialog für Frage ob Entwickler über Installtion benachrichtigt werden darf'
+            'Dialog für Frage ob Entwickler über Installtion benachrichtigt werden darf',
+            'Neue Installtion Info-Dialog'
         ]
     ],
     [
