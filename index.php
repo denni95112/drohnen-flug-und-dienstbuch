@@ -56,22 +56,20 @@ if(isAuthenticated()){
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     require_once __DIR__ . '/includes/rate_limit.php';
+    require_once __DIR__ . '/includes/utils.php';
     
     if (checkRateLimit('login', 5, 900)) {
         $error = 'Zu viele fehlgeschlagene Anmeldeversuche. Bitte versuchen Sie es später erneut.';
     } else {
         $password = $_POST['password'] ?? '';
-
-        $passwordValid = false;
+        $verifyResult = verifyPassword($password, $config['password_hash']);
         
-        if (password_verify($password, $config['password_hash'])) {
-            $passwordValid = true;
-        } elseif (hash('sha256', $password) === $config['password_hash']) {
-            $passwordValid = true;
-            $newHash = password_hash($password, PASSWORD_DEFAULT);
-        }
-        
-        if ($passwordValid) {
+        if ($verifyResult['valid']) {
+            // Update hash if needed (legacy SHA256 -> bcrypt migration)
+            if ($verifyResult['needs_rehash'] && $verifyResult['new_hash']) {
+                updateConfig('password_hash', $verifyResult['new_hash']);
+            }
+            
             clearRateLimit('login');
             session_regenerate_id(true);
             $_SESSION['loggedin'] = true;

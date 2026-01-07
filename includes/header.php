@@ -81,16 +81,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['admin_password'])) {
         }
     } else {
         $admin_password = $_POST['admin_password'] ?? '';
+        $verifyResult = verifyPassword($admin_password, $config['admin_hash']);
         
-        $passwordValid = false;
-        
-        if (password_verify($admin_password, $config['admin_hash'])) {
-            $passwordValid = true;
-        } elseif (hash('sha256', $admin_password) === $config['admin_hash']) {
-            $passwordValid = true;
-        }
-        
-        if ($passwordValid) {
+        if ($verifyResult['valid']) {
+            // Update hash if needed (legacy SHA256 -> bcrypt migration)
+            if ($verifyResult['needs_rehash'] && $verifyResult['new_hash']) {
+                updateConfig('admin_hash', $verifyResult['new_hash']);
+            }
+            
             clearRateLimit('admin_login');
             session_regenerate_id(true);
             setAdminStatus(true);

@@ -11,6 +11,7 @@ initApiEndpoint(true, false);
 
 $dbPath = getDatabasePath();
 $db = new SQLite3($dbPath);
+$db->enableExceptions(true);
 $db->exec('PRAGMA foreign_keys = ON');
 
 // Get request method and action
@@ -103,7 +104,13 @@ function handleStartFlight($db) {
         
     } catch (Exception $e) {
         $db->exec('ROLLBACK');
-        error_log("Flight start error: " . $e->getMessage());
+        logError("Flight start error: " . $e->getMessage(), [
+            'pilot_id' => $data['pilot_id'] ?? null,
+            'drone_id' => $data['drone_id'] ?? null,
+            'location_id' => $data['location_id'] ?? null,
+            'file' => $e->getFile(),
+            'line' => $e->getLine()
+        ]);
         sendErrorResponse('Fehler beim Starten des Flugs.', 'DATABASE_ERROR', 500);
     }
 }
@@ -173,7 +180,11 @@ function handleEndFlight($db) {
         
     } catch (Exception $e) {
         $db->exec('ROLLBACK');
-        error_log("Flight end error: " . $e->getMessage());
+        logError("Flight end error: " . $e->getMessage(), [
+            'flight_id' => $data['flight_id'] ?? null,
+            'file' => $e->getFile(),
+            'line' => $e->getLine()
+        ]);
         sendErrorResponse('Fehler beim Beenden des Flugs.', 'DATABASE_ERROR', 500);
     }
 }
@@ -250,7 +261,12 @@ function handleCreateFlight($db) {
         sendSuccessResponse(['flight_id' => $flightId], 'Flug erfolgreich eingetragen');
         
     } catch (Exception $e) {
-        error_log("Flight create error: " . $e->getMessage());
+        logError("Flight create error: " . $e->getMessage(), [
+            'pilot_id' => $data['pilot_id'] ?? null,
+            'flight_date' => $data['flight_date'] ?? null,
+            'file' => $e->getFile(),
+            'line' => $e->getLine()
+        ]);
         sendErrorResponse('Fehler beim Eintragen des Flugs.', 'DATABASE_ERROR', 500);
     }
 }
@@ -280,7 +296,11 @@ function handleDeleteFlight($db, $flightId) {
         sendSuccessResponse(null, 'Flug erfolgreich gelöscht');
         
     } catch (Exception $e) {
-        error_log("Flight delete error: " . $e->getMessage());
+        logError("Flight delete error: " . $e->getMessage(), [
+            'flight_id' => $flightId ?? null,
+            'file' => $e->getFile(),
+            'line' => $e->getLine()
+        ]);
         sendErrorResponse('Fehler beim Löschen des Flugs.', 'DATABASE_ERROR', 500);
     }
 }
@@ -291,28 +311,41 @@ function handleDeleteFlight($db, $flightId) {
 function handleGetDashboard($db) {
     require_once __DIR__ . '/../includes/dashboard_helpers.php';
     
-    $pilots = [];
-    $stmt = $db->prepare('SELECT * FROM pilots ORDER BY name');
+    // Calculate cutoff date for flight counts
+    $cutoffDate = new DateTime('now', new DateTimeZone('UTC'));
+    $cutoffDate->modify('-3 months');
+    $cutoffDateUTC = $cutoffDate->format('Y-m-d H:i:s');
+    
+    // Optimized query: Get all pilot data with ongoing flights and flight counts in single query
+    $query = "
+        SELECT 
+            p.*,
+            of.id as ongoing_flight_id,
+            of.flight_date as ongoing_flight_date,
+            COUNT(DISTINCT CASE WHEN f.flight_date >= :cutoff_date THEN f.id END) as flight_count
+        FROM pilots p
+        LEFT JOIN flights of ON p.id = of.pilot_id AND of.flight_end_date IS NULL
+        LEFT JOIN flights f ON p.id = f.pilot_id
+        GROUP BY p.id
+        ORDER BY p.name
+    ";
+    
+    $stmt = $db->prepare($query);
+    $stmt->bindValue(':cutoff_date', $cutoffDateUTC, SQLITE3_TEXT);
     $pilotsResult = $stmt->execute();
     
+    $pilots = [];
     while ($row = $pilotsResult->fetchArray(SQLITE3_ASSOC)) {
         $pilotId = $row['id'];
         
-        // Get ongoing flight
-        $stmt = $db->prepare("SELECT id, flight_date FROM flights WHERE pilot_id = :pilot_id AND flight_end_date IS NULL ORDER BY flight_date DESC LIMIT 1");
-        $stmt->bindValue(':pilot_id', $pilotId, SQLITE3_INTEGER);
-        $ongoingResult = $stmt->execute();
-        $ongoingFlight = $ongoingResult->fetchArray(SQLITE3_ASSOC);
-        
-        // Calculate flight count (last 3 months)
-        $cutoffDate = new DateTime('now', new DateTimeZone('UTC'));
-        $cutoffDate->modify('-3 months');
-        $cutoffDateUTC = $cutoffDate->format('Y-m-d H:i:s');
-        
-        $stmt = $db->prepare("SELECT COUNT(*) FROM flights WHERE pilot_id = :pilot_id AND flight_date >= :cutoff_date");
-        $stmt->bindValue(':pilot_id', $pilotId, SQLITE3_INTEGER);
-        $stmt->bindValue(':cutoff_date', $cutoffDateUTC, SQLITE3_TEXT);
-        $flightCount = $stmt->execute()->fetchArray(SQLITE3_NUM)[0] ?? 0;
+        // Prepare ongoing flight data
+        $ongoingFlight = null;
+        if ($row['ongoing_flight_id']) {
+            $ongoingFlight = [
+                'id' => $row['ongoing_flight_id'],
+                'flight_date' => $row['ongoing_flight_date']
+            ];
+        }
         
         $nextFlightDue = getNextDueDate($db, $pilotId);
         $flightTime = getPilotFlightTime($db, $pilotId);
@@ -321,7 +354,7 @@ function handleGetDashboard($db) {
             'id' => $row['id'],
             'name' => $row['name'],
             'flight_count' => $flightTime,
-            'has_enough_flights' => $flightCount >= 3,
+            'has_enough_flights' => $row['flight_count'] >= 3,
             'next_flight_due' => $nextFlightDue,
             'ongoing_flight' => $ongoingFlight,
             'required_minutes' => $row['minutes_of_flights_needed']

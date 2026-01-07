@@ -23,6 +23,7 @@ function checkRateLimit($action = 'login', $maxAttempts = 5, $timeWindow = 900) 
         require_once __DIR__ . '/utils.php';
         $dbPath = getDatabasePath();
         $db = new SQLite3($dbPath);
+        $db->enableExceptions(true);
         
         // Ensure rate_limits table exists
         $db->exec('CREATE TABLE IF NOT EXISTS rate_limits (
@@ -89,6 +90,7 @@ function recordFailedAttempt($action = 'login') {
         require_once __DIR__ . '/utils.php';
         $dbPath = getDatabasePath();
         $db = new SQLite3($dbPath);
+        $db->enableExceptions(true);
         
         // Ensure rate_limits table exists
         $db->exec('CREATE TABLE IF NOT EXISTS rate_limits (
@@ -126,6 +128,7 @@ function clearRateLimit($action = 'login') {
         require_once __DIR__ . '/utils.php';
         $dbPath = getDatabasePath();
         $db = new SQLite3($dbPath);
+        $db->enableExceptions(true);
         $stmt = $db->prepare('DELETE FROM rate_limits WHERE ip_address = :ip AND action = :action');
         $stmt->bindValue(':ip', $ip, SQLITE3_TEXT);
         $stmt->bindValue(':action', $action, SQLITE3_TEXT);

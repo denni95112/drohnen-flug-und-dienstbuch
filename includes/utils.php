@@ -6,7 +6,7 @@
 /**
  * Generate and store CSRF token in session
  */
-function generateCSRFToken() {
+function generateCSRFToken(): string {
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
@@ -19,7 +19,7 @@ function generateCSRFToken() {
 /**
  * Verify CSRF token
  */
-function verifyCSRFToken($token) {
+function verifyCSRFToken(string $token): bool {
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
@@ -29,14 +29,14 @@ function verifyCSRFToken($token) {
 /**
  * Get CSRF token for forms
  */
-function getCSRFToken() {
+function getCSRFToken(): string {
     return generateCSRFToken();
 }
 
 /**
  * Validate and sanitize integer input
  */
-function validateInt($value, $min = null, $max = null) {
+function validateInt($value, ?int $min = null, ?int $max = null) {
     $int = filter_var($value, FILTER_VALIDATE_INT);
     if ($int === false) {
         return false;
@@ -53,7 +53,7 @@ function validateInt($value, $min = null, $max = null) {
 /**
  * Validate and sanitize float input
  */
-function validateFloat($value, $min = null, $max = null) {
+function validateFloat($value, ?float $min = null, ?float $max = null) {
     $float = filter_var($value, FILTER_VALIDATE_FLOAT);
     if ($float === false) {
         return false;
@@ -70,7 +70,7 @@ function validateFloat($value, $min = null, $max = null) {
 /**
  * Validate datetime string
  */
-function validateDateTime($datetime) {
+function validateDateTime(string $datetime) {
     $d = DateTime::createFromFormat('Y-m-d H:i:s', $datetime);
     if ($d && $d->format('Y-m-d H:i:s') === $datetime) {
         return $datetime;
@@ -84,6 +84,7 @@ function validateDateTime($datetime) {
 
 /**
  * Validate latitude (-90 to 90)
+ * @return float|false
  */
 function validateLatitude($latitude) {
     $lat = validateFloat($latitude, -90, 90);
@@ -92,6 +93,7 @@ function validateLatitude($latitude) {
 
 /**
  * Validate longitude (-180 to 180)
+ * @return float|false
  */
 function validateLongitude($longitude) {
     $lng = validateFloat($longitude, -180, 180);
@@ -102,7 +104,7 @@ function validateLongitude($longitude) {
  * Get database path from config, with fallback to default location
  * Normalizes paths for Windows and Linux
  */
-function getDatabasePath() {
+function getDatabasePath(): string {
     $config = [];
     $configFile = __DIR__ . '/../config/config.php';
     if (file_exists($configFile)) {
@@ -143,7 +145,7 @@ function getDatabasePath() {
 /**
  * Get database connection with error handling
  */
-function getDB() {
+function getDB(): SQLite3 {
     $dbPath = getDatabasePath();
     if (!file_exists($dbPath)) {
         throw new Exception('Database file not found: ' . $dbPath);
@@ -157,7 +159,7 @@ function getDB() {
 /**
  * Log error securely (don't expose to user)
  */
-function logError($message, $context = []) {
+function logError(string $message, array $context = []): void {
     $logFile = __DIR__ . '/../logs/error.log';
     $logDir = dirname($logFile);
     if (!is_dir($logDir)) {
@@ -175,7 +177,7 @@ function logError($message, $context = []) {
  * @param string $repo GitHub repository name
  * @return array|null Returns array with 'available' (bool), 'version' (string), 'url' (string) or null on error
  */
-function checkGitHubVersion($currentVersion, $owner, $repo) {
+function checkGitHubVersion(string $currentVersion, string $owner, string $repo): ?array {
     $cacheFile = __DIR__ . '/../logs/github_version_cache.json';
     $cacheTime = 3600;
     
@@ -321,7 +323,7 @@ function checkGitHubVersion($currentVersion, $owner, $repo) {
  * @param string $datetime Local datetime string (format: 'Y-m-d H:i:s' or 'Y-m-d\TH:i')
  * @return string UTC datetime string in 'Y-m-d H:i:s' format
  */
-function toUTC($datetime) {
+function toUTC(string $datetime): string {
     $config = [];
     $configFile = __DIR__ . '/../config/config.php';
     if (file_exists($configFile)) {
@@ -362,11 +364,11 @@ function toUTC($datetime) {
 
 /**
  * Convert datetime from UTC to local timezone for display
- * @param string $utcTime UTC datetime string (format: 'Y-m-d H:i:s')
+ * @param string|null $utcTime UTC datetime string (format: 'Y-m-d H:i:s')
  * @param string $format Output format (default: 'Y-m-d H:i:s')
- * @return string Local datetime string
+ * @return string Local datetime string (empty string if input is null/empty)
  */
-function toLocalTime($utcTime, $format = 'Y-m-d H:i:s') {
+function toLocalTime(?string $utcTime, string $format = 'Y-m-d H:i:s'): string {
     $config = [];
     $configFile = __DIR__ . '/../config/config.php';
     if (file_exists($configFile)) {
@@ -379,7 +381,7 @@ function toLocalTime($utcTime, $format = 'Y-m-d H:i:s') {
     $timezone = $config['timezone'] ?? 'Europe/Berlin';
     
     // Handle null or empty strings
-    if (empty($utcTime)) {
+    if ($utcTime === null || $utcTime === '') {
         return '';
     }
     
@@ -396,10 +398,10 @@ function toLocalTime($utcTime, $format = 'Y-m-d H:i:s') {
 
 /**
  * Convert datetime from UTC to local timezone for datetime-local input
- * @param string $utcTime UTC datetime string (format: 'Y-m-d H:i:s')
- * @return string Local datetime string in 'Y-m-d\TH:i' format
+ * @param string|null $utcTime UTC datetime string (format: 'Y-m-d H:i:s')
+ * @return string Local datetime string in 'Y-m-d\TH:i' format (empty string if input is null/empty)
  */
-function toLocalTimeForInput($utcTime) {
+function toLocalTimeForInput(?string $utcTime): string {
     return toLocalTime($utcTime, 'Y-m-d\TH:i');
 }
 
@@ -407,9 +409,41 @@ function toLocalTimeForInput($utcTime) {
  * Get current datetime in UTC
  * @return string UTC datetime string in 'Y-m-d H:i:s' format
  */
-function getCurrentUTC() {
+function getCurrentUTC(): string {
     $date = new DateTime('now', new DateTimeZone('UTC'));
     return $date->format('Y-m-d H:i:s');
+}
+
+/**
+ * Verify password against stored hash (supports both bcrypt and legacy SHA256)
+ * @param string $password Plain text password to verify
+ * @param string $storedHash Stored password hash
+ * @return array Returns ['valid' => bool, 'needs_rehash' => bool, 'new_hash' => string|null]
+ */
+function verifyPassword(string $password, string $storedHash): array {
+    $result = [
+        'valid' => false,
+        'needs_rehash' => false,
+        'new_hash' => null
+    ];
+    
+    // Try bcrypt/argon2 first (modern method)
+    if (password_verify($password, $storedHash)) {
+        $result['valid'] = true;
+        // Check if rehashing is needed (e.g., cost factor changed)
+        if (password_needs_rehash($storedHash, PASSWORD_DEFAULT)) {
+            $result['needs_rehash'] = true;
+            $result['new_hash'] = password_hash($password, PASSWORD_DEFAULT);
+        }
+    }
+    // Fallback to legacy SHA256 (for backward compatibility)
+    elseif (hash('sha256', $password) === $storedHash) {
+        $result['valid'] = true;
+        $result['needs_rehash'] = true;
+        $result['new_hash'] = password_hash($password, PASSWORD_DEFAULT);
+    }
+    
+    return $result;
 }
 
 /**
@@ -418,7 +452,7 @@ function getCurrentUTC() {
  * @param mixed $value Config value
  * @return bool True on success, false on failure
  */
-function updateConfig($key, $value) {
+function updateConfig(string $key, $value): bool {
     $configFile = __DIR__ . '/../config/config.php';
     if (!file_exists($configFile)) {
         return false;

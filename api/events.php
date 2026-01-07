@@ -11,6 +11,7 @@ initApiEndpoint(true, false);
 
 $dbPath = getDatabasePath();
 $db = new SQLite3($dbPath);
+$db->enableExceptions(true);
 $db->exec('PRAGMA foreign_keys = ON');
 
 // Get request method and action
@@ -158,7 +159,12 @@ function handleCreateEvent($db) {
         
     } catch (Exception $e) {
         $db->exec('ROLLBACK');
-        error_log("Event create error: " . $e->getMessage());
+        logError("Event create error: " . $e->getMessage(), [
+            'location_id' => $data['location_id'] ?? null,
+            'event_type' => $data['event_type'] ?? null,
+            'file' => $e->getFile(),
+            'line' => $e->getLine()
+        ]);
         sendErrorResponse('Fehler beim Erstellen des Ereignisses.', 'DATABASE_ERROR', 500);
     }
 }
@@ -189,7 +195,11 @@ function handleDeleteEvent($db, $eventId) {
         sendSuccessResponse(null, 'Ereignis erfolgreich gelöscht');
         
     } catch (Exception $e) {
-        error_log("Event delete error: " . $e->getMessage());
+        logError("Event delete error: " . $e->getMessage(), [
+            'event_id' => $eventId ?? null,
+            'file' => $e->getFile(),
+            'line' => $e->getLine()
+        ]);
         sendErrorResponse('Fehler beim Löschen des Ereignisses.', 'DATABASE_ERROR', 500);
     }
 }

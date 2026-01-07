@@ -11,6 +11,7 @@ initApiEndpoint(true, false);
 
 $dbPath = getDatabasePath();
 $db = new SQLite3($dbPath);
+$db->enableExceptions(true);
 $db->exec('PRAGMA foreign_keys = ON');
 
 // Get request method and action
@@ -79,7 +80,11 @@ function handleCreatePilot($db) {
         sendSuccessResponse(['pilot_id' => $pilotId], 'Pilot erfolgreich hinzugefügt');
         
     } catch (Exception $e) {
-        error_log("Pilot create error: " . $e->getMessage());
+        logError("Pilot create error: " . $e->getMessage(), [
+            'pilot_name' => $data['name'] ?? null,
+            'file' => $e->getFile(),
+            'line' => $e->getLine()
+        ]);
         sendErrorResponse('Fehler beim Hinzufügen des Piloten.', 'DATABASE_ERROR', 500);
     }
 }
@@ -109,7 +114,11 @@ function handleDeletePilot($db, $pilotId) {
         sendSuccessResponse(null, 'Pilot erfolgreich gelöscht');
         
     } catch (Exception $e) {
-        error_log("Pilot delete error: " . $e->getMessage());
+        logError("Pilot delete error: " . $e->getMessage(), [
+            'pilot_id' => $pilotId ?? null,
+            'file' => $e->getFile(),
+            'line' => $e->getLine()
+        ]);
         sendErrorResponse('Fehler beim Löschen des Piloten.', 'DATABASE_ERROR', 500);
     }
 }
@@ -147,7 +156,11 @@ function handleUpdatePilotMinutes($db, $pilotId) {
         sendSuccessResponse(null, 'Anzahl der benötigten Flugminuten erfolgreich aktualisiert');
         
     } catch (Exception $e) {
-        error_log("Pilot update error: " . $e->getMessage());
+        logError("Pilot update error: " . $e->getMessage(), [
+            'pilot_id' => $pilotId ?? null,
+            'file' => $e->getFile(),
+            'line' => $e->getLine()
+        ]);
         sendErrorResponse('Fehler beim Aktualisieren des Piloten.', 'DATABASE_ERROR', 500);
     }
 }

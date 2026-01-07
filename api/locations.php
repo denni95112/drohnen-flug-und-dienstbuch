@@ -11,6 +11,7 @@ initApiEndpoint(true, false);
 
 $dbPath = getDatabasePath();
 $db = new SQLite3($dbPath);
+$db->enableExceptions(true);
 $db->exec('PRAGMA foreign_keys = ON');
 
 // Get request method and action
@@ -116,7 +117,11 @@ function handleCreateLocation($db) {
         sendSuccessResponse(['location_id' => $locationId], 'Standort erfolgreich hinzugefügt');
         
     } catch (Exception $e) {
-        error_log("Location create error: " . $e->getMessage());
+        logError("Location create error: " . $e->getMessage(), [
+            'location_name' => $data['location_name'] ?? null,
+            'file' => $e->getFile(),
+            'line' => $e->getLine()
+        ]);
         sendErrorResponse('Fehler beim Hinzufügen des Standorts.', 'DATABASE_ERROR', 500);
     }
 }
@@ -223,7 +228,12 @@ function handleUploadFile($db) {
         sendSuccessResponse(null, 'Datei erfolgreich hochgeladen und verschlüsselt');
         
     } catch (Exception $e) {
-        error_log("File upload error: " . $e->getMessage());
+        logError("File upload error: " . $e->getMessage(), [
+            'location_id' => $locationId ?? null,
+            'file_name' => $_FILES['location_file']['name'] ?? null,
+            'file' => $e->getFile(),
+            'line' => $e->getLine()
+        ]);
         sendErrorResponse('Fehler beim Hochladen der Datei.', 'UPLOAD_ERROR', 500);
     }
 }
@@ -268,7 +278,11 @@ function handleDeleteLocation($db, $locationId) {
         sendSuccessResponse(null, 'Standort erfolgreich gelöscht');
         
     } catch (Exception $e) {
-        error_log("Location delete error: " . $e->getMessage());
+        logError("Location delete error: " . $e->getMessage(), [
+            'location_id' => $locationId ?? null,
+            'file' => $e->getFile(),
+            'line' => $e->getLine()
+        ]);
         sendErrorResponse('Fehler beim Löschen des Standorts.', 'DATABASE_ERROR', 500);
     }
 }

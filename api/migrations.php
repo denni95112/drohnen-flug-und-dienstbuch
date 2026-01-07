@@ -21,6 +21,7 @@ if ($method === 'POST' && $action === 'run') {
 
 $dbPath = getDatabasePath();
 $db = new SQLite3($dbPath);
+$db->enableExceptions(true);
 $db->exec('PRAGMA foreign_keys = ON');
 
 // Route requests

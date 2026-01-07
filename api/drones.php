@@ -11,6 +11,7 @@ initApiEndpoint(true, false);
 
 $dbPath = getDatabasePath();
 $db = new SQLite3($dbPath);
+$db->enableExceptions(true);
 $db->exec('PRAGMA foreign_keys = ON');
 
 // Get request method and action
@@ -77,7 +78,11 @@ function handleCreateDrone($db) {
         sendSuccessResponse(['drone_id' => $droneId], 'Drohne erfolgreich hinzugefügt');
         
     } catch (Exception $e) {
-        error_log("Drone create error: " . $e->getMessage());
+        logError("Drone create error: " . $e->getMessage(), [
+            'drone_name' => $data['drone_name'] ?? null,
+            'file' => $e->getFile(),
+            'line' => $e->getLine()
+        ]);
         sendErrorResponse('Fehler beim Hinzufügen der Drohne.', 'DATABASE_ERROR', 500);
     }
 }
@@ -107,7 +112,11 @@ function handleDeleteDrone($db, $droneId) {
         sendSuccessResponse(null, 'Drohne erfolgreich gelöscht');
         
     } catch (Exception $e) {
-        error_log("Drone delete error: " . $e->getMessage());
+        logError("Drone delete error: " . $e->getMessage(), [
+            'drone_id' => $droneId ?? null,
+            'file' => $e->getFile(),
+            'line' => $e->getLine()
+        ]);
         sendErrorResponse('Fehler beim Löschen der Drohne.', 'DATABASE_ERROR', 500);
     }
 }

@@ -38,6 +38,7 @@ function isAuthenticated() {
             require_once __DIR__ . '/includes/utils.php';
             $dbPath = getDatabasePath();
             $db = new SQLite3($dbPath);
+            $db->enableExceptions(true);
             ensureAuthTokensTable($db);
             
             $stmt = $db->prepare('SELECT user_id, expires_at FROM auth_tokens WHERE token = :token AND expires_at > datetime("now")');
@@ -81,6 +82,7 @@ function setLoginCookie() {
         require_once __DIR__ . '/includes/utils.php';
         $dbPath = getDatabasePath();
         $db = new SQLite3($dbPath);
+        $db->enableExceptions(true);
         
         ensureAuthTokensTable($db);
         $db->exec('DELETE FROM auth_tokens WHERE expires_at < datetime("now")');
@@ -120,6 +122,7 @@ function logout() {
             require_once __DIR__ . '/includes/utils.php';
             $dbPath = getDatabasePath();
             $db = new SQLite3($dbPath);
+            $db->enableExceptions(true);
             ensureAuthTokensTable($db);
             $stmt = $db->prepare('DELETE FROM auth_tokens WHERE token = :token');
             $stmt->bindValue(':token', hash('sha256', $token), SQLITE3_TEXT);
