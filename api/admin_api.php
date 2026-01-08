@@ -7,7 +7,7 @@
 // Start output buffering to prevent any accidental output
 ob_start();
 
-require_once __DIR__ . '/includes/error_reporting.php';
+require_once __DIR__ . '/../includes/error_reporting.php';
 
 // Only allow POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 // Check if config exists
-$configFile = __DIR__ . '/config/config.php';
+$configFile = __DIR__ . '/../config/config.php';
 if (!file_exists($configFile)) {
     http_response_code(500);
     header('Content-Type: application/json');
@@ -31,11 +31,11 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-require_once __DIR__ . '/includes/csrf.php';
-require_once __DIR__ . '/includes/rate_limit.php';
-require_once __DIR__ . '/auth.php';
-require_once __DIR__ . '/includes/utils.php';
-require_once __DIR__ . '/config/config.php';
+require_once __DIR__ . '/../includes/csrf.php';
+require_once __DIR__ . '/../includes/rate_limit.php';
+require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/utils.php';
+require_once __DIR__ . '/../config/config.php';
 
 $config = include $configFile;
 

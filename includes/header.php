@@ -1,15 +1,21 @@
 <?php
-require_once __DIR__ . '/../includes/error_reporting.php';
+require_once __DIR__ . '/error_reporting.php';
 
 $configFile = dirname(__DIR__) . '/config/config.php';
+// Calculate base path for assets (relative to document root)
+// This works whether header.php is included from root or pages/ directory
+$basePath = '';
+if (strpos($_SERVER['PHP_SELF'], '/pages/') !== false) {
+    $basePath = '../';
+}
 if (!file_exists($configFile)) {
     header('Location: ' . dirname($_SERVER['PHP_SELF']) . '/setup.php');
     exit;
 }
 
-require_once __DIR__ . '/../includes/security_headers.php';
-require_once __DIR__ . '/../version.php';
-require_once __DIR__ . '/../includes/utils.php';
+require_once __DIR__ . '/security_headers.php';
+require_once __DIR__ . '/version.php';
+require_once __DIR__ . '/utils.php';
 $config = include $configFile;
 
 // For older installations: add ask_for_install_notification config option if it doesn't exist
@@ -23,7 +29,7 @@ if (isset($config['timezone'])) {
     date_default_timezone_set($config['timezone']);
 }
 
-require_once __DIR__ . '/../auth.php';
+require_once __DIR__ . '/auth.php';
 $is_admin = isAdmin();
 
 // Check for pending migrations
@@ -66,8 +72,8 @@ $url = trim($config['external_documentation_url'] ?? '');
 $admin_error = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['admin_password'])) {
-    require_once __DIR__ . '/../includes/csrf.php';
-    require_once __DIR__ . '/../includes/rate_limit.php';
+    require_once __DIR__ . '/csrf.php';
+    require_once __DIR__ . '/rate_limit.php';
     verify_csrf();
     
     $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
@@ -122,7 +128,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['admin_password'])) {
     }
 }
 ?>
-<link rel="stylesheet" href="css/navigation.css?v=<?php echo APP_VERSION; ?>">
+<link rel="stylesheet" href="<?php echo $basePath; ?>css/navigation.css?v=<?php echo APP_VERSION; ?>">
 <header>
     <div class="nav-backdrop" id="nav-backdrop"></div>
     <nav>
@@ -132,7 +138,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['admin_password'])) {
                 $logo_path = $config['logo_path'] ?? '';
                 if (!empty($logo_path) && file_exists(__DIR__ . '/../' . $logo_path)): 
                 ?>
-                    <a href="dashboard.php"><img src="<?php echo htmlspecialchars($logo_path, ENT_QUOTES, 'UTF-8'); ?>" alt="Logo" class="nav-logo"></a>
+                    <a href="<?php echo $basePath; ?>pages/dashboard.php"><img src="<?php echo $basePath . htmlspecialchars($logo_path, ENT_QUOTES, 'UTF-8'); ?>" alt="Logo" class="nav-logo"></a>
                 <?php endif; ?>
                 <span class="nav-title"><?php echo $config['navigation_title']; ?>  <?php if ($is_admin): ?> - Admin <?php endif; ?></span>
             </div>
@@ -146,7 +152,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['admin_password'])) {
                     </span>
                 <?php endif; ?>
                 <?php if ($hasPendingMigrations): ?>
-                    <a href="migrations.php" 
+                    <a href="<?php echo $basePath; ?>pages/migrations.php" 
                        class="migration-notification" 
                        title="Datenbank-Update verfügbar. Klicken Sie, um zur Update-Seite zu gehen.">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -179,20 +185,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['admin_password'])) {
             </button>
         </div>
         <ul class="nav-menu" id="nav-menu">
-            <li><a href="dashboard.php">Dashboard</a></li>
-            <li><a href="manage_locations.php">Flugstandorte</a></li>
-            <li><a href="view_flights.php">Alle Flüge anzeigen</a></li>
-            <li><a href="battery_overview.php">Akku Übersicht</a></li>
+            <li><a href="<?php echo $basePath; ?>pages/dashboard.php">Dashboard</a></li>
+            <li><a href="<?php echo $basePath; ?>pages/manage_locations.php">Flugstandorte</a></li>
+            <li><a href="<?php echo $basePath; ?>pages/view_flights.php">Alle Flüge anzeigen</a></li>
+            <li><a href="<?php echo $basePath; ?>pages/battery_overview.php">Akku Übersicht</a></li>
             <li>
                 <button class="nav-dropdown-toggle" id="nav-dropdown-toggle-btn">Verwaltung</button>
                 <ul class="nav-dropdown" id="nav-dropdown">
-                    <li><a href="add_flight.php">Manueller Eintrag</a></li>
-                    <li><a href="delete_flights.php">Einträge löschen</a></li>
-                    <li><a href="manage_pilots.php">Piloten verwalten</a></li>
-                    <li><a href="manage_drones.php">Drohnen verwalten</a></li>
-                    <li><a href="add_events.php">Dienst anlegen</a></li>
-                    <li><a href="view_events.php">Dienste ansehen</a></li>
-                    <li><a href="migrations.php">Datenbank Update</a></li>
+                    <li><a href="<?php echo $basePath; ?>pages/add_flight.php">Manueller Eintrag</a></li>
+                    <li><a href="<?php echo $basePath; ?>pages/delete_flights.php">Einträge löschen</a></li>
+                    <li><a href="<?php echo $basePath; ?>pages/manage_pilots.php">Piloten verwalten</a></li>
+                    <li><a href="<?php echo $basePath; ?>pages/manage_drones.php">Drohnen verwalten</a></li>
+                    <li><a href="<?php echo $basePath; ?>pages/add_events.php">Dienst anlegen</a></li>
+                    <li><a href="<?php echo $basePath; ?>pages/view_events.php">Dienste ansehen</a></li>
+                    <li><a href="<?php echo $basePath; ?>pages/migrations.php">Datenbank Update</a></li>
                     <?php if (!$is_admin): ?>
                         <li><a href="#" id="admin-modal-link">Admin</a></li>
                     <?php endif; ?>
@@ -202,7 +208,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['admin_password'])) {
                 <li><a href="<?= htmlspecialchars($url, ENT_QUOTES, 'UTF-8') ?>">Einsatzdoku</a></li>
             <?php endif; ?>
 
-            <li><a href="logout.php">Logout</a></li>
+            <li><a href="<?php echo $basePath; ?>pages/logout.php">Logout</a></li>
         </ul>
     </nav>
 </header>
@@ -213,7 +219,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['admin_password'])) {
         <span class="close" id="admin-modal-close">&times;</span>
         <h2 id="admin-modal-title">Admin Login</h2>
         <form id="admin-login-form" method="post" action="<?php echo $_SERVER['PHP_SELF']; ?>">
-            <?php require_once __DIR__ . '/../includes/csrf.php'; csrf_field(); ?>
+            <?php require_once __DIR__ . '/csrf.php'; csrf_field(); ?>
             <div id="admin-login-content">
                 <div class="form-group">
                     <label for="admin_password">Passwort:</label>
@@ -256,7 +262,7 @@ if (isset($config['ask_for_install_notification']) && $config['ask_for_install_n
     // Or show for new installations (database has no pilots or drones yet)
     else {
         try {
-            require_once __DIR__ . '/../includes/utils.php';
+            require_once __DIR__ . '/utils.php';
             $dbPath = getDatabasePath();
             if (file_exists($dbPath)) {
                 $checkDb = new SQLite3($dbPath);
@@ -314,7 +320,11 @@ if (isset($config['ask_for_install_notification']) && $config['ask_for_install_n
     // Make config value available to JavaScript
     window.showInstallNotification = true;
 </script>
-<script src="js/install_notification.js"></script>
+<script src="<?php echo $basePath; ?>js/install_notification.js"></script>
 <?php endif; ?>
 
-<script src="js/header.js"></script>
+<script>
+    // Define base path for API calls - works from root or pages/ directory
+    window.basePath = '<?php echo $basePath; ?>';
+</script>
+<script src="<?php echo $basePath; ?>js/header.js"></script>

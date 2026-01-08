@@ -1,16 +1,16 @@
 <?php
-require_once __DIR__ . '/includes/error_reporting.php';
-require_once __DIR__ . '/includes/security_headers.php';
-require 'auth.php';
+require_once __DIR__ . '/../includes/error_reporting.php';
+require_once __DIR__ . '/../includes/security_headers.php';
+require __DIR__ . '/../includes/auth.php';
 requireAuth();
 
 // Set timezone from config
-$config = include __DIR__ . '/config/config.php';
+$config = include __DIR__ . '/../config/config.php';
 if (isset($config['timezone'])) {
     date_default_timezone_set($config['timezone']);
 }
 
-require_once __DIR__ . '/includes/utils.php';
+require_once __DIR__ . '/../includes/utils.php';
 $dbPath = getDatabasePath();
 $db = new SQLite3($dbPath);
 

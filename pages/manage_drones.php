@@ -1,17 +1,17 @@
 <?php
-require_once __DIR__ . '/includes/error_reporting.php';
-require_once __DIR__ . '/includes/security_headers.php';
-require 'auth.php';
+require_once __DIR__ . '/../includes/error_reporting.php';
+require_once __DIR__ . '/../includes/security_headers.php';
+require __DIR__ . '/../includes/auth.php';
 requireAuth();
 
 // Set timezone from config
-$config = include __DIR__ . '/config/config.php';
+$config = include __DIR__ . '/../config/config.php';
 if (isset($config['timezone'])) {
     date_default_timezone_set($config['timezone']);
 }
 
-require_once __DIR__ . '/includes/utils.php';
-require_once __DIR__ . '/version.php';
+require_once __DIR__ . '/../includes/utils.php';
+require_once __DIR__ . '/../includes/version.php';
 
 // Note: POST/GET handling has been moved to api/drones.php
 // This page now only renders HTML. Data is fetched via API in manage_drones.js
@@ -23,11 +23,11 @@ require_once __DIR__ . '/version.php';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Drohnen verwalten</title>
-    <link rel="stylesheet" href="css/styles.css?v=<?php echo APP_VERSION; ?>">
-    <script src="js/manage_drones.js"></script>
+    <link rel="stylesheet" href="../css/styles.css?v=<?php echo APP_VERSION; ?>">
+    <script src="../js/manage_drones.js"></script>
 </head>
 <body>
-    <?php include 'includes/header.php'; ?>
+    <?php include __DIR__ . '/../includes/header.php'; ?>
     <main>
         <h1>Drohnen verwalten</h1>
 
@@ -37,7 +37,7 @@ require_once __DIR__ . '/version.php';
 
         <!-- Add Drone Form -->
         <form id="add-drone-form">
-            <?php require_once __DIR__ . '/includes/csrf.php'; csrf_field(); ?>
+            <?php require_once __DIR__ . '/../includes/csrf.php'; csrf_field(); ?>
             <div>
                 <label for="drone_name">Drohnenname</label>
                 <input type="text" id="drone_name" name="drone_name" placeholder="Name der Drohne" required>
@@ -62,6 +62,6 @@ require_once __DIR__ . '/version.php';
             </tbody>
         </table>
     </main>
-    <?php include 'includes/footer.php'; ?>
+    <?php include __DIR__ . '/../includes/footer.php'; ?>
 </body>
 </html>

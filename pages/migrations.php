@@ -4,14 +4,14 @@
  * Visible to all users, but only admins can execute migrations
  */
 
-require_once __DIR__ . '/includes/error_reporting.php';
-require_once __DIR__ . '/includes/security_headers.php';
-require 'auth.php';
+require_once __DIR__ . '/../includes/error_reporting.php';
+require_once __DIR__ . '/../includes/security_headers.php';
+require __DIR__ . '/../includes/auth.php';
 requireAuth();
 
-require_once __DIR__ . '/includes/utils.php';
-require_once __DIR__ . '/includes/migration_runner.php';
-require_once __DIR__ . '/version.php';
+require_once __DIR__ . '/../includes/utils.php';
+require_once __DIR__ . '/../includes/migration_runner.php';
+require_once __DIR__ . '/../includes/version.php';
 
 $dbPath = getDatabasePath();
 $db = new SQLite3($dbPath);
@@ -29,7 +29,7 @@ $pendingMigrations = getPendingMigrations($db);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Datenbank Update</title>
-    <link rel="stylesheet" href="css/styles.css?v=<?php echo APP_VERSION; ?>">
+    <link rel="stylesheet" href="../css/styles.css?v=<?php echo APP_VERSION; ?>">
     <style>
         .migration-table {
             width: 100%;
@@ -109,10 +109,10 @@ $pendingMigrations = getPendingMigrations($db);
             margin: 8px 0;
         }
     </style>
-    <script src="js/migrations.js"></script>
+    <script src="../js/migrations.js"></script>
 </head>
 <body>
-    <?php include 'includes/header.php'; ?>
+    <?php include __DIR__ . '/../includes/header.php'; ?>
     <main>
         <h1>Datenbank Update</h1>
         
@@ -205,7 +205,7 @@ $pendingMigrations = getPendingMigrations($db);
             </tbody>
         </table>
     </main>
-    <?php include 'includes/footer.php'; ?>
+    <?php include __DIR__ . '/../includes/footer.php'; ?>
     
     <script>
         // Get CSRF token

@@ -1,21 +1,21 @@
 <?php
-require_once __DIR__ . '/includes/error_reporting.php';
-require_once __DIR__ . '/includes/security_headers.php';
-require 'auth.php';
+require_once __DIR__ . '/../includes/error_reporting.php';
+require_once __DIR__ . '/../includes/security_headers.php';
+require __DIR__ . '/../includes/auth.php';
 requireAuth();
 
-$config = include __DIR__ . '/config/config.php';
+$config = include __DIR__ . '/../config/config.php';
 if (isset($config['timezone'])) {
     date_default_timezone_set($config['timezone']);
 }
 
-require_once __DIR__ . '/includes/utils.php';
-require_once __DIR__ . '/version.php';
+require_once __DIR__ . '/../includes/utils.php';
+require_once __DIR__ . '/../includes/version.php';
 
 $is_admin = isset($_GET['admin']) && $_GET['admin'] === 'true';
 
 // Note: POST handling has been moved to api/flights.php
-// This page now only renders HTML. Data is fetched via API in add_flight.js
+// This page now only renders HTML. Data (pilots, drones, locations) is fetched via API in add_flight.js
 ?>
 
 
@@ -25,12 +25,12 @@ $is_admin = isset($_GET['admin']) && $_GET['admin'] === 'true';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Flug hinzufügen - Drohnenpiloten</title>
-    <link rel="stylesheet" href="css/add_flight.css?v=<?php echo APP_VERSION; ?>">
-    <link rel="stylesheet" href="css/styles.css?v=<?php echo APP_VERSION; ?>">
-    <script src="js/add_flight.js"></script>
+    <link rel="stylesheet" href="../css/add_flight.css?v=<?php echo APP_VERSION; ?>">
+    <link rel="stylesheet" href="../css/styles.css?v=<?php echo APP_VERSION; ?>">
+    <script src="../js/add_flight.js"></script>
 </head>
 <body>
-    <?php include 'includes/header.php'; ?>
+    <?php include __DIR__ . '/../includes/header.php'; ?>
     <main>
         <h1>Flug hinzufügen</h1>
         <!-- Message containers -->
@@ -38,13 +38,11 @@ $is_admin = isset($_GET['admin']) && $_GET['admin'] === 'true';
         <div id="success-container" class="success" style="display: none;"></div>
         
         <form id="add-flight-form">
-            <?php require_once __DIR__ . '/includes/csrf.php'; csrf_field(); ?>
+            <?php require_once __DIR__ . '/../includes/csrf.php'; csrf_field(); ?>
             <div>
                 <label for="pilot_id">Pilot</label>
                 <select name="pilot_id" id="pilot_id" required>
-                    <?php while ($row = $pilots->fetchArray(SQLITE3_ASSOC)): ?>
-                        <option value="<?= $row['id']; ?>"><?= htmlspecialchars($row['name']); ?></option>
-                    <?php endwhile; ?>
+                    <option value="">Lade Piloten...</option>
                 </select>
             </div>
             <br>
@@ -61,10 +59,7 @@ $is_admin = isset($_GET['admin']) && $_GET['admin'] === 'true';
             <div>
                 <label for="drone_id">Drohne</label>
                 <select name="drone_id" id="drone_id" required>
-                    <option value="">Bitte wählen</option>
-                    <?php while ($drone = $drones->fetchArray(SQLITE3_ASSOC)): ?>
-                        <option value="<?= $drone['id']; ?>"><?= htmlspecialchars($drone['drone_name']); ?></option>
-                    <?php endwhile; ?>
+                    <option value="">Lade Drohnen...</option>
                 </select>
             </div>
             <br>
@@ -83,7 +78,7 @@ $is_admin = isset($_GET['admin']) && $_GET['admin'] === 'true';
             <button type="submit">Flug eintragen</button>
         </form>
     </main>
-    <?php include 'includes/footer.php'; ?>
+    <?php include __DIR__ . '/../includes/footer.php'; ?>
 
 </body>
 </html>

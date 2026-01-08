@@ -22,7 +22,7 @@ try {
 }
 
 try {
-    require_once __DIR__ . '/version.php';
+    require_once __DIR__ . '/includes/version.php';
 } catch (Throwable $e) {
     die("Error loading version.php: " . htmlspecialchars($e->getMessage()) . " in " . $e->getFile() . ":" . $e->getLine());
 }
@@ -44,13 +44,13 @@ if (isset($config['timezone'])) {
 $error = '';
 
 try {
-    include('auth.php');
+    include(__DIR__ . '/includes/auth.php');
 } catch (Throwable $e) {
     die("Error loading auth.php: " . htmlspecialchars($e->getMessage()) . " in " . $e->getFile() . ":" . $e->getLine());
 }
 
 if(isAuthenticated()){
-    header('Location: dashboard.php');
+    header('Location: pages/dashboard.php');
     exit();
 }
 
@@ -75,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['loggedin'] = true;
             $_SESSION['login_time'] = time();
             setLoginCookie(); 
-            header('Location: dashboard.php');
+            header('Location: pages/dashboard.php');
             exit();
         } else {
             recordFailedAttempt('login');

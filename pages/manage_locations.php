@@ -1,18 +1,18 @@
 <?php
-require_once __DIR__ . '/includes/error_reporting.php';
-require_once __DIR__ . '/includes/security_headers.php';
-require 'auth.php';
+require_once __DIR__ . '/../includes/error_reporting.php';
+require_once __DIR__ . '/../includes/security_headers.php';
+require __DIR__ . '/../includes/auth.php';
 requireAuth();
 
-$config = include __DIR__ . '/config/config.php';
+$config = include __DIR__ . '/../config/config.php';
 
 // Set timezone from config
 if (isset($config['timezone'])) {
     date_default_timezone_set($config['timezone']);
 }
 
-require_once __DIR__ . '/includes/utils.php';
-require_once __DIR__ . '/version.php';
+require_once __DIR__ . '/../includes/utils.php';
+require_once __DIR__ . '/../includes/version.php';
 $dbPath = getDatabasePath();
 $db = new SQLite3($dbPath);
 
@@ -27,7 +27,7 @@ if (isset($_GET['download_file']) && isset($_GET['location_id'])) {
     $result = $stmt->execute()->fetchArray(SQLITE3_ASSOC);
 
     if ($result && $result['file_path']) {
-        $filePath = __DIR__ . '/' . $result['file_path'];
+        $filePath = dirname(__DIR__) . '/' . $result['file_path'];
 
         if (file_exists($filePath)) {
             // Read the encrypted file content
@@ -90,12 +90,12 @@ if (isset($_GET['download_file']) && isset($_GET['location_id'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Flugstandorte verwalten</title>
-    <link rel="stylesheet" href="css/styles.css?v=<?php echo APP_VERSION; ?>">
-    <link rel="stylesheet" href="css/manage_locations.css?v=<?php echo APP_VERSION; ?>">
-    <script src="js/manage_locations.js"></script>
+    <link rel="stylesheet" href="../css/styles.css?v=<?php echo APP_VERSION; ?>">
+    <link rel="stylesheet" href="../css/manage_locations.css?v=<?php echo APP_VERSION; ?>">
+    <script src="../js/manage_locations.js"></script>
 </head>
 <body>
-    <?php include 'includes/header.php'; ?>
+    <?php include __DIR__ . '/../includes/header.php'; ?>
     <main>
         <h1>Flugstandorte verwalten</h1>
 
@@ -105,7 +105,7 @@ if (isset($_GET['download_file']) && isset($_GET['location_id'])) {
 
         <!-- Add Location Form -->
         <form id="add-location-form">
-            <?php require_once __DIR__ . '/includes/csrf.php'; csrf_field(); ?>
+            <?php require_once __DIR__ . '/../includes/csrf.php'; csrf_field(); ?>
             <div>
                 <label for="location_name">Standortname</label>
                 <input type="text" id="location_name" name="location_name" placeholder="Name des Standorts" required>
@@ -173,6 +173,6 @@ if (isset($_GET['download_file']) && isset($_GET['location_id'])) {
             </tbody>
         </table>
     </main>
-    <?php include 'includes/footer.php'; ?>
+    <?php include __DIR__ . '/../includes/footer.php'; ?>
 </body>
 </html>

@@ -37,7 +37,8 @@ async function fetchDrones() {
     if (loading) loading.style.display = 'block';
     
     try {
-        const response = await fetch('api/drones.php?action=list');
+        const basePath = window.basePath || '';
+        const response = await fetch(`${basePath}api/drones.php?action=list`);
         const data = await response.json();
         
         if (data.success && tbody) {
@@ -77,7 +78,8 @@ async function addDrone(droneName) {
     const requestId = generateRequestId();
     
     try {
-        const response = await fetch('api/drones.php?action=create', {
+        const basePath = window.basePath || '';
+        const response = await fetch(`${basePath}api/drones.php?action=create`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -111,7 +113,8 @@ async function deleteDrone(droneId) {
     }
     
     try {
-        const response = await fetch(`api/drones.php?id=${droneId}`, {
+        const basePath = window.basePath || '';
+        const response = await fetch(`${basePath}api/drones.php?id=${droneId}`, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',

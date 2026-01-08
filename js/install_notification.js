@@ -93,7 +93,8 @@
             
             let response;
             try {
-                response = await fetch('install_notification_api.php', {
+                const basePath = window.basePath || '';
+                response = await fetch(`${basePath}api/install_notification_api.php`, {
                     method: 'POST',
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest'

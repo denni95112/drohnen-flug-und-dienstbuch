@@ -37,7 +37,8 @@ async function fetchPilots() {
     if (loading) loading.style.display = 'block';
     
     try {
-        const response = await fetch('api/pilots.php?action=list');
+        const basePath = window.basePath || '';
+        const response = await fetch(`${basePath}api/pilots.php?action=list`);
         const data = await response.json();
         
         if (data.success && tbody) {
@@ -88,7 +89,8 @@ async function addPilot(name) {
     const requestId = generateRequestId();
     
     try {
-        const response = await fetch('api/pilots.php?action=create', {
+        const basePath = window.basePath || '';
+        const response = await fetch(`${basePath}api/pilots.php?action=create`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -122,7 +124,7 @@ async function deletePilot(pilotId) {
     }
     
     try {
-        const response = await fetch(`api/pilots.php?id=${pilotId}`, {
+        const response = await fetch(`${basePath}api/pilots.php?id=${pilotId}`, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
@@ -149,7 +151,7 @@ async function deletePilot(pilotId) {
 // Update pilot minutes
 async function updatePilotMinutes(pilotId, minutes) {
     try {
-        const response = await fetch(`api/pilots.php?id=${pilotId}&action=minutes`, {
+        const response = await fetch(`${basePath}api/pilots.php?id=${pilotId}&action=minutes`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',

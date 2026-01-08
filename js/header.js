@@ -98,11 +98,14 @@ function closeMenuOnBackdrop(event) {
 function setActiveMenuItem() {
     const currentPath = window.location.pathname;
     const fileName = currentPath.split('/').pop() || 'dashboard.php';
+    const fileNameWithoutPath = fileName.replace('pages/', '');
     
     const menuLinks = document.querySelectorAll('.nav-menu a[href]');
     menuLinks.forEach(link => {
         const linkPath = link.getAttribute('href');
-        if (linkPath === fileName || (fileName === '' && linkPath === 'dashboard.php')) {
+        const linkPathWithoutDir = linkPath.replace('pages/', '');
+        if (linkPath === fileName || linkPathWithoutDir === fileName || 
+            (fileName === '' && (linkPath === 'pages/dashboard.php' || linkPath === 'dashboard.php'))) {
             link.classList.add('active');
         }
     });
@@ -193,7 +196,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 formData.append('csrf_token', csrfInput.value);
                 
-                const response = await fetch('admin_api.php', {
+                const basePath = window.basePath || '';
+                const response = await fetch(`${basePath}api/admin_api.php`, {
                     method: 'POST',
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest'
@@ -305,7 +309,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             try {
-                const response = await fetch('admin_api.php', {
+                const basePath = window.basePath || '';
+                const response = await fetch(`${basePath}api/admin_api.php`, {
                     method: 'POST',
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest'

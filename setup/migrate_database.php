@@ -8,9 +8,9 @@
  * Usage: Run this file once to migrate your existing database.
  */
 
-require_once __DIR__ . '/includes/error_reporting.php';
-require_once __DIR__ . '/includes/utils.php';
-require_once __DIR__ . '/version.php';
+require_once __DIR__ . '/../includes/error_reporting.php';
+require_once __DIR__ . '/../includes/utils.php';
+require_once __DIR__ . '/../includes/version.php';
 
 $dbPath = getDatabasePath();
 
@@ -457,7 +457,7 @@ try {
         <?php endif; ?>
 
         <div style="text-align: center; margin-top: 2rem;">
-            <a href="dashboard.php" style="display: inline-block; padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 10px; font-weight: 600; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);">
+            <a href="../pages/dashboard.php" style="display: inline-block; padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 10px; font-weight: 600; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);">
                 Zum Dashboard
             </a>
         </div>

@@ -1,6 +1,6 @@
 <?php
-require_once __DIR__ . '/includes/error_reporting.php';
-require_once __DIR__ . '/includes/utils.php';
+require_once __DIR__ . '/../includes/error_reporting.php';
+require_once __DIR__ . '/../includes/utils.php';
 
 $dbPath = getDatabasePath();
 
@@ -150,6 +150,6 @@ $db->exec('CREATE INDEX IF NOT EXISTS idx_rate_limits_ip_action ON rate_limits(i
 
 echo "Database setup completed successfully! Redirecting...";
 
-header("Refresh: 2; url=index.php");
+header("Refresh: 2; url=../index.php");
 exit;
 ?>

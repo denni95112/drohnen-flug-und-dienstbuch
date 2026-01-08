@@ -1,16 +1,16 @@
 <?php
-require_once __DIR__ . '/includes/error_reporting.php';
-require_once __DIR__ . '/includes/security_headers.php';
-require 'auth.php';
+require_once __DIR__ . '/../includes/error_reporting.php';
+require_once __DIR__ . '/../includes/security_headers.php';
+require __DIR__ . '/../includes/auth.php';
 requireAuth();
 
-$config = include __DIR__ . '/config/config.php';
+$config = include __DIR__ . '/../config/config.php';
 if (isset($config['timezone'])) {
     date_default_timezone_set($config['timezone']);
 }
 
-require_once __DIR__ . '/includes/utils.php';
-require_once __DIR__ . '/version.php';
+require_once __DIR__ . '/../includes/utils.php';
+require_once __DIR__ . '/../includes/version.php';
 $dbPath = getDatabasePath();
 $db = new SQLite3($dbPath);
 
@@ -84,11 +84,11 @@ function formatDuration($seconds) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Batterienutzung Übersicht</title>
-    <link rel="stylesheet" href="css/battery_overview.css?v=<?php echo APP_VERSION; ?>">
-    <link rel="stylesheet" href="css/styles.css?v=<?php echo APP_VERSION; ?>">
+    <link rel="stylesheet" href="../css/battery_overview.css?v=<?php echo APP_VERSION; ?>">
+    <link rel="stylesheet" href="../css/styles.css?v=<?php echo APP_VERSION; ?>">
 </head>
 <body>
-    <?php include 'includes/header.php'; ?>
+    <?php include __DIR__ . '/../includes/header.php'; ?>
     <main>
         <h1>Akku Übersicht</h1>
         <div class="overview-container">
@@ -139,6 +139,6 @@ function formatDuration($seconds) {
             <?php endif; ?>
         </div>
     </main>
-    <?php include 'includes/footer.php'; ?>
+    <?php include __DIR__ . '/../includes/footer.php'; ?>
 </body>
 </html>

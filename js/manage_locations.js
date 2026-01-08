@@ -44,7 +44,8 @@ async function fetchLocations(filterTraining = false) {
     if (loading) loading.style.display = 'block';
     
     try {
-        const response = await fetch('api/locations.php?action=list');
+        const basePath = window.basePath || '';
+        const response = await fetch(`${basePath}api/locations.php?action=list`);
         const data = await response.json();
         
         if (data.success && tbody) {
@@ -85,7 +86,7 @@ async function fetchLocations(filterTraining = false) {
                         </td>
                         <td data-label="Datei herunterladen">
                             ${location.file_path ? `
-                                <a href="manage_locations.php?download_file=true&location_id=${location.id}">
+                                <a href="${window.basePath || ''}pages/manage_locations.php?download_file=true&location_id=${location.id}">
                                     <button type="button" class="button-full">Herunterladen</button>
                                 </a>
                             ` : '<button type="button" disabled>Keine Datei</button>'}
@@ -118,7 +119,8 @@ async function addLocation(locationData) {
     const requestId = generateRequestId();
     
     try {
-        const response = await fetch('api/locations.php?action=create', {
+        const basePath = window.basePath || '';
+        const response = await fetch(`${basePath}api/locations.php?action=create`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -168,7 +170,8 @@ async function uploadFile(locationId, fileInput) {
     submitBtn.textContent = 'Wird hochgeladen...';
     
     try {
-        const response = await fetch('api/locations.php?action=upload', {
+        const basePath = window.basePath || '';
+        const response = await fetch(`${basePath}api/locations.php?action=upload`, {
             method: 'POST',
             body: formData
         });
@@ -197,7 +200,8 @@ async function deleteLocation(locationId) {
     }
     
     try {
-        const response = await fetch(`api/locations.php?id=${locationId}`, {
+        const basePath = window.basePath || '';
+        const response = await fetch(`${basePath}api/locations.php?id=${locationId}`, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',

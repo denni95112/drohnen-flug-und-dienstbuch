@@ -38,7 +38,8 @@ async function loadPilots() {
     if (loading) loading.style.display = 'block';
     
     try {
-        const response = await fetch('api/pilots.php?action=list');
+        const basePath = window.basePath || '';
+        const response = await fetch(`${basePath}api/pilots.php?action=list`);
         const data = await response.json();
         
         if (data.success && container) {
@@ -102,7 +103,8 @@ async function submitEvent(e) {
     submitBtn.textContent = 'Wird erstellt...';
     
     try {
-        const response = await fetch('api/events.php?action=create', {
+        const basePath = window.basePath || '';
+        const response = await fetch(`${basePath}api/events.php?action=create`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

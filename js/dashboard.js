@@ -74,7 +74,8 @@ async function fetchDashboardData(force = false) {
     try {
         // Add cache-busting timestamp to ensure fresh data
         const timestamp = new Date().getTime();
-        const response = await fetch(`api/flights.php?action=dashboard&_t=${timestamp}`);
+        const basePath = window.basePath || '';
+        const response = await fetch(`${basePath}api/flights.php?action=dashboard&_t=${timestamp}`);
         const data = await response.json();
         
         if (data.success) {
@@ -208,7 +209,8 @@ async function startFlight(pilotId) {
     btn.textContent = 'Wird gestartet...';
     
     try {
-        const response = await fetch('api/flights.php?action=start', {
+        const basePath = window.basePath || '';
+        const response = await fetch(`${basePath}api/flights.php?action=start`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -262,7 +264,8 @@ async function endFlight(flightId, pilotId) {
     btn.textContent = 'Wird beendet...';
     
     try {
-        const response = await fetch('api/flights.php?action=end', {
+        const basePath = window.basePath || '';
+        const response = await fetch(`${basePath}api/flights.php?action=end`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

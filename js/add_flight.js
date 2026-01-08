@@ -33,7 +33,8 @@ async function fetchLocationsByDate(flightDate) {
     const datePart = flightDate.split('T')[0];
     
     try {
-        const response = await fetch(`api/locations.php?action=list&date=${datePart}`);
+        const basePath = window.basePath || '';
+        const response = await fetch(`${basePath}api/locations.php?action=list&date=${datePart}`);
         const data = await response.json();
         
         const locationSelect = document.getElementById('location_id');
@@ -85,7 +86,8 @@ async function submitFlight(e) {
     submitBtn.textContent = 'Wird eingetragen...';
     
     try {
-        const response = await fetch('api/flights.php?action=create', {
+        const basePath = window.basePath || '';
+        const response = await fetch(`${basePath}api/flights.php?action=create`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -121,10 +123,64 @@ async function submitFlight(e) {
     }
 }
 
+// Load pilots
+async function loadPilots() {
+    const pilotSelect = document.getElementById('pilot_id');
+    if (!pilotSelect) return;
+    
+    try {
+        const basePath = window.basePath || '';
+        const response = await fetch(`${basePath}api/pilots.php?action=list`);
+        const data = await response.json();
+        
+        if (data.success && pilotSelect) {
+            pilotSelect.innerHTML = '<option value="">Bitte wählen</option>';
+            data.data.pilots.forEach(pilot => {
+                const option = document.createElement('option');
+                option.value = pilot.id;
+                option.textContent = pilot.name;
+                pilotSelect.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Error loading pilots:', error);
+        pilotSelect.innerHTML = '<option value="">Fehler beim Laden</option>';
+    }
+}
+
+// Load drones
+async function loadDrones() {
+    const droneSelect = document.getElementById('drone_id');
+    if (!droneSelect) return;
+    
+    try {
+        const basePath = window.basePath || '';
+        const response = await fetch(`${basePath}api/drones.php?action=list`);
+        const data = await response.json();
+        
+        if (data.success && droneSelect) {
+            droneSelect.innerHTML = '<option value="">Bitte wählen</option>';
+            data.data.drones.forEach(drone => {
+                const option = document.createElement('option');
+                option.value = drone.id;
+                option.textContent = drone.drone_name;
+                droneSelect.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Error loading drones:', error);
+        droneSelect.innerHTML = '<option value="">Fehler beim Laden</option>';
+    }
+}
+
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
     const flightDateInput = document.getElementById('flight_date');
     const form = document.getElementById('add-flight-form');
+    
+    // Load pilots and drones on page load
+    loadPilots();
+    loadDrones();
     
     // Fetch locations when flight date changes
     if (flightDateInput) {

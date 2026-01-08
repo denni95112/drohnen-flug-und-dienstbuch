@@ -216,58 +216,75 @@ Dieses Projekt kann zusammen mit dem **[Drohnen-Einsatztagebuch](https://github.
 ```
 drohnen-flug-und-dienstbuch/
 ├── api/                    # API-Endpunkte
-│   ├── flights.php        # Flugoperationen
-│   ├── pilots.php         # Pilot-Verwaltung
+│   ├── admin_api.php      # Admin-API
 │   ├── drones.php         # Drohnen-Verwaltung
-│   ├── locations.php      # Standort-Verwaltung
 │   ├── events.php         # Ereignis-Verwaltung
-│   └── migrations.php     # Migrations-Verwaltung
+│   ├── flights.php        # Flugoperationen
+│   ├── install_notification_api.php  # Installationsbenachrichtigung
+│   ├── locations.php      # Standort-Verwaltung
+│   ├── migrations.php     # Migrations-Verwaltung
+│   ├── pilots.php         # Pilot-Verwaltung
+│   └── fetch_locations.php # Legacy: Standort-Abruf
 ├── config/
 │   ├── config.example.php  # Beispielkonfiguration (sicher zu committen)
 │   └── config.php          # Tatsächliche Konfiguration (NICHT COMMITTEN)
 ├── css/                    # Stylesheets
+├── dev/                    # Entwicklungs-/Debug-Dateien
+│   └── debug_passwords.php # Passwort-Debug-Tool (nur für Entwicklung)
 ├── icons/                  # PWA-Icons
-├── includes/               # PHP-Includes
+├── includes/               # PHP-Includes und System-Dateien
 │   ├── api_helpers.php    # API-Hilfsfunktionen
+│   ├── auth.php           # Authentifizierung
 │   ├── csrf.php           # CSRF-Schutz
+│   ├── dashboard_helpers.php
 │   ├── error_reporting.php
-│   ├── header.php         # Navigations-Header
 │   ├── footer.php
+│   ├── header.php         # Navigations-Header
 │   ├── migration_runner.php  # Migrations-System
 │   ├── rate_limit.php     # Rate Limiting
 │   ├── security_headers.php
-│   └── utils.php          # Hilfsfunktionen
+│   ├── utils.php          # Hilfsfunktionen
+│   └── version.php        # Versionsinformationen
 ├── js/                     # JavaScript-Dateien
+│   ├── add_events.js
+│   ├── add_flight.js
 │   ├── dashboard.js       # Dashboard mit API-Integration
-│   ├── manage_pilots.js
+│   ├── delete_flights.js
+│   ├── header.js
+│   ├── index.js
+│   ├── install_notification.js
 │   ├── manage_drones.js
 │   ├── manage_locations.js
-│   ├── add_flight.js
-│   ├── add_events.js
-│   └── delete_flights.js
+│   ├── manage_pilots.js
+│   ├── setup.js
+│   └── view_events.js
 ├── migrations/             # Datenbank-Migrationen
 │   ├── 001_create_schema_migrations_table.php
 │   ├── 002_create_request_log_table.php
 │   └── ...                # Weitere Migrationen
+├── pages/                  # Benutzeroberflächen-Seiten
+│   ├── add_events.php     # Dienst anlegen
+│   ├── add_flight.php     # Manueller Flugeintrag
+│   ├── battery_overview.php  # Akku-Übersicht
+│   ├── changelog.php      # Changelog
+│   ├── dashboard.php      # Dashboard (API-basiert)
+│   ├── delete_flights.php # Flüge löschen
+│   ├── logout.php         # Logout
+│   ├── manage_drones.php  # Drohnen-Verwaltung (API-basiert)
+│   ├── manage_locations.php  # Standort-Verwaltung (API-basiert)
+│   ├── manage_pilots.php  # Pilot-Verwaltung (API-basiert)
+│   ├── migrations.php    # Migrations-Verwaltungsseite
+│   ├── view_events.php    # Dienste ansehen
+│   └── view_flights.php   # Alle Flüge anzeigen
+├── setup/                  # Setup- und Migrations-Skripte
+│   ├── migrate_database.php  # Datenbank-Migrationsskript
+│   └── setup_database.php   # Datenbankinitialisierung
 ├── logs/                   # Anwendungsprotokolle
 ├── uploads/                # Verschlüsselte Datei-Uploads
-├── add_events.php
-├── add_flight.php
-├── auth.php
-├── battery_overview.php
-├── dashboard.php           # Dashboard (API-basiert)
-├── delete_flights.php
-├── index.php              # Login-Seite
-├── logout.php
-├── manage_drones.php       # Drohnen-Verwaltung (API-basiert)
-├── manage_locations.php    # Standort-Verwaltung (API-basiert)
-├── manage_pilots.php       # Pilot-Verwaltung (API-basiert)
-├── migrations.php          # Migrations-Verwaltungsseite
+├── index.php              # Login-Seite (Haupteingangspunkt)
 ├── setup.php              # Initialer Setup-Assistent
-├── setup_database.php     # Datenbankinitialisierung
-├── service-worker.js      # PWA Service Worker
-├── view_events.php
-└── view_flights.php
+├── manifest.json          # PWA-Manifest (muss im Root sein)
+└── service-worker.js      # PWA Service Worker (muss im Root sein)
 ```
 
 ## Verwendung

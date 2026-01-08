@@ -180,7 +180,7 @@ function handleUploadFile($db) {
     try {
         require_once __DIR__ . '/../config/config.php';
         $config = include __DIR__ . '/../config/config.php';
-        require_once __DIR__ . '/../auth.php';
+        require_once __DIR__ . '/../includes/auth.php';
         
         // Sanitize filename
         $originalName = basename($file['name']);

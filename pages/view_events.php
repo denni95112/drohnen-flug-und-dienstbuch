@@ -1,17 +1,17 @@
 <?php
-require_once __DIR__ . '/includes/error_reporting.php';
-require_once __DIR__ . '/includes/security_headers.php';
-require 'auth.php';
+require_once __DIR__ . '/../includes/error_reporting.php';
+require_once __DIR__ . '/../includes/security_headers.php';
+require __DIR__ . '/../includes/auth.php';
 requireAuth();
 
 // Set timezone from config
-$config = include __DIR__ . '/config/config.php';
+$config = include __DIR__ . '/../config/config.php';
 if (isset($config['timezone'])) {
     date_default_timezone_set($config['timezone']);
 }
 
-require_once __DIR__ . '/includes/utils.php';
-require_once __DIR__ . '/version.php';
+require_once __DIR__ . '/../includes/utils.php';
+require_once __DIR__ . '/../includes/version.php';
 $dbPath = getDatabasePath();
 $db = new SQLite3($dbPath);
 
@@ -23,7 +23,7 @@ $selected_year = isset($_GET['year']) ? intval($_GET['year']) : date('Y');
 
 // Handle event deletion
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_event_id'])) {
-    require_once __DIR__ . '/includes/csrf.php';
+    require_once __DIR__ . '/../includes/csrf.php';
     verify_csrf();
     
     if (!$is_admin) {
@@ -49,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_event_id'])) {
 
 // Handle event update
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_event_id'])) {
-    require_once __DIR__ . '/includes/csrf.php';
+    require_once __DIR__ . '/../includes/csrf.php';
     verify_csrf();
     
     if (!$is_admin) {
@@ -211,12 +211,12 @@ function calculateDuration($start_date_utc, $end_date_utc) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Events anzeigen</title>
-    <link rel="stylesheet" href="css/view_events.css?v=<?php echo APP_VERSION; ?>">
-    <link rel="stylesheet" href="css/styles.css?v=<?php echo APP_VERSION; ?>">
-    <script src="js/view_events.js"></script>
+    <link rel="stylesheet" href="../css/view_events.css?v=<?php echo APP_VERSION; ?>">
+    <link rel="stylesheet" href="../css/styles.css?v=<?php echo APP_VERSION; ?>">
+    <script src="../js/view_events.js"></script>
 </head>
 <body>
-    <?php include 'includes/header.php'; ?>
+    <?php include __DIR__ . '/../includes/header.php'; ?>
     <main>
         <h1>Dienstbuch</h1>
 
@@ -307,7 +307,7 @@ function calculateDuration($start_date_utc, $end_date_utc) {
                                 'pilot_ids' => $attendee_ids
                             ])); ?>)">Bearbeiten</button>
                             <form method="post" action="view_events.php" class="delete-form" onsubmit="return confirm('Möchten Sie dieses Ereignis wirklich löschen?');">
-                                <?php require_once __DIR__ . '/includes/csrf.php'; csrf_field(); ?>
+                                <?php require_once __DIR__ . '/../includes/csrf.php'; csrf_field(); ?>
                                 <input type="hidden" name="delete_event_id" value="<?= $event['id']; ?>">
                                 <input type="hidden" name="year" value="<?= $selected_year; ?>">
                                 <button type="submit" class="btn-delete">Löschen</button>
@@ -325,7 +325,7 @@ function calculateDuration($start_date_utc, $end_date_utc) {
                 <span class="modal-close">&times;</span>
                 <h2>Ereignis bearbeiten</h2>
                 <form id="editEventForm" method="post" action="view_events.php">
-                    <?php require_once __DIR__ . '/includes/csrf.php'; csrf_field(); ?>
+                    <?php require_once __DIR__ . '/../includes/csrf.php'; csrf_field(); ?>
                     <input type="hidden" name="edit_event_id" id="edit_event_id">
                     <input type="hidden" name="year" value="<?= $selected_year; ?>">
                     
@@ -375,6 +375,6 @@ function calculateDuration($start_date_utc, $end_date_utc) {
         </div>
         <?php endif; ?>
     </main>
-    <?php include 'includes/footer.php'; ?>
+    <?php include __DIR__ . '/../includes/footer.php'; ?>
 </body>
 </html>

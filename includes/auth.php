@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/includes/error_reporting.php';
+require_once __DIR__ . '/error_reporting.php';
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -35,7 +35,7 @@ function isAuthenticated() {
         $token = $_COOKIE['dg_dashboard_token'];
         
         try {
-            require_once __DIR__ . '/includes/utils.php';
+            require_once __DIR__ . '/utils.php';
             $dbPath = getDatabasePath();
             $db = new SQLite3($dbPath);
             $db->enableExceptions(true);
@@ -65,7 +65,7 @@ function isAuthenticated() {
  */
 function requireAuth() {
     if (!isAuthenticated()) {
-        header('Location: index.php');
+        header('Location: ../index.php');
         exit();
     }
 }
@@ -79,7 +79,7 @@ function setLoginCookie() {
     $expires = time() + (30 * 24 * 60 * 60);
     
     try {
-        require_once __DIR__ . '/includes/utils.php';
+        require_once __DIR__ . '/utils.php';
         $dbPath = getDatabasePath();
         $db = new SQLite3($dbPath);
         $db->enableExceptions(true);
@@ -119,7 +119,7 @@ function logout() {
     if (isset($_COOKIE['dg_dashboard_token'])) {
         $token = $_COOKIE['dg_dashboard_token'];
         try {
-            require_once __DIR__ . '/includes/utils.php';
+            require_once __DIR__ . '/utils.php';
             $dbPath = getDatabasePath();
             $db = new SQLite3($dbPath);
             $db->enableExceptions(true);

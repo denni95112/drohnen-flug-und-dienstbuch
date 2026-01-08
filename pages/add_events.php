@@ -1,16 +1,16 @@
 <?php
-require_once __DIR__ . '/includes/error_reporting.php';
-require_once __DIR__ . '/includes/security_headers.php';
-require 'auth.php';
+require_once __DIR__ . '/../includes/error_reporting.php';
+require_once __DIR__ . '/../includes/security_headers.php';
+require __DIR__ . '/../includes/auth.php';
 requireAuth();
 
-$config = include __DIR__ . '/config/config.php';
+$config = include __DIR__ . '/../config/config.php';
 if (isset($config['timezone'])) {
     date_default_timezone_set($config['timezone']);
 }
 
-require_once __DIR__ . '/includes/utils.php';
-require_once __DIR__ . '/version.php';
+require_once __DIR__ . '/../includes/utils.php';
+require_once __DIR__ . '/../includes/version.php';
 
 // Note: POST handling has been moved to api/events.php
 // This page now only renders HTML. Data is fetched via API in add_events.js
@@ -22,12 +22,12 @@ require_once __DIR__ . '/version.php';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dienste hinzufügen</title>
-    <link rel="stylesheet" href="css/add_events.css?v=<?php echo APP_VERSION; ?>">
-    <link rel="stylesheet" href="css/styles.css?v=<?php echo APP_VERSION; ?>">
-    <script src="js/add_events.js"></script>
+    <link rel="stylesheet" href="../css/add_events.css?v=<?php echo APP_VERSION; ?>">
+    <link rel="stylesheet" href="../css/styles.css?v=<?php echo APP_VERSION; ?>">
+    <script src="../js/add_events.js"></script>
 </head>
 <body>
-    <?php include 'includes/header.php'; ?>
+    <?php include __DIR__ . '/../includes/header.php'; ?>
     <main>
         <h1>Dienst hinzufügen</h1>
         <!-- Message containers -->
@@ -35,7 +35,7 @@ require_once __DIR__ . '/version.php';
         <div id="success-container" class="success-message" style="display: none;"></div>
 
         <form id="add-event-form">
-            <?php require_once __DIR__ . '/includes/csrf.php'; csrf_field(); ?>
+            <?php require_once __DIR__ . '/../includes/csrf.php'; csrf_field(); ?>
             <div class="form-group">
                 <label for="event_start_date">Startdatum und -zeit</label>
                 <input type="datetime-local" id="event_start_date" name="event_start_date" required>
@@ -67,6 +67,6 @@ require_once __DIR__ . '/version.php';
             <button type="submit" class="btn-submit">Dienst hinzufügen</button>
         </form>
     </main>
-    <?php include 'includes/footer.php'; ?>
+    <?php include __DIR__ . '/../includes/footer.php'; ?>
 </body>
 </html>

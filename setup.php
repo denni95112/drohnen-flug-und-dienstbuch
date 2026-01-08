@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/includes/error_reporting.php';
-require_once __DIR__ . '/version.php';
+require_once __DIR__ . '/includes/version.php';
 // setup.php
 
 // Detect OS
@@ -213,7 +213,7 @@ PHP;
             file_put_contents($configPath, $config);
 
             // Redirect to setup_database.php
-            header('Location: setup_database.php');
+            header('Location: setup/setup_database.php');
             exit;
         }
     } else {

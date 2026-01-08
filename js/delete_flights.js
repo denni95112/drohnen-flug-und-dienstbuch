@@ -32,7 +32,8 @@ async function fetchFlights() {
     if (loading) loading.style.display = 'block';
     
     try {
-        const response = await fetch('api/flights.php?action=list');
+        const basePath = window.basePath || '';
+        const response = await fetch(`${basePath}api/flights.php?action=list`);
         const data = await response.json();
         
         if (data.success && tbody) {
@@ -78,7 +79,7 @@ async function deleteFlight(flightId) {
     }
     
     try {
-        const response = await fetch(`api/flights.php?id=${flightId}`, {
+        const response = await fetch(`${basePath}api/flights.php?id=${flightId}`, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
