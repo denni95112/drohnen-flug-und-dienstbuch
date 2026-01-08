@@ -197,7 +197,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 formData.append('csrf_token', csrfInput.value);
                 
                 const basePath = window.basePath || '';
-                const response = await fetch(`${basePath}api/admin_api.php`, {
+                const response = await fetch(`${basePath}api/admin.php`, {
                     method: 'POST',
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest'
@@ -310,7 +310,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             try {
                 const basePath = window.basePath || '';
-                const response = await fetch(`${basePath}api/admin_api.php`, {
+                const response = await fetch(`${basePath}api/admin.php`, {
                     method: 'POST',
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest'
