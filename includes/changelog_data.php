@@ -22,7 +22,9 @@ $changelog = [
         'bugfixes' => [
             'Multi-User-Konflikte beim Starten/Beenden von Flügen behoben',
             'Race Conditions bei gleichzeitigen Operationen behoben',
-            'Doppelte Requests werden jetzt verhindert'
+            'Doppelte Requests werden jetzt verhindert',
+            'Default min Flugzeit für neue Piloten auf 45 Minuten gesetzt',
+            'DB Update nach Setup nicht mehr notwendig'
         ],
         'new_features' => [
             'API-Endpunkte für alle Datenoperationen',

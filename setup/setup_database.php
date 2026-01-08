@@ -68,7 +68,7 @@ try {
 $db->exec('CREATE TABLE IF NOT EXISTS pilots (
     id INTEGER PRIMARY KEY,
     name TEXT NOT NULL,
-    minutes_of_flights_needed INTEGER NOT NULL DEFAULT 3,
+    minutes_of_flights_needed INTEGER NOT NULL DEFAULT 45,
     last_flight DATE
 )');
 
@@ -147,6 +147,54 @@ $db->exec('CREATE INDEX IF NOT EXISTS idx_events_start_date ON events(event_star
 $db->exec('CREATE INDEX IF NOT EXISTS idx_pilot_events_event ON pilot_events(event_id)');
 $db->exec('CREATE INDEX IF NOT EXISTS idx_pilot_events_pilot ON pilot_events(pilot_id)');
 $db->exec('CREATE INDEX IF NOT EXISTS idx_rate_limits_ip_action ON rate_limits(ip_address, action)');
+
+// Create schema_migrations table (from migration 001)
+$db->exec('CREATE TABLE IF NOT EXISTS schema_migrations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    migration_name TEXT NOT NULL UNIQUE,
+    executed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    executed_by TEXT,
+    execution_time_ms INTEGER
+)');
+
+$db->exec('CREATE INDEX IF NOT EXISTS idx_schema_migrations_name ON schema_migrations(migration_name)');
+
+// Create request_log table (from migration 002)
+$db->exec('CREATE TABLE IF NOT EXISTS request_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    request_id TEXT NOT NULL UNIQUE,
+    action TEXT NOT NULL,
+    pilot_id INTEGER,
+    flight_id INTEGER,
+    processed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    expires_at DATETIME NOT NULL,
+    response_data TEXT
+)');
+
+$db->exec('CREATE INDEX IF NOT EXISTS idx_request_log_request_id ON request_log(request_id)');
+$db->exec('CREATE INDEX IF NOT EXISTS idx_request_log_expires ON request_log(expires_at)');
+
+// Mark all existing migrations as executed since we've created everything during setup
+// This ensures fresh installs don't show pending migrations
+require_once __DIR__ . '/../includes/migration_runner.php';
+$migrationFiles = getMigrationFiles();
+foreach ($migrationFiles as $migrationFile) {
+    $migrationName = $migrationFile['name'];
+    // Check if already marked as executed
+    $stmt = $db->prepare('SELECT COUNT(*) FROM schema_migrations WHERE migration_name = :name');
+    $stmt->bindValue(':name', $migrationName, SQLITE3_TEXT);
+    $result = $stmt->execute();
+    $count = $result->fetchArray(SQLITE3_NUM)[0];
+    
+    if ($count == 0) {
+        // Mark migration as executed during setup
+        $stmt = $db->prepare('INSERT INTO schema_migrations (migration_name, executed_by, execution_time_ms) VALUES (:name, :by, :time)');
+        $stmt->bindValue(':name', $migrationName, SQLITE3_TEXT);
+        $stmt->bindValue(':by', 'setup', SQLITE3_TEXT);
+        $stmt->bindValue(':time', 0, SQLITE3_INTEGER);
+        $stmt->execute();
+    }
+}
 
 echo "Database setup completed successfully! Redirecting...";
 

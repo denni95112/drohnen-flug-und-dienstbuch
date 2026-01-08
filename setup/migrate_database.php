@@ -168,7 +168,7 @@ try {
                     $db->exec('CREATE TABLE pilots_new (
                         id INTEGER PRIMARY KEY,
                         name TEXT NOT NULL,
-                        minutes_of_flights_needed INTEGER NOT NULL DEFAULT 3,
+                        minutes_of_flights_needed INTEGER NOT NULL DEFAULT 45,
                         last_flight DATE
                     )');
                     
@@ -222,7 +222,7 @@ try {
                 $db->exec('CREATE TABLE pilots_new (
                     id INTEGER PRIMARY KEY,
                     name TEXT NOT NULL,
-                    minutes_of_flights_needed INTEGER NOT NULL DEFAULT 3,
+                    minutes_of_flights_needed INTEGER NOT NULL DEFAULT 45,
                     last_flight DATE
                 )');
                 

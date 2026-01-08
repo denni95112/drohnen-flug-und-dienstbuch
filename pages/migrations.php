@@ -210,6 +210,8 @@ $pendingMigrations = getPendingMigrations($db);
     <script>
         // Get CSRF token
         const csrfToken = '<?= htmlspecialchars($_SESSION['csrf_token'] ?? ''); ?>';
+        // Get base path for API calls
+        const basePath = window.basePath || '';
         
         function runMigration(migrationName) {
             if (!confirm('Möchten Sie dieses Datenbank-Update wirklich ausführen?\n\nHinweis: Ihre Daten bleiben dabei vollständig erhalten.')) {
@@ -220,7 +222,7 @@ $pendingMigrations = getPendingMigrations($db);
             btn.disabled = true;
             btn.textContent = 'Wird aktualisiert...';
             
-            fetch('api/migrations.php?action=run', {
+            fetch(`${basePath}api/migrations.php?action=run`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

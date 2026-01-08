@@ -143,8 +143,10 @@ function runMigration($db, $migrationPath, $migrationName, $executedBy = null) {
     $startTime = microtime(true);
     
     try {
-        // Begin transaction
-        $db->exec('BEGIN TRANSACTION');
+        // Set busy timeout for better lock handling
+        $db->exec('PRAGMA busy_timeout = 10000'); // 10 seconds
+        // Use IMMEDIATE transaction to get exclusive lock for table operations
+        $db->exec('BEGIN IMMEDIATE TRANSACTION');
         
         // Execute migration
         $result = up($db);
