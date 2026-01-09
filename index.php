@@ -101,6 +101,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body>
     <div class="login-container">
+        <?php 
+        $logo_path = $config['logo_path'] ?? '';
+        if (!empty($logo_path) && file_exists(__DIR__ . '/' . $logo_path)): 
+        ?>
+            <img src="<?php echo htmlspecialchars($logo_path, ENT_QUOTES, 'UTF-8'); ?>" alt="Logo" class="login-logo">
+        <?php endif; ?>
         <h1>Login</h1>
         <h3><?php echo $config['navigation_title'] ?></h3>
         <form method="post" action="index.php" class="login-form">
@@ -113,8 +119,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <button type="submit" class="btn-login">Einloggen</button>
         </form>
         <footer>
-            <p>MIT License - Erstellt von Dennis Bögner</p>
+            <p>MIT License - Erstellt von <a href="https://github.com/denni95112">Dennis Bögner</a></p>
             <p>Version <?php echo APP_VERSION; ?></p>
+            <p><a href="https://github.com/denni95112/drohnen-flug-und-dienstbuch">Visit GitHub</a></p>
         </footer>
     </div>
 </body>
