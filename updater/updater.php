@@ -247,6 +247,14 @@ class Updater {
         $extractPath = null;
         
         try {
+            // Check requirements before starting
+            $requirements = $this->checkRequirements();
+            if (!$requirements['available']) {
+                $errorMsg = $this->getRequirementErrorMessage($requirements['missing']);
+                $this->log('Requirements check failed', 'ERROR', ['missing' => $requirements['missing']]);
+                throw new Exception($errorMsg);
+            }
+            
             // Validate version
             if (!$this->validateVersion($version)) {
                 throw new Exception('Invalid version format: ' . $version);
@@ -504,6 +512,192 @@ class Updater {
     }
     
     /**
+     * Check if required PHP extensions are available
+     * @return array Array with 'available' => bool and 'missing' => array of missing extensions
+     */
+    public function checkRequirements(): array {
+        $required = ['zip'];
+        $missing = [];
+        
+        foreach ($required as $ext) {
+            // Check if extension is loaded
+            if (!extension_loaded($ext)) {
+                $missing[] = $ext;
+            }
+        }
+        
+        return [
+            'available' => empty($missing),
+            'missing' => $missing
+        ];
+    }
+    
+    /**
+     * Get detailed extension status
+     * @return array Extension status information
+     */
+    public function getExtensionStatus(): array {
+        $status = [];
+        $extensions = ['zip'];
+        
+        foreach ($extensions as $ext) {
+            // Check for zip.so files
+            $zipSoFiles = [];
+            if (function_exists('shell_exec')) {
+                $result = @shell_exec('find /usr -name "zip.so" 2>/dev/null');
+                if ($result) {
+                    $zipSoFiles = array_filter(array_map('trim', explode("\n", $result)));
+                }
+            }
+            
+            // Detect PHP API version from zip.so path
+            $apiVersion = null;
+            $wrongVersion = false;
+            foreach ($zipSoFiles as $file) {
+                if (preg_match('/\/(\d{8})\/zip\.so$/', $file, $matches)) {
+                    $apiVersion = $matches[1];
+                    // Check if this matches current PHP API version
+                    $expectedApi = $this->getPhpApiVersion();
+                    if ($apiVersion !== $expectedApi) {
+                        $wrongVersion = true;
+                    }
+                    break;
+                }
+            }
+            
+            $status[$ext] = [
+                'loaded' => extension_loaded($ext),
+                'available' => function_exists('zip_open') || class_exists('ZipArchive'),
+                'class_exists' => class_exists('ZipArchive'),
+                'zip_so_files' => $zipSoFiles,
+                'api_version' => $apiVersion,
+                'wrong_version' => $wrongVersion
+            ];
+        }
+        
+        return $status;
+    }
+    
+    /**
+     * Get PHP version for package installation
+     * @return string PHP version (e.g., '8.3', '8.2', '7.4')
+     */
+    private function getPhpVersionForPackage(): string {
+        $version = PHP_VERSION;
+        // Extract major.minor version (e.g., "8.3" from "8.3.0")
+        if (preg_match('/^(\d+)\.(\d+)/', $version, $matches)) {
+            return $matches[1] . '.' . $matches[2];
+        }
+        return '8.3'; // Default fallback
+    }
+    
+    /**
+     * Get PHP version from API version number
+     * @param string $apiVersion API version (e.g., "20190902")
+     * @return string PHP version string
+     */
+    private function getPhpVersionFromApi(string $apiVersion): string {
+        $apiMap = [
+            '20190902' => '7.4',
+            '20200930' => '8.0',
+            '20210902' => '8.1',
+            '20220829' => '8.2',
+            '20230831' => '8.3'
+        ];
+        return $apiMap[$apiVersion] ?? 'unknown';
+    }
+    
+    /**
+     * Get user-friendly error message for missing requirements
+     * @param array $missing Missing extensions
+     * @return string Error message with installation instructions
+     */
+    private function getRequirementErrorMessage(array $missing): string {
+        $messages = [];
+        $phpVersion = $this->getPhpVersionForPackage();
+        $phpMajorMinor = explode('.', $phpVersion)[0] . '.' . explode('.', $phpVersion)[1];
+        $phpMajorMinorNoDot = str_replace('.', '', $phpMajorMinor);
+        
+        foreach ($missing as $ext) {
+            switch ($ext) {
+                case 'zip':
+                    $extStatus = $this->getExtensionStatus();
+                    $zipStatus = $extStatus['zip'] ?? [];
+                    
+                    // Check if extension file exists
+                    $iniPath = php_ini_loaded_file();
+                    $extensionDir = ini_get('extension_dir');
+                    $zipSoFiles = $zipStatus['zip_so_files'] ?? [];
+                    $wrongVersion = $zipStatus['wrong_version'] ?? false;
+                    $apiVersion = $zipStatus['api_version'] ?? null;
+                    $expectedApi = $this->getPhpApiVersion();
+                    
+                    $diagnosis = "Diagnosis:\n" .
+                        "- PHP Version: " . PHP_VERSION . "\n" .
+                        "- Extension loaded: " . ($zipStatus['loaded'] ? 'Yes' : 'No') . "\n" .
+                        "- ZipArchive class: " . ($zipStatus['class_exists'] ? 'Available' : 'Not available') . "\n" .
+                        "- php.ini: " . ($iniPath ?: 'Not found') . "\n" .
+                        "- Extension directory: " . ($extensionDir ?: 'Default');
+                    
+                    if (!empty($zipSoFiles)) {
+                        $diagnosis .= "\n- zip.so files found: " . implode(', ', $zipSoFiles);
+                        if ($wrongVersion && $apiVersion) {
+                            $diagnosis .= "\n- ⚠️ WARNING: Found zip.so for API version " . $apiVersion . " but PHP " . PHP_VERSION . " needs " . $expectedApi;
+                            $diagnosis .= "\n  This means you have the extension for a different PHP version!";
+                        }
+                    }
+                    
+                    $messages[] = "PHP 'zip' extension is not loaded.\n\n" . $diagnosis . "\n\n" .
+                        "⚠️ Installation Methods:\n\n";
+                    
+                    if ($wrongVersion && $apiVersion) {
+                        $messages[] .= "⚠️ PROBLEM: You have zip.so for PHP " . $this->getPhpVersionFromApi($apiVersion) . " (API " . $apiVersion . ") but are running PHP " . PHP_VERSION . " (needs API " . $expectedApi . ")!\n\n" .
+                            "Solution:\n" .
+                            "  1. Reinstall php-zip to get the correct version:\n" .
+                            "     sudo apt-get remove php-zip\n" .
+                            "     sudo apt-get install php-zip\n" .
+                            "  2. Verify the correct zip.so exists:\n" .
+                            "     find /usr/lib/php/" . $expectedApi . "/zip.so\n" .
+                            "     (Should show: /usr/lib/php/" . $expectedApi . "/zip.so)\n" .
+                            "  3. If the correct zip.so exists, enable it:\n" .
+                            "     echo 'extension=zip' | sudo tee /etc/php/" . $phpMajorMinor . "/fpm/conf.d/20-zip.ini\n" .
+                            "  4. Verify extension_dir in php.ini:\n" .
+                            "     php -i | grep extension_dir\n" .
+                            "     (Should point to: /usr/lib/php/" . $expectedApi . ")\n" .
+                            "  5. Restart PHP-FPM:\n" .
+                            "     sudo systemctl restart php" . $phpMajorMinor . "-fpm\n" .
+                            "  6. Verify it's loaded:\n" .
+                            "     php -m | grep zip\n\n";
+                    } else {
+                        $messages[] .= "Method 1 - Install/reinstall package:\n" .
+                            "  sudo apt-get install php-zip\n" .
+                            "  (If already installed, try: sudo apt-get install --reinstall php-zip)\n" .
+                            "  Then verify: find /usr/lib/php/" . $expectedApi . "/zip.so\n\n" .
+                            "Method 2 - Manual enablement (if zip.so exists but not enabled):\n" .
+                            "  1. Check if zip.so exists: find /usr/lib/php/" . $expectedApi . "/zip.so\n" .
+                            "  2. Create enablement file:\n" .
+                            "     echo 'extension=zip' | sudo tee /etc/php/" . $phpMajorMinor . "/fpm/conf.d/20-zip.ini\n" .
+                            "  3. Verify extension_dir: php -i | grep extension_dir\n" .
+                            "     (Should point to: /usr/lib/php/" . $expectedApi . ")\n" .
+                            "  4. Restart PHP-FPM: sudo systemctl restart php" . $phpMajorMinor . "-fpm\n\n";
+                    }
+                    
+                    $messages[] .= "For other systems:\n" .
+                        "- CentOS/RHEL: sudo yum install php-zip (then restart php-fpm)\n" .
+                        "- Windows: Uncomment 'extension=zip' in php.ini and restart web server\n\n" .
+                        "To verify:\n" .
+                        "  php -m | grep zip (should show 'zip')\n" .
+                        "  php -i | grep zip (should show zip extension info)";
+                    break;
+                default:
+                    $messages[] = "PHP extension '{$ext}' is not installed.";
+            }
+        }
+        
+        return implode("\n\n", $messages);
+    }
+    
+    /**
      * Extract ZIP file
      * @param string $zipPath Path to ZIP file
      * @param string $extractPath Path to extract to
@@ -511,7 +705,14 @@ class Updater {
      */
     private function extractRelease(string $zipPath, string $extractPath): bool {
         if (!class_exists('ZipArchive')) {
-            throw new Exception('ZipArchive class not available');
+            $requirements = $this->checkRequirements();
+            $errorMsg = 'ZipArchive class not available. ';
+            if (!empty($requirements['missing'])) {
+                $errorMsg .= $this->getRequirementErrorMessage($requirements['missing']);
+            } else {
+                $errorMsg .= 'Please install the PHP zip extension.';
+            }
+            throw new Exception($errorMsg);
         }
         
         $zip = new ZipArchive();

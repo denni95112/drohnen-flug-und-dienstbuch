@@ -233,7 +233,19 @@
                 }, 1000);
             } else {
                 setProgress(0, 'Update fehlgeschlagen');
-                showError(data.error || 'Update fehlgeschlagen');
+                
+                // Format error message - preserve line breaks for better readability
+                let errorMsg = data.error || 'Update fehlgeschlagen';
+                if (data.missing_extensions && data.missing_extensions.length > 0) {
+                    errorMsg = '<strong>Fehlende PHP-Erweiterungen:</strong> ' + data.missing_extensions.join(', ') + '<br><br>' + errorMsg;
+                }
+                
+                // Show error with better formatting
+                const errorContainer = document.getElementById('error-message-container');
+                if (errorContainer) {
+                    errorContainer.innerHTML = errorMsg.replace(/\n/g, '<br>');
+                    errorContainer.style.display = 'block';
+                }
                 
                 if (data.rollback) {
                     showError('Das Update wurde automatisch zurückgesetzt. Bitte versuchen Sie es später erneut.');
@@ -247,7 +259,7 @@
                     if (updateAvailableSection) {
                         updateAvailableSection.style.display = 'block';
                     }
-                }, 3000);
+                }, 5000);
             }
         })
         .catch(error => {
@@ -305,7 +317,8 @@
     function showError(message) {
         hideMessages();
         if (errorContainer) {
-            errorContainer.textContent = message;
+            // Allow HTML in error messages for better formatting
+            errorContainer.innerHTML = message.replace(/\n/g, '<br>');
             errorContainer.style.display = 'block';
         }
     }

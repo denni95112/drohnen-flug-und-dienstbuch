@@ -30,6 +30,14 @@ require_once __DIR__ . '/updater.php';
 $projectRoot = realpath(dirname(__DIR__)) ?: dirname(__DIR__);
 $updater = new Updater($projectRoot);
 
+// Check requirements
+$requirements = $updater->checkRequirements();
+$requirementsError = null;
+if (!$requirements['available']) {
+    $requirementsError = "Warnung: Erforderliche PHP-Erweiterungen fehlen: " . implode(', ', $requirements['missing']) . 
+                        ". Bitte installieren Sie die fehlenden Erweiterungen, bevor Sie ein Update durchführen.";
+}
+
 // Get current version info
 $currentVersion = APP_VERSION;
 $updateInfo = null;
@@ -63,6 +71,99 @@ try {
         
         <!-- Success message container -->
         <div id="success-message-container" class="success-message" style="display: none;"></div>
+        
+        <!-- Requirements warning -->
+        <?php if ($requirementsError): ?>
+            <div class="error-message" style="display: block; margin-bottom: 1.5rem;">
+                <strong>⚠️ Systemanforderungen:</strong><br>
+                <?php echo nl2br(htmlspecialchars($requirementsError, ENT_QUOTES, 'UTF-8')); ?>
+                <div style="margin-top: 1rem; padding: 1rem; background: #fff3cd; border-radius: 8px; border-left: 4px solid #ffc107;">
+                    <strong>⚠️ PHP zip-Erweiterung ist nicht aktiviert!</strong><br><br>
+                    <strong>Ihre PHP-Version:</strong> <?php echo PHP_VERSION; ?><br>
+                    <strong>php.ini:</strong> <?php echo php_ini_loaded_file() ?: 'Nicht gefunden'; ?><br>
+                    <strong>Extension-Verzeichnis:</strong> <?php echo ini_get('extension_dir') ?: 'Standard'; ?><br><br>
+                    <strong>Installationsmethoden (in dieser Reihenfolge versuchen):</strong><br><br>
+                    <strong>Methode 1 - Paket installieren:</strong><br>
+                    <code>sudo apt-get install php-zip</code><br>
+                    Dann prüfen, ob die Extension-Datei existiert:<br>
+                    <code>find /usr -name 'zip.so' 2>/dev/null</code><br><br>
+                    <strong>Methode 2 - Manuelle Aktivierung (falls zip.so existiert, aber nicht geladen wird):</strong><br>
+                    <?php 
+                    $phpVersion = explode('.', PHP_VERSION)[0] . '.' . explode('.', PHP_VERSION)[1];
+                    $zipSoPath = shell_exec('find /usr -name "zip.so" 2>/dev/null | head -1');
+                    $zipSoExists = !empty(trim($zipSoPath));
+                    $zipSoPath = trim($zipSoPath);
+                    
+                    // Check API version
+                    $wrongVersion = false;
+                    $foundApiVersion = null;
+                    if ($zipSoExists && preg_match('/\/(\d{8})\/zip\.so$/', $zipSoPath, $matches)) {
+                        $foundApiVersion = $matches[1];
+                        // PHP 8.2 should have 20220829
+                        $expectedApi = version_compare(PHP_VERSION, '8.3', '>=') ? '20230831' : 
+                                      (version_compare(PHP_VERSION, '8.2', '>=') ? '20220829' : 
+                                      (version_compare(PHP_VERSION, '8.1', '>=') ? '20210902' : 
+                                      (version_compare(PHP_VERSION, '8.0', '>=') ? '20200930' : '20190902')));
+                        $wrongVersion = ($foundApiVersion !== $expectedApi);
+                    }
+                    ?>
+                    <?php if ($zipSoExists): ?>
+                        <div style="background: <?php echo $wrongVersion ? '#f8d7da' : '#d1ecf1'; ?>; padding: 0.5rem; border-radius: 4px; margin: 0.5rem 0; border-left: 4px solid <?php echo $wrongVersion ? '#dc3545' : '#0c5460'; ?>;">
+                            <strong><?php echo $wrongVersion ? '⚠️' : '✓'; ?> zip.so gefunden:</strong> <?php echo htmlspecialchars($zipSoPath); ?><br>
+                            <?php if ($wrongVersion): ?>
+                                <strong>PROBLEM:</strong> Diese zip.so ist für PHP <?php 
+                                    $apiMap = ['20190902' => '7.4', '20200930' => '8.0', '20210902' => '8.1', '20220829' => '8.2', '20230831' => '8.3'];
+                                    echo $apiMap[$foundApiVersion] ?? 'unbekannt';
+                                ?> (API <?php echo $foundApiVersion; ?>), aber Sie verwenden PHP <?php echo PHP_VERSION; ?>!<br>
+                                Sie benötigen zip.so für PHP <?php echo $phpVersion; ?> (API <?php echo $expectedApi; ?>).
+                            <?php else: ?>
+                                Die Extension-Datei existiert, muss aber aktiviert werden!
+                            <?php endif; ?>
+                        </div>
+                    <?php endif; ?>
+                    <?php if ($wrongVersion): ?>
+                        <div style="background: #fff3cd; padding: 1rem; border-radius: 4px; margin: 0.5rem 0; border-left: 4px solid #ffc107;">
+                            <strong>⚠️ PROBLEM: zip.so ist für eine andere PHP-Version!</strong><br><br>
+                            <strong>Lösung:</strong><br>
+                            <ol style="margin: 0.5rem 0; padding-left: 1.5rem;">
+                                <li>php-zip neu installieren (um die richtige Version zu bekommen):<br>
+                                    <code>sudo apt-get remove php-zip</code><br>
+                                    <code>sudo apt-get install php-zip</code></li>
+                                <li>Prüfen, ob richtige zip.so existiert:<br>
+                                    <code>find /usr/lib/php/<?php echo $expectedApi; ?>/zip.so</code><br>
+                                    (Sollte zeigen: /usr/lib/php/<?php echo $expectedApi; ?>/zip.so)</li>
+                                <li>Falls vorhanden, aktivieren:<br>
+                                    <code>echo 'extension=zip' | sudo tee /etc/php/<?php echo $phpVersion; ?>/fpm/conf.d/20-zip.ini</code></li>
+                                <li>extension_dir prüfen:<br>
+                                    <code>php -i | grep extension_dir</code><br>
+                                    (Sollte zeigen: /usr/lib/php/<?php echo $expectedApi; ?>)</li>
+                                <li>PHP-FPM neu starten:<br>
+                                    <code>sudo systemctl restart php<?php echo $phpVersion; ?>-fpm</code></li>
+                                <li>Überprüfen:<br>
+                                    <code>php -m | grep zip</code> (sollte "zip" anzeigen)</li>
+                            </ol>
+                        </div>
+                    <?php else: ?>
+                        <ol style="margin: 0.5rem 0; padding-left: 1.5rem;">
+                            <li>Extension-Datei prüfen: <code>find /usr -name 'zip.so' 2>/dev/null</code></li>
+                            <li>PHP-FPM conf.d Verzeichnis finden: <code>ls /etc/php/<?php echo $phpVersion; ?>/fpm/conf.d/</code></li>
+                            <li>Extension aktivieren: <code>echo 'extension=zip' | sudo tee /etc/php/<?php echo $phpVersion; ?>/fpm/conf.d/20-zip.ini</code></li>
+                            <li>PHP-FPM neu starten: <code>sudo systemctl restart php<?php echo $phpVersion; ?>-fpm</code></li>
+                        </ol>
+                    <?php endif; ?>
+                    <strong>Hinweis:</strong> Falls die Extension immer noch nicht geladen wird, prüfen Sie:<br>
+                    - <code>php --ini</code> (zeigt alle geladenen ini-Dateien)<br>
+                    - <code>php -i | grep extension_dir</code> (zeigt Extension-Verzeichnis)<br>
+                    - Die extension_dir sollte auf das Verzeichnis zeigen, in dem zip.so liegt
+                    <strong>PHP-FPM neu starten:</strong><br>
+                    <code>sudo systemctl restart php<?php echo explode('.', PHP_VERSION)[0] . '.' . explode('.', PHP_VERSION)[1]; ?>-fpm</code><br>
+                    (oder: <code>sudo systemctl restart php-fpm</code>)<br><br>
+                    <strong>Installation überprüfen:</strong><br>
+                    <code>php -m | grep zip</code> (sollte "zip" anzeigen)<br>
+                    <code>php -i | grep zip</code> (zeigt zip Extension-Info)
+                </div>
+            </div>
+        <?php endif; ?>
         
         <div class="updater-container">
             <!-- Current Version Section -->

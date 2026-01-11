@@ -149,6 +149,20 @@ try {
             $timestamp = date('Y-m-d H:i:s');
             @file_put_contents($logFile, "[$timestamp] [INFO] API: Update requested for version $version\n", FILE_APPEND);
             
+            // Check requirements first
+            $requirements = $updater->checkRequirements();
+            if (!$requirements['available']) {
+                $errorMsg = "Update cannot proceed. Missing required PHP extensions: " . implode(', ', $requirements['missing']) . 
+                           ". Please install the required extensions and restart your web server.";
+                http_response_code(500);
+                echo json_encode([
+                    'success' => false,
+                    'error' => $errorMsg,
+                    'missing_extensions' => $requirements['missing']
+                ]);
+                exit();
+            }
+            
             // Perform update
             $result = $updater->performUpdate($version);
             
