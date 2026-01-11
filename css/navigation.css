@@ -83,12 +83,13 @@ nav {
     padding: 0.5rem 0.75rem;
     border-radius: 8px;
     text-decoration: none;
-    font-size: 0.875rem;
+    font-size: 0.675rem;
     font-weight: 600;
     transition: all 0.3s ease;
     box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
     position: relative;
     animation: pulse 2s infinite;
+    max-height: 30px;
 }
 
 .version-notification:hover {

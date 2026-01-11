@@ -1,18 +1,19 @@
 <?php
-$baseDir = dirname(__DIR__);
-require_once $baseDir . '/includes/error_reporting.php';
-require_once $baseDir . '/includes/security_headers.php';
-require $baseDir . '/includes/auth.php';
+// Get base directory and normalize path
+$baseDir = realpath(dirname(__DIR__)) ?: dirname(__DIR__);
+require_once $baseDir . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR . 'error_reporting.php';
+require_once $baseDir . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR . 'security_headers.php';
+require $baseDir . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR . 'auth.php';
 requireAuth();
 
-$config = include $baseDir . '/config/config.php';
+$config = include $baseDir . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'config.php';
 if (isset($config['timezone'])) {
     date_default_timezone_set($config['timezone']);
 }
 
-require_once $baseDir . '/includes/utils.php';
-require_once $baseDir . '/includes/version.php';
-require_once $baseDir . '/includes/csrf.php';
+require_once $baseDir . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR . 'utils.php';
+require_once $baseDir . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR . 'version.php';
+require_once $baseDir . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR . 'csrf.php';
 
 // Calculate base path for assets
 $basePath = '../';
@@ -26,7 +27,7 @@ if (!isAdmin()) {
 // Load updater class
 require_once __DIR__ . '/updater.php';
 
-$projectRoot = dirname(__DIR__);
+$projectRoot = realpath(dirname(__DIR__)) ?: dirname(__DIR__);
 $updater = new Updater($projectRoot);
 
 // Get current version info
@@ -53,7 +54,7 @@ try {
     <link rel="manifest" href="<?php echo $basePath; ?>manifest.json">
 </head>
 <body>
-    <?php include $baseDir . '/includes/header.php'; ?>
+    <?php include $baseDir . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR . 'header.php'; ?>
     <main>
         <h1>Update Tool</h1>
         
@@ -143,7 +144,7 @@ try {
         </div>
     </main>
     
-    <?php include $baseDir . '/includes/footer.php'; ?>
+    <?php include $baseDir . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR . 'footer.php'; ?>
     
     <?php
     // Calculate base path for assets

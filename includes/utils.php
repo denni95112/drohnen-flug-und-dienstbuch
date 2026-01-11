@@ -181,10 +181,34 @@ function checkGitHubVersion(string $currentVersion, string $owner, string $repo)
     $cacheFile = __DIR__ . '/../logs/github_version_cache.json';
     $cacheTime = 3600;
     
+    // Check if debug mode is enabled (for SSL verification)
+    $configFile = __DIR__ . '/../config/config.php';
+    $debugMode = false;
+    if (file_exists($configFile)) {
+        $config = @include $configFile;
+        if (is_array($config) && isset($config['debugMode'])) {
+            $debugMode = $config['debugMode'] === true;
+        }
+    }
+    
+    // Check cache, but validate that cached data is still relevant
     if (file_exists($cacheFile)) {
         $cache = json_decode(file_get_contents($cacheFile), true);
         if ($cache && isset($cache['timestamp']) && (time() - $cache['timestamp']) < $cacheTime) {
-            return $cache['data'];
+            // Validate cached data: if current version changed, invalidate cache
+            if (isset($cache['data']['version']) && isset($cache['data']['available'])) {
+                // Re-validate the availability based on current version
+                $cachedLatestVersion = $cache['data']['version'];
+                $cachedAvailable = version_compare($cachedLatestVersion, $currentVersion, '>');
+                // If availability changed, refresh cache
+                if ($cachedAvailable !== $cache['data']['available']) {
+                    // Cache is stale, continue to fetch fresh data
+                } else {
+                    return $cache['data'];
+                }
+            } else {
+                return $cache['data'];
+            }
         }
     }
     
@@ -193,54 +217,69 @@ function checkGitHubVersion(string $currentVersion, string $owner, string $repo)
     $url = "https://api.github.com/repos/{$owner}/{$repo}/releases";
     $response = null;
     $httpCode = 0;
+    $curlError = null;
+    $curlErrno = null;
     
     if (function_exists('curl_init')) {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
             'User-Agent: Drohnen-Flug-und-Dienstbuch',
             'Accept: application/vnd.github.v3+json'
         ]);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 5);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
         
-        // Try to use system CA bundle if available
-        $caBundlePaths = [
-            __DIR__ . '/../cacert.pem',
-            ini_get('curl.cainfo'),
-            getenv('SSL_CERT_FILE')
-        ];
-        foreach ($caBundlePaths as $caPath) {
-            if ($caPath && file_exists($caPath)) {
-                curl_setopt($ch, CURLOPT_CAINFO, $caPath);
-                break;
+        // Use debug mode setting for SSL verification
+        if ($debugMode) {
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+        } else {
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+            
+            // Try to use system CA bundle if available
+            $caBundlePaths = [
+                __DIR__ . '/../cacert.pem',
+                ini_get('curl.cainfo'),
+                getenv('SSL_CERT_FILE')
+            ];
+            foreach ($caBundlePaths as $caPath) {
+                if ($caPath && file_exists($caPath)) {
+                    curl_setopt($ch, CURLOPT_CAINFO, $caPath);
+                    break;
+                }
             }
         }
         
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $curlError = curl_error($ch);
+        $curlErrno = curl_errno($ch);
         curl_close($ch);
         
-        // If SSL verification failed, try again without verification (less secure but works)
-        if ($httpCode === 0 && strpos($curlError, 'SSL') !== false) {
+        // If SSL verification failed and not in debug mode, try again without verification
+        if (!$debugMode && ($httpCode === 0 || $httpCode !== 200) && 
+            ($curlErrno === CURLE_SSL_CACERT || $curlErrno === CURLE_SSL_PEER_CERTIFICATE || 
+             strpos($curlError, 'SSL') !== false || strpos($curlError, 'certificate') !== false)) {
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, $url);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
             curl_setopt($ch, CURLOPT_HTTPHEADER, [
                 'User-Agent: Drohnen-Flug-und-Dienstbuch',
                 'Accept: application/vnd.github.v3+json'
             ]);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 5);
-            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
             curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
             
             $response = curl_exec($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curlError = curl_error($ch);
             curl_close($ch);
         }
     } elseif (ini_get('allow_url_fopen')) {
@@ -251,7 +290,11 @@ function checkGitHubVersion(string $currentVersion, string $owner, string $repo)
                     'User-Agent: Drohnen-Flug-und-Dienstbuch',
                     'Accept: application/vnd.github.v3+json'
                 ],
-                'timeout' => 5
+                'timeout' => 10
+            ],
+            'ssl' => [
+                'verify_peer' => !$debugMode,
+                'verify_peer_name' => !$debugMode
             ]
         ]);
         
@@ -262,6 +305,7 @@ function checkGitHubVersion(string $currentVersion, string $owner, string $repo)
     }
     
     if ($httpCode !== 200 || !$response) {
+        // On error, return cached data if available (even if expired)
         if (file_exists($cacheFile)) {
             $cache = json_decode(file_get_contents($cacheFile), true);
             if ($cache && isset($cache['data'])) {
@@ -273,6 +317,13 @@ function checkGitHubVersion(string $currentVersion, string $owner, string $repo)
     
     $releases = json_decode($response, true);
     if (!is_array($releases) || empty($releases)) {
+        // On parse error, return cached data if available
+        if (file_exists($cacheFile)) {
+            $cache = json_decode(file_get_contents($cacheFile), true);
+            if ($cache && isset($cache['data'])) {
+                return $cache['data'];
+            }
+        }
         return null;
     }
     
@@ -293,6 +344,13 @@ function checkGitHubVersion(string $currentVersion, string $owner, string $repo)
     }
     
     if (!$latestRelease || !isset($latestRelease['tag_name'])) {
+        // No valid release found, return cached data if available
+        if (file_exists($cacheFile)) {
+            $cache = json_decode(file_get_contents($cacheFile), true);
+            if ($cache && isset($cache['data'])) {
+                return $cache['data'];
+            }
+        }
         return null;
     }
     
