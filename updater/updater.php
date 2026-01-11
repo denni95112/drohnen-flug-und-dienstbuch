@@ -78,33 +78,39 @@ class Updater {
      */
     public function checkForUpdates(): array {
         try {
-            // Use existing checkGitHubVersion if available
-            if (function_exists('checkGitHubVersion')) {
-                $result = checkGitHubVersion($this->currentVersion, $this->githubOwner, $this->githubRepo);
-                if ($result) {
-                    return [
-                        'available' => $result['available'],
-                        'current_version' => $this->currentVersion,
-                        'latest_version' => $result['version'],
-                        'release_url' => $result['url'],
-                        'release_notes' => '',
-                        'error' => null
-                    ];
-                }
-            }
-            
-            // Fallback to direct API call
+            // Always use direct API call to bypass cache and get fresh data
+            // (checkGitHubVersion has 1-hour cache which might be stale)
             $url = "https://api.github.com/repos/{$this->githubOwner}/{$this->githubRepo}/releases";
             $response = $this->fetchUrl($url);
             
             if (!$response) {
+                // Get error details
+                $errorMsg = 'Failed to fetch releases from GitHub';
+                if (function_exists('curl_init')) {
+                    $ch = curl_init();
+                    curl_setopt($ch, CURLOPT_URL, $url);
+                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                    curl_setopt($ch, CURLOPT_NOBODY, true);
+                    curl_exec($ch);
+                    $curlError = curl_error($ch);
+                    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                    curl_close($ch);
+                    if ($curlError) {
+                        $errorMsg .= ' (cURL error: ' . $curlError . ')';
+                    } elseif ($httpCode && $httpCode !== 200) {
+                        $errorMsg .= ' (HTTP ' . $httpCode . ')';
+                    }
+                } elseif (!ini_get('allow_url_fopen')) {
+                    $errorMsg .= ' (cURL not available and allow_url_fopen is disabled)';
+                }
+                
                 return [
                     'available' => false,
                     'current_version' => $this->currentVersion,
                     'latest_version' => $this->currentVersion,
                     'release_url' => '',
                     'release_notes' => '',
-                    'error' => 'Failed to fetch releases from GitHub'
+                    'error' => $errorMsg
                 ];
             }
             
@@ -595,7 +601,30 @@ class Updater {
             
             $response = curl_exec($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curlError = curl_error($ch);
             curl_close($ch);
+            
+            if ($curlError) {
+                // If SSL verification failed, try without verification (less secure but works)
+                if (strpos($curlError, 'SSL') !== false || strpos($curlError, 'certificate') !== false) {
+                    $ch = curl_init();
+                    curl_setopt($ch, CURLOPT_URL, $url);
+                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+                    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                        'User-Agent: Drohnen-Flug-und-Dienstbuch-Updater',
+                        'Accept: application/vnd.github.v3+json'
+                    ]);
+                    curl_setopt($ch, CURLOPT_TIMEOUT, 300);
+                    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 30);
+                    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+                    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+                    
+                    $response = curl_exec($ch);
+                    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                    curl_close($ch);
+                }
+            }
             
             if ($httpCode === 200 && $response !== false) {
                 return $response;
@@ -609,6 +638,31 @@ class Updater {
                         'Accept: application/vnd.github.v3+json'
                     ],
                     'timeout' => 300
+                ],
+                'ssl' => [
+                    'verify_peer' => true,
+                    'verify_peer_name' => true
+                ]
+            ]);
+            
+            $response = @file_get_contents($url, false, $context);
+            if ($response !== false) {
+                return $response;
+            }
+            
+            // Try without SSL verification if first attempt failed
+            $context = stream_context_create([
+                'http' => [
+                    'method' => 'GET',
+                    'header' => [
+                        'User-Agent: Drohnen-Flug-und-Dienstbuch-Updater',
+                        'Accept: application/vnd.github.v3+json'
+                    ],
+                    'timeout' => 300
+                ],
+                'ssl' => [
+                    'verify_peer' => false,
+                    'verify_peer_name' => false
                 ]
             ]);
             

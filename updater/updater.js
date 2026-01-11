@@ -98,6 +98,9 @@
     function handleUpdateCheckResult(result) {
         hideAllSections();
         
+        // Debug: log the result
+        console.log('Update check result:', result);
+        
         if (result.error) {
             showError(result.error);
             return;
