@@ -41,6 +41,7 @@ $changelog = [
             'API-Dokumentation im README',
             'Bearbeiten von Flugstandorten als Admin',
             'Bearbeiten von Flügen als Admin',
+            'Update Tool für Administratoren',
         ],
         'migration_notes' => [
             'Führen Sie die Migrationen aus migrations.php aus',

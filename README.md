@@ -16,6 +16,7 @@ Eine Progressive Web App (PWA) zur Verwaltung von Drohnen-Flugprotokollen, Pilot
 - 👥 **Multi-User-Support**: Konfliktfreie Nutzung durch mehrere Benutzer gleichzeitig
 - 🔁 **Request-Deduplizierung**: Verhindert doppelte Operationen
 - 📦 **Datenbank-Migrationen**: Versionsgesteuerte Schema-Updates
+- 🚀 **Automatisches Update-System**: Ein-Klick-Updates direkt über die Weboberfläche
 
 ## Screenshots 
 
@@ -194,6 +195,70 @@ function down($db) {
 
 Wenn ausstehende Migrationen vorhanden sind, wird ein Benachrichtigungssymbol in der Kopfzeile angezeigt, das zur Migrations-Seite führt.
 
+## Automatisches Update-System
+
+Die Anwendung verfügt über ein integriertes Update-System, das es Administratoren ermöglicht, die Anwendung direkt über die Weboberfläche zu aktualisieren.
+
+### Update-Benachrichtigung
+
+- Wenn eine neue Version verfügbar ist, wird ein Benachrichtigungssymbol in der Kopfzeile angezeigt
+- **Für Administratoren**: Klicken auf die Benachrichtigung führt direkt zum Update-Tool
+- **Für normale Benutzer**: Klicken auf die Benachrichtigung führt zur GitHub-Release-Seite
+
+### Update-Tool verwenden
+
+1. **Zugriff**: Navigieren Sie zu `Verwaltung > Update Tool` (nur für Administratoren)
+2. **Update prüfen**: Klicken Sie auf "Auf Updates prüfen", um nach verfügbaren Updates zu suchen
+3. **Update installieren**: Wenn ein Update verfügbar ist, klicken Sie auf "Jetzt aktualisieren"
+4. **Fortschritt**: Der Update-Fortschritt wird in Echtzeit angezeigt
+
+### Wie funktioniert das Update?
+
+Das Update-System:
+- **Lädt automatisch** die neueste Release-Version von GitHub herunter
+- **Erstellt automatisch ein Backup** aller geschützten Dateien vor dem Update
+- **Schützt wichtige Dateien** während des Updates:
+  - `config/config.php` (Konfiguration)
+  - `config/` Verzeichnis
+  - `uploads/` Verzeichnis (hochgeladene Dateien)
+  - `logs/` Verzeichnis
+  - Datenbankdateien (`.sqlite`, `.sqlite3`, `.db`)
+- **Kopiert neue/aktualisierte Dateien** aus dem Release
+- **Entfernt veraltete Dateien**, die nicht mehr im Release enthalten sind
+- **Stellt geschützte Dateien wieder her** nach dem Update
+- **Führt automatisch ein Rollback durch**, falls ein Fehler auftritt
+
+### Update-Anforderungen
+
+- **Admin-Zugriff**: Nur Administratoren können Updates durchführen
+- **Schreibrechte**: Der Webserver benötigt Schreibrechte auf das Projektverzeichnis
+- **PHP-ZipArchive**: Die PHP-ZipArchive-Erweiterung muss installiert sein
+
+### Update-Logs
+
+Update-Protokolle werden in `logs/updater.log` gespeichert und enthalten:
+- Update-Prüfungen
+- Heruntergeladene Versionen
+- Update-Fortschritt
+- Erfolgreiche Updates
+- Fehler und Warnungen
+
+### Fehlerbehebung bei Updates
+
+**Update schlägt fehl:**
+- Überprüfen Sie die Update-Logs in `logs/updater.log`
+- Stellen Sie sicher, dass der Webserver Schreibrechte hat
+- Überprüfen Sie die Internetverbindung
+- Aktivieren Sie `debugMode` in der Konfiguration für detailliertere Fehlermeldungen
+
+**SSL-Fehler:**
+- Wenn SSL-Verifizierungsfehler auftreten, können Sie `debugMode` in der Konfiguration aktivieren
+- Dies deaktiviert die SSL-Verifizierung (weniger sicher, aber funktioniert in Entwicklungsumgebungen)
+
+**Cache-Probleme:**
+- Die Versionsprüfung verwendet einen Cache (1 Stunde)
+- Bei Problemen können Sie die Cache-Datei `logs/github_version_cache.json` löschen
+
 ## Sicherheitsfunktionen
 
 - ✅ SQL-Injection-Schutz (Prepared Statements)
@@ -279,6 +344,12 @@ drohnen-flug-und-dienstbuch/
 ├── setup/                  # Setup- und Migrations-Skripte
 │   ├── migrate_database.php  # Datenbank-Migrationsskript
 │   └── setup_database.php   # Datenbankinitialisierung
+├── updater/                # Automatisches Update-System
+│   ├── updater.php        # Updater-Klasse
+│   ├── updater_page.php   # Update-Tool Benutzeroberfläche
+│   ├── updater_api.php    # Update-API-Endpunkt
+│   ├── updater.js         # Update-Tool JavaScript
+│   └── updater.css        # Update-Tool Stylesheet
 ├── logs/                   # Anwendungsprotokolle
 ├── uploads/                # Verschlüsselte Datei-Uploads
 ├── index.php              # Login-Seite (Haupteingangspunkt)
