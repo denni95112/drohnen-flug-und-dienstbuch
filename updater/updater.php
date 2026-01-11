@@ -73,19 +73,44 @@ class Updater {
     }
     
     /**
+     * Log updater message
+     * @param string $message Log message
+     * @param string $level Log level (INFO, WARNING, ERROR)
+     * @param array $context Additional context
+     */
+    private function log(string $message, string $level = 'INFO', array $context = []): void {
+        $logFile = $this->projectRoot . '/logs/updater.log';
+        $logDir = dirname($logFile);
+        if (!is_dir($logDir)) {
+            @mkdir($logDir, 0755, true);
+        }
+        $timestamp = date('Y-m-d H:i:s');
+        $contextStr = !empty($context) ? ' ' . json_encode($context) : '';
+        $logMessage = "[$timestamp] [$level] $message$contextStr\n";
+        @file_put_contents($logFile, $logMessage, FILE_APPEND);
+    }
+    
+    /**
      * Check for available updates
      * @return array Update information
      */
     public function checkForUpdates(): array {
+        $this->log('Checking for updates', 'INFO', [
+            'current_version' => $this->currentVersion,
+            'github_repo' => $this->githubOwner . '/' . $this->githubRepo
+        ]);
+        
         try {
             // Always use direct API call to bypass cache and get fresh data
             // (checkGitHubVersion has 1-hour cache which might be stale)
             $url = "https://api.github.com/repos/{$this->githubOwner}/{$this->githubRepo}/releases";
+            $this->log('Fetching releases from GitHub', 'INFO', ['url' => $url]);
             $response = $this->fetchUrl($url);
             
             if (!$response) {
                 // Get error details
                 $errorMsg = 'Failed to fetch releases from GitHub';
+                $errorDetails = [];
                 if (function_exists('curl_init')) {
                     $ch = curl_init();
                     curl_setopt($ch, CURLOPT_URL, $url);
@@ -97,12 +122,20 @@ class Updater {
                     curl_close($ch);
                     if ($curlError) {
                         $errorMsg .= ' (cURL error: ' . $curlError . ')';
+                        $errorDetails['curl_error'] = $curlError;
                     } elseif ($httpCode && $httpCode !== 200) {
                         $errorMsg .= ' (HTTP ' . $httpCode . ')';
+                        $errorDetails['http_code'] = $httpCode;
                     }
                 } elseif (!ini_get('allow_url_fopen')) {
                     $errorMsg .= ' (cURL not available and allow_url_fopen is disabled)';
+                    $errorDetails['reason'] = 'no_curl_no_fopen';
                 }
+                
+                $this->log('Failed to fetch releases', 'ERROR', array_merge([
+                    'url' => $url,
+                    'error' => $errorMsg
+                ], $errorDetails));
                 
                 return [
                     'available' => false,
@@ -156,6 +189,12 @@ class Updater {
             $latestVersion = ltrim($latestRelease['tag_name'], 'v');
             $available = version_compare($latestVersion, $this->currentVersion, '>');
             
+            $this->log('Update check completed', 'INFO', [
+                'current_version' => $this->currentVersion,
+                'latest_version' => $latestVersion,
+                'update_available' => $available
+            ]);
+            
             return [
                 'available' => $available,
                 'current_version' => $this->currentVersion,
@@ -165,6 +204,12 @@ class Updater {
                 'error' => null
             ];
         } catch (Exception $e) {
+            $this->log('Exception during update check', 'ERROR', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+            
             return [
                 'available' => false,
                 'current_version' => $this->currentVersion,
@@ -182,6 +227,11 @@ class Updater {
      * @return array Update result
      */
     public function performUpdate(string $version): array {
+        $this->log('Starting update process', 'INFO', [
+            'target_version' => $version,
+            'current_version' => $this->currentVersion
+        ]);
+        
         $backupPath = null;
         $zipPath = null;
         $extractPath = null;
@@ -189,14 +239,18 @@ class Updater {
         try {
             // Validate version
             if (!$this->validateVersion($version)) {
-                throw new Exception('Invalid version format');
+                throw new Exception('Invalid version format: ' . $version);
             }
             
+            $this->log('Version validated', 'INFO', ['version' => $version]);
+            
             // Download release
+            $this->log('Downloading release', 'INFO', ['version' => $version]);
             $zipPath = $this->downloadRelease($version);
             if (!$zipPath || !file_exists($zipPath)) {
                 throw new Exception('Failed to download release');
             }
+            $this->log('Release downloaded', 'INFO', ['zip_path' => $zipPath, 'size' => filesize($zipPath)]);
             
             // Extract release
             $extractPath = $this->tempDir . '/extracted_' . uniqid();
@@ -204,31 +258,48 @@ class Updater {
                 @mkdir($extractPath, 0755, true);
             }
             
+            $this->log('Extracting release', 'INFO', ['extract_path' => $extractPath]);
             if (!$this->extractRelease($zipPath, $extractPath)) {
                 throw new Exception('Failed to extract release');
             }
+            $this->log('Release extracted', 'INFO');
             
             // Create backup
+            $this->log('Creating backup', 'INFO');
             $backupPath = $this->backupProtectedFiles();
+            $this->log('Backup created', 'INFO', ['backup_path' => $backupPath]);
             
             // Get file lists
+            $this->log('Comparing file lists', 'INFO');
             $releaseFiles = $this->getReleaseFileList($extractPath);
             $currentFiles = $this->getCurrentFileList();
+            $this->log('File lists generated', 'INFO', [
+                'release_files' => count($releaseFiles),
+                'current_files' => count($currentFiles)
+            ]);
             
             // Delete obsolete files
+            $this->log('Removing obsolete files', 'INFO');
             $filesRemoved = 0;
             foreach ($currentFiles as $file) {
                 if (!in_array($file, $releaseFiles)) {
                     $fullPath = $this->projectRoot . '/' . $file;
                     if (file_exists($fullPath) && is_file($fullPath)) {
-                        @unlink($fullPath);
-                        $filesRemoved++;
+                        if (@unlink($fullPath)) {
+                            $filesRemoved++;
+                            $this->log('Removed file', 'INFO', ['file' => $file]);
+                        } else {
+                            $this->log('Failed to remove file', 'WARNING', ['file' => $file]);
+                        }
                     }
                 }
             }
+            $this->log('Obsolete files removed', 'INFO', ['count' => $filesRemoved]);
             
             // Copy new/updated files
+            $this->log('Copying new/updated files', 'INFO');
             $filesUpdated = 0;
+            $filesFailed = 0;
             foreach ($releaseFiles as $file) {
                 $sourcePath = $extractPath . '/' . $file;
                 $destPath = $this->projectRoot . '/' . $file;
@@ -241,20 +312,39 @@ class Updater {
                     
                     if (@copy($sourcePath, $destPath)) {
                         $filesUpdated++;
+                        if ($filesUpdated % 10 === 0) {
+                            $this->log('Progress update', 'INFO', ['files_updated' => $filesUpdated]);
+                        }
+                    } else {
+                        $filesFailed++;
+                        $this->log('Failed to copy file', 'WARNING', ['file' => $file]);
                     }
                 }
             }
+            $this->log('Files copied', 'INFO', [
+                'success' => $filesUpdated,
+                'failed' => $filesFailed
+            ]);
             
             // Restore protected files
             if ($backupPath) {
+                $this->log('Restoring protected files', 'INFO');
                 $this->restoreFromBackup($backupPath);
+                $this->log('Protected files restored', 'INFO');
             }
             
             // Cleanup
+            $this->log('Cleaning up temporary files', 'INFO');
             $this->cleanup($this->tempDir);
             if ($zipPath && file_exists($zipPath)) {
                 @unlink($zipPath);
             }
+            
+            $this->log('Update completed successfully', 'INFO', [
+                'files_updated' => $filesUpdated,
+                'files_removed' => $filesRemoved,
+                'files_failed' => $filesFailed
+            ]);
             
             return [
                 'success' => true,
@@ -266,17 +356,30 @@ class Updater {
             ];
             
         } catch (Exception $e) {
+            $this->log('Update failed', 'ERROR', [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
             // Rollback on error
             if ($backupPath) {
                 try {
+                    $this->log('Attempting rollback', 'INFO', ['backup_path' => $backupPath]);
                     $this->restoreFromBackup($backupPath);
+                    $this->log('Rollback successful', 'INFO');
                 } catch (Exception $rollbackError) {
-                    // Log rollback error but don't throw
-                    error_log('Rollback failed: ' . $rollbackError->getMessage());
+                    $this->log('Rollback failed', 'ERROR', [
+                        'error' => $rollbackError->getMessage(),
+                        'file' => $rollbackError->getFile(),
+                        'line' => $rollbackError->getLine()
+                    ]);
                 }
             }
             
             // Cleanup
+            $this->log('Cleaning up after failure', 'INFO');
             $this->cleanup($this->tempDir);
             if ($zipPath && file_exists($zipPath)) {
                 @unlink($zipPath);

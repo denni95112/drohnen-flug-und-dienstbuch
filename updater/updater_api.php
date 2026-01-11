@@ -83,6 +83,15 @@ try {
                 exit();
             }
             
+            // Log API call
+            $logFile = __DIR__ . '/../logs/updater.log';
+            $logDir = dirname($logFile);
+            if (!is_dir($logDir)) {
+                @mkdir($logDir, 0755, true);
+            }
+            $timestamp = date('Y-m-d H:i:s');
+            @file_put_contents($logFile, "[$timestamp] [INFO] API: Check for updates requested\n", FILE_APPEND);
+            
             $result = $updater->checkForUpdates();
             
             if ($result['error']) {
@@ -131,8 +140,25 @@ try {
                 exit();
             }
             
+            // Log API call
+            $logFile = __DIR__ . '/../logs/updater.log';
+            $logDir = dirname($logFile);
+            if (!is_dir($logDir)) {
+                @mkdir($logDir, 0755, true);
+            }
+            $timestamp = date('Y-m-d H:i:s');
+            @file_put_contents($logFile, "[$timestamp] [INFO] API: Update requested for version $version\n", FILE_APPEND);
+            
             // Perform update
             $result = $updater->performUpdate($version);
+            
+            // Log result
+            $timestamp = date('Y-m-d H:i:s');
+            if ($result['success']) {
+                @file_put_contents($logFile, "[$timestamp] [INFO] API: Update completed successfully - Files updated: {$result['files_updated']}, Files removed: {$result['files_removed']}\n", FILE_APPEND);
+            } else {
+                @file_put_contents($logFile, "[$timestamp] [ERROR] API: Update failed - {$result['error']}\n", FILE_APPEND);
+            }
             
             if ($result['success']) {
                 echo json_encode([
@@ -173,9 +199,22 @@ try {
         logError('Updater API error: ' . $e->getMessage(), [
             'action' => $action,
             'file' => $e->getFile(),
-            'line' => $e->getLine()
+            'line' => $e->getLine(),
+            'trace' => $e->getTraceAsString()
         ]);
     }
+    
+    // Also log to updater log
+    $logFile = __DIR__ . '/../logs/updater.log';
+    $logDir = dirname($logFile);
+    if (!is_dir($logDir)) {
+        @mkdir($logDir, 0755, true);
+    }
+    $timestamp = date('Y-m-d H:i:s');
+    $logMessage = "[$timestamp] [ERROR] API Exception: {$e->getMessage()} in {$e->getFile()}:{$e->getLine()}\n";
+    $logMessage .= "[$timestamp] [ERROR] Action: $action\n";
+    $logMessage .= "[$timestamp] [ERROR] Trace: {$e->getTraceAsString()}\n";
+    @file_put_contents($logFile, $logMessage, FILE_APPEND);
 }
 
 exit();
