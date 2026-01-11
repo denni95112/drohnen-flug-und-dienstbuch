@@ -3,9 +3,9 @@ require_once __DIR__ . '/error_reporting.php';
 
 $configFile = dirname(__DIR__) . '/config/config.php';
 // Calculate base path for assets (relative to document root)
-// This works whether header.php is included from root or pages/ directory
+// This works whether header.php is included from root, pages/, or updater/ directory
 $basePath = '';
-if (strpos($_SERVER['PHP_SELF'], '/pages/') !== false) {
+if (strpos($_SERVER['PHP_SELF'], '/pages/') !== false || strpos($_SERVER['PHP_SELF'], '/updater/') !== false) {
     $basePath = '../';
 }
 if (!file_exists($configFile)) {
@@ -198,6 +198,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['admin_password'])) {
                     <li><a href="<?php echo $basePath; ?>pages/add_events.php">Dienst anlegen</a></li>
                     <li><a href="<?php echo $basePath; ?>pages/view_events.php">Dienste ansehen</a></li>
                     <li><a href="<?php echo $basePath; ?>pages/migrations.php">Datenbank Update</a></li>
+                    <?php if ($is_admin): ?>
+                        <li><a href="<?php echo $basePath; ?>updater/updater_page.php">Update Tool</a></li>
+                    <?php endif; ?>
                     <?php if (!$is_admin): ?>
                         <li><a href="#" id="admin-modal-link">Admin</a></li>
                     <?php endif; ?>

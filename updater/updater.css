@@ -1,0 +1,356 @@
+/* Updater Tool Styles */
+
+.updater-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Version Section */
+.version-section {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.version-section h2 {
+    margin-bottom: 1rem;
+    color: #374151;
+    font-size: 1.5rem;
+}
+
+/* Version Badges */
+.version-badge {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1.25rem;
+    color: #ffffff;
+}
+
+.version-badge.current-version {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.version-badge.new-version {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.version-comparison {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin: 1.5rem 0;
+    flex-wrap: wrap;
+}
+
+.version-arrow {
+    font-size: 1.5rem;
+    color: #6b7280;
+}
+
+/* Update Check Section */
+.update-check-section {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.update-check-section h2 {
+    margin-bottom: 1rem;
+    color: #374151;
+}
+
+/* Buttons */
+.btn-primary,
+.btn-update {
+    padding: 0.875rem 2rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #ffffff;
+}
+
+.btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.btn-update {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: #ffffff;
+}
+
+.btn-update:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(245, 87, 108, 0.4);
+}
+
+.btn-primary:disabled,
+.btn-update:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Update Available Section */
+.update-available-section {
+    margin-bottom: 2rem;
+    padding: 2rem;
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border-radius: 12px;
+    border: 2px solid #fbbf24;
+}
+
+.update-available-section h2 {
+    margin-top: 0;
+    color: #92400e;
+}
+
+.update-info {
+    margin: 1.5rem 0;
+}
+
+.release-notes {
+    margin: 1.5rem 0;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 8px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.release-notes h1,
+.release-notes h2,
+.release-notes h3 {
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.release-notes h1 {
+    font-size: 1.5rem;
+}
+
+.release-notes h2 {
+    font-size: 1.25rem;
+}
+
+.release-notes h3 {
+    font-size: 1.1rem;
+}
+
+.release-link {
+    display: inline-block;
+    margin-top: 1rem;
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.release-link:hover {
+    text-decoration: underline;
+}
+
+.update-actions {
+    text-align: center;
+    margin-top: 1.5rem;
+}
+
+/* No Update Section */
+.no-update-section {
+    text-align: center;
+    padding: 2rem;
+    background: #f0fdf4;
+    border-radius: 12px;
+    border: 2px solid #86efac;
+    color: #166534;
+}
+
+.no-update-section h2 {
+    margin-top: 0;
+    color: #166534;
+}
+
+/* Update Progress Section */
+.update-progress-section {
+    margin-bottom: 2rem;
+    padding: 2rem;
+    background: #f9fafb;
+    border-radius: 12px;
+    border: 2px solid #e5e7eb;
+}
+
+.update-progress-section h2 {
+    margin-top: 0;
+    color: #374151;
+}
+
+.progress-container {
+    margin: 1.5rem 0;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 30px;
+    background: #e5e7eb;
+    border-radius: 15px;
+    overflow: hidden;
+    position: relative;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    transition: width 0.3s ease;
+    border-radius: 15px;
+}
+
+.progress-text {
+    margin-top: 0.75rem;
+    text-align: center;
+    font-weight: 500;
+    color: #374151;
+}
+
+.update-status {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: #ffffff;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    font-size: 0.9rem;
+    color: #6b7280;
+}
+
+/* Update Complete Section */
+.update-complete-section {
+    margin-bottom: 2rem;
+    padding: 2rem;
+    background: #f0fdf4;
+    border-radius: 12px;
+    border: 2px solid #86efac;
+}
+
+.update-complete-section h2 {
+    margin-top: 0;
+    color: #166534;
+}
+
+.update-results {
+    margin: 1.5rem 0;
+}
+
+.update-success {
+    padding: 1.5rem;
+    background: #ffffff;
+    border-radius: 8px;
+    border: 1px solid #86efac;
+}
+
+.update-success p {
+    margin: 0.5rem 0;
+    color: #166534;
+}
+
+.update-success ul {
+    margin: 1rem 0;
+    padding-left: 1.5rem;
+    color: #166534;
+}
+
+.update-success li {
+    margin: 0.5rem 0;
+}
+
+/* Info Section */
+.info-section {
+    margin-top: 3rem;
+    padding: 1.5rem;
+    background: #eff6ff;
+    border-radius: 12px;
+    border-left: 4px solid #3b82f6;
+}
+
+.info-section h3 {
+    margin-top: 0;
+    color: #1e40af;
+}
+
+.info-section ul {
+    margin: 1rem 0;
+    padding-left: 1.5rem;
+    color: #1e3a8a;
+}
+
+.info-section li {
+    margin: 0.5rem 0;
+}
+
+/* Error and Success Messages */
+.error-message {
+    color: #dc2626;
+    background-color: #fef2f2;
+    border: 2px solid #fecaca;
+    padding: 1rem 1.25rem;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    font-weight: 500;
+}
+
+.success-message {
+    color: #16a34a;
+    background-color: #f0fdf4;
+    border: 2px solid #86efac;
+    padding: 1rem 1.25rem;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    font-weight: 500;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .updater-container {
+        padding: 1rem;
+        margin: 1rem;
+    }
+    
+    .version-comparison {
+        flex-direction: column;
+    }
+    
+    .version-arrow {
+        transform: rotate(90deg);
+    }
+    
+    .btn-primary,
+    .btn-update {
+        width: 100%;
+        justify-content: center;
+    }
+}
