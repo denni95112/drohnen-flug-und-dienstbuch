@@ -12,6 +12,7 @@ class Updater {
     private $protectedPaths;
     private $backupDir;
     private $tempDir;
+    private $debugMode;
     
     /**
      * Constructor
@@ -62,6 +63,15 @@ class Updater {
         // Set directories
         $this->backupDir = $config['backup_dir'] ?? $this->projectRoot . '/backups';
         $this->tempDir = $config['temp_dir'] ?? sys_get_temp_dir() . '/updater_' . uniqid();
+        
+        // Load config to check debugMode
+        $configFile = $this->projectRoot . '/config/config.php';
+        if (file_exists($configFile)) {
+            $appConfig = include $configFile;
+            $this->debugMode = isset($appConfig['debugMode']) && $appConfig['debugMode'] === true;
+        } else {
+            $this->debugMode = false;
+        }
         
         // Create directories if needed
         if (!is_dir($this->backupDir)) {
@@ -402,42 +412,96 @@ class Updater {
      * @return string Path to downloaded ZIP file
      */
     private function downloadRelease(string $version): string {
-        $zipUrl = $this->getReleaseZipUrl($version);
-        if (!$zipUrl) {
-            throw new Exception('Could not determine ZIP URL for version');
-        }
-        
-        $this->log('Downloading ZIP from URL', 'INFO', ['url' => $zipUrl]);
-        
         $zipPath = $this->tempDir . '/release_' . $version . '.zip';
         
-        $content = $this->fetchUrl($zipUrl);
-        if (!$content) {
-            // Get more details about why fetchUrl failed
-            $errorDetails = [];
+        // Try different URL formats
+        $urlFormats = $this->getReleaseZipUrlFormats($version);
+        
+        foreach ($urlFormats as $index => $zipUrl) {
+            $this->log('Attempting to download ZIP', 'INFO', [
+                'attempt' => $index + 1,
+                'total' => count($urlFormats),
+                'url' => $zipUrl
+            ]);
+            
+            $content = $this->fetchUrl($zipUrl);
+            if ($content) {
+                $this->log('ZIP downloaded successfully', 'INFO', ['size' => strlen($content), 'url' => $zipUrl]);
+                
+                if (@file_put_contents($zipPath, $content) === false) {
+                    $this->log('Failed to save ZIP file', 'ERROR', [
+                        'path' => $zipPath,
+                        'writable' => is_writable(dirname($zipPath))
+                    ]);
+                    throw new Exception('Failed to save downloaded ZIP to: ' . $zipPath);
+                }
+                
+                $this->log('ZIP saved', 'INFO', ['path' => $zipPath, 'size' => filesize($zipPath)]);
+                return $zipPath;
+            }
+            
+            // Check if it's a 404 (wrong URL format) or other error
             if (function_exists('curl_init')) {
                 $ch = curl_init();
                 curl_setopt($ch, CURLOPT_URL, $zipUrl);
                 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
                 curl_setopt($ch, CURLOPT_NOBODY, true);
+                if ($this->debugMode) {
+                    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+                    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+                }
                 curl_exec($ch);
-                $curlError = curl_error($ch);
                 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
                 curl_close($ch);
-                if ($curlError) {
-                    $errorDetails['curl_error'] = $curlError;
-                }
-                if ($httpCode && $httpCode !== 200) {
-                    $errorDetails['http_code'] = $httpCode;
+                
+                if ($httpCode === 404) {
+                    $this->log('URL returned 404, trying next format', 'WARNING', ['url' => $zipUrl]);
+                    continue; // Try next URL format
                 }
             }
-            
-            $this->log('Failed to download ZIP', 'ERROR', array_merge([
-                'url' => $zipUrl
-            ], $errorDetails));
-            
-            throw new Exception('Failed to download release ZIP' . (!empty($errorDetails) ? ': ' . json_encode($errorDetails) : ''));
         }
+        
+        // All URL formats failed
+        $this->log('Failed to download ZIP from all URL formats', 'ERROR', [
+            'urls_tried' => $urlFormats
+        ]);
+        
+        throw new Exception('Failed to download release ZIP from all attempted URL formats');
+    }
+    
+    /**
+     * Get possible release ZIP URL formats
+     * @param string $version Version string
+     * @return array Array of possible URLs
+     */
+    private function getReleaseZipUrlFormats(string $version): array {
+        $versionTag = $version;
+        if (strpos($version, 'v') !== 0) {
+            $versionTag = 'v' . $version;
+        }
+        
+        // Try different GitHub URL formats
+        return [
+            // Standard format: /archive/refs/tags/v1.0.2.zip
+            "https://github.com/{$this->githubOwner}/{$this->githubRepo}/archive/refs/tags/{$versionTag}.zip",
+            // Alternative format: /archive/v1.0.2.zip
+            "https://github.com/{$this->githubOwner}/{$this->githubRepo}/archive/{$versionTag}.zip",
+            // Without 'v' prefix: /archive/refs/tags/1.0.2.zip
+            "https://github.com/{$this->githubOwner}/{$this->githubRepo}/archive/refs/tags/{$version}.zip",
+            // Without 'v' prefix alternative: /archive/1.0.2.zip
+            "https://github.com/{$this->githubOwner}/{$this->githubRepo}/archive/{$version}.zip",
+        ];
+    }
+    
+    /**
+     * Get release ZIP URL (deprecated - use getReleaseZipUrlFormats)
+     * @param string $version Version string
+     * @return string|null ZIP URL or null on error
+     */
+    private function getReleaseZipUrl(string $version): ?string {
+        $formats = $this->getReleaseZipUrlFormats($version);
+        return $formats[0] ?? null;
+    }
         
         $this->log('ZIP downloaded successfully', 'INFO', ['size' => strlen($content)]);
         
@@ -462,12 +526,17 @@ class Updater {
     private function getReleaseZipUrl(string $version): ?string {
         // GitHub releases use format: https://github.com/{owner}/{repo}/archive/refs/tags/v{version}.zip
         // or without 'v' prefix: https://github.com/{owner}/{repo}/archive/refs/tags/{version}.zip
+        // Also try: https://github.com/{owner}/{repo}/archive/v{version}.zip (older format)
         $versionTag = $version;
         if (strpos($version, 'v') !== 0) {
             $versionTag = 'v' . $version;
         }
         
-        return "https://github.com/{$this->githubOwner}/{$this->githubRepo}/archive/refs/tags/{$versionTag}.zip";
+        // Try the standard format first
+        $url = "https://github.com/{$this->githubOwner}/{$this->githubRepo}/archive/refs/tags/{$versionTag}.zip";
+        $this->log('Generated ZIP URL', 'INFO', ['url' => $url, 'version' => $version, 'version_tag' => $versionTag]);
+        
+        return $url;
     }
     
     /**
@@ -721,7 +790,7 @@ class Updater {
      * @return string|null Content or null on error
      */
     private function fetchUrl(string $url): ?string {
-        $this->log('Fetching URL', 'INFO', ['url' => $url]);
+        $this->log('Fetching URL', 'INFO', ['url' => $url, 'debugMode' => $this->debugMode]);
         
         if (function_exists('curl_init')) {
             $ch = curl_init();
@@ -734,8 +803,16 @@ class Updater {
             ]);
             curl_setopt($ch, CURLOPT_TIMEOUT, 300);
             curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 30);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+            
+            // Skip SSL verification if debugMode is enabled
+            if ($this->debugMode) {
+                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+                curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+                $this->log('SSL verification disabled (debugMode)', 'INFO');
+            } else {
+                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+                curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+            }
             
             $response = curl_exec($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -743,7 +820,7 @@ class Updater {
             $curlErrno = curl_errno($ch);
             curl_close($ch);
             
-            if ($curlError) {
+            if ($curlError && !$this->debugMode) {
                 $this->log('cURL error on first attempt', 'WARNING', [
                     'error' => $curlError,
                     'errno' => $curlErrno,
@@ -788,6 +865,13 @@ class Updater {
             }
         } elseif (ini_get('allow_url_fopen')) {
             $this->log('Using file_get_contents (allow_url_fopen)', 'INFO');
+            
+            // Skip SSL verification if debugMode is enabled
+            $sslVerify = !$this->debugMode;
+            if ($this->debugMode) {
+                $this->log('SSL verification disabled for file_get_contents (debugMode)', 'INFO');
+            }
+            
             $context = stream_context_create([
                 'http' => [
                     'method' => 'GET',
@@ -798,8 +882,8 @@ class Updater {
                     'timeout' => 300
                 ],
                 'ssl' => [
-                    'verify_peer' => true,
-                    'verify_peer_name' => true
+                    'verify_peer' => $sslVerify,
+                    'verify_peer_name' => $sslVerify
                 ]
             ]);
             
@@ -809,30 +893,32 @@ class Updater {
                 return $response;
             }
             
-            // Try without SSL verification if first attempt failed
-            $this->log('Retrying file_get_contents without SSL verification', 'INFO');
-            $context = stream_context_create([
-                'http' => [
-                    'method' => 'GET',
-                    'header' => [
-                        'User-Agent: Drohnen-Flug-und-Dienstbuch-Updater',
-                        'Accept: application/vnd.github.v3+json'
+            // Try without SSL verification if first attempt failed and not in debug mode
+            if (!$this->debugMode) {
+                $this->log('Retrying file_get_contents without SSL verification', 'INFO');
+                $context = stream_context_create([
+                    'http' => [
+                        'method' => 'GET',
+                        'header' => [
+                            'User-Agent: Drohnen-Flug-und-Dienstbuch-Updater',
+                            'Accept: application/vnd.github.v3+json'
+                        ],
+                        'timeout' => 300
                     ],
-                    'timeout' => 300
-                ],
-                'ssl' => [
-                    'verify_peer' => false,
-                    'verify_peer_name' => false
-                ]
-            ]);
-            
-            $response = @file_get_contents($url, false, $context);
-            if ($response !== false) {
-                $this->log('URL fetched successfully via file_get_contents (no SSL)', 'INFO', ['size' => strlen($response)]);
-                return $response;
-            } else {
-                $this->log('file_get_contents failed', 'ERROR', ['url' => $url]);
+                    'ssl' => [
+                        'verify_peer' => false,
+                        'verify_peer_name' => false
+                    ]
+                ]);
+                
+                $response = @file_get_contents($url, false, $context);
+                if ($response !== false) {
+                    $this->log('URL fetched successfully via file_get_contents (no SSL)', 'INFO', ['size' => strlen($response)]);
+                    return $response;
+                }
             }
+            
+            $this->log('file_get_contents failed', 'ERROR', ['url' => $url]);
         } else {
             $this->log('No method available to fetch URL', 'ERROR', [
                 'curl_available' => function_exists('curl_init'),
