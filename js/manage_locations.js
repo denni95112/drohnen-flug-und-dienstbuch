@@ -296,7 +296,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const latitude = document.getElementById('latitude').value;
             const longitude = document.getElementById('longitude').value;
             const description = document.getElementById('description').value.trim();
-            const training = document.getElementById('training') ? document.getElementById('training').checked : true;
+            const trainingCheckbox = document.getElementById('training');
+            const training = trainingCheckbox ? trainingCheckbox.checked : true;
             
             if (!name || !latitude || !longitude) {
                 showMessage('Bitte füllen Sie alle erforderlichen Felder aus.', 'error');

@@ -55,7 +55,17 @@ function handleGetLocationsList($db) {
     $result = $stmt->execute();
     $locations = [];
     
+    require_once __DIR__ . '/../includes/utils.php';
+    
     while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+        // Convert UTC datetime to local time for display
+        if (isset($row['created_at'])) {
+            $row['created_at'] = toLocalTime($row['created_at']);
+        }
+        // Convert training to boolean (SQLite3 returns integers, ensure proper conversion)
+        if (isset($row['training'])) {
+            $row['training'] = (int)$row['training'] !== 0;
+        }
         $locations[] = $row;
     }
     

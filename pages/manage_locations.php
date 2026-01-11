@@ -130,7 +130,7 @@ if (isset($_GET['download_file']) && isset($_GET['location_id'])) {
             </div>
             <div>
                 <label>
-                    <input type="checkbox" name="training" checked>
+                    <input type="checkbox" id="training" name="training" checked>
                     Ist ein Übungsflug
                 </label>
             </div>
