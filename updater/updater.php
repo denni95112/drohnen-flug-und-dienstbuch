@@ -502,42 +502,6 @@ class Updater {
         $formats = $this->getReleaseZipUrlFormats($version);
         return $formats[0] ?? null;
     }
-        
-        $this->log('ZIP downloaded successfully', 'INFO', ['size' => strlen($content)]);
-        
-        if (@file_put_contents($zipPath, $content) === false) {
-            $this->log('Failed to save ZIP file', 'ERROR', [
-                'path' => $zipPath,
-                'writable' => is_writable(dirname($zipPath))
-            ]);
-            throw new Exception('Failed to save downloaded ZIP to: ' . $zipPath);
-        }
-        
-        $this->log('ZIP saved', 'INFO', ['path' => $zipPath, 'size' => filesize($zipPath)]);
-        
-        return $zipPath;
-    }
-    
-    /**
-     * Get release ZIP URL
-     * @param string $version Version string
-     * @return string|null ZIP URL or null on error
-     */
-    private function getReleaseZipUrl(string $version): ?string {
-        // GitHub releases use format: https://github.com/{owner}/{repo}/archive/refs/tags/v{version}.zip
-        // or without 'v' prefix: https://github.com/{owner}/{repo}/archive/refs/tags/{version}.zip
-        // Also try: https://github.com/{owner}/{repo}/archive/v{version}.zip (older format)
-        $versionTag = $version;
-        if (strpos($version, 'v') !== 0) {
-            $versionTag = 'v' . $version;
-        }
-        
-        // Try the standard format first
-        $url = "https://github.com/{$this->githubOwner}/{$this->githubRepo}/archive/refs/tags/{$versionTag}.zip";
-        $this->log('Generated ZIP URL', 'INFO', ['url' => $url, 'version' => $version, 'version_tag' => $versionTag]);
-        
-        return $url;
-    }
     
     /**
      * Extract ZIP file

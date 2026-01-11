@@ -1,17 +1,18 @@
 <?php
-require_once __DIR__ . '/../includes/error_reporting.php';
-require_once __DIR__ . '/../includes/security_headers.php';
-require __DIR__ . '/../includes/auth.php';
+$baseDir = dirname(__DIR__);
+require_once $baseDir . '/includes/error_reporting.php';
+require_once $baseDir . '/includes/security_headers.php';
+require $baseDir . '/includes/auth.php';
 requireAuth();
 
-$config = include __DIR__ . '/../config/config.php';
+$config = include $baseDir . '/config/config.php';
 if (isset($config['timezone'])) {
     date_default_timezone_set($config['timezone']);
 }
 
-require_once __DIR__ . '/../includes/utils.php';
-require_once __DIR__ . '/../includes/version.php';
-require_once __DIR__ . '/../includes/csrf.php';
+require_once $baseDir . '/includes/utils.php';
+require_once $baseDir . '/includes/version.php';
+require_once $baseDir . '/includes/csrf.php';
 
 // Calculate base path for assets
 $basePath = '../';
@@ -52,7 +53,7 @@ try {
     <link rel="manifest" href="<?php echo $basePath; ?>manifest.json">
 </head>
 <body>
-    <?php include __DIR__ . '/../includes/header.php'; ?>
+    <?php include $baseDir . '/includes/header.php'; ?>
     <main>
         <h1>Update Tool</h1>
         
@@ -142,7 +143,7 @@ try {
         </div>
     </main>
     
-    <?php include __DIR__ . '/../includes/footer.php'; ?>
+    <?php include $baseDir . '/includes/footer.php'; ?>
     
     <?php
     // Calculate base path for assets
