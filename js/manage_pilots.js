@@ -62,7 +62,7 @@ async function fetchPilots() {
                     </td>
                     <td>
                         <button type="button" 
-                                class="button-full delete-pilot-btn" 
+                                class="btn-delete delete-pilot-btn" 
                                 data-pilot-id="${pilot.id}">
                             Löschen
                         </button>

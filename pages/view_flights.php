@@ -147,15 +147,17 @@ if (!$flights) {
                             </td>
                             <?php if ($is_admin): ?>
                                 <td>
-                                    <button type="button" class="btn-edit edit-flight-btn" data-flight-id="<?= $flight['flight_id']; ?>" data-flight-end-date="<?= htmlspecialchars($flight['flight_end_date'] ? toLocalTimeForInput($flight['flight_end_date']) : ''); ?>" data-battery-number="<?= htmlspecialchars($flight['battery_number'] ?? ''); ?>">
-                                        Bearbeiten
-                                    </button>
-                                    <form method="post" action="view_flights.php" style="display: inline-block; margin-top: 0.5rem;">
-                                        <?php require_once __DIR__ . '/../includes/csrf.php'; csrf_field(); ?>
-                                        <input type="hidden" name="delete_flight_id" value="<?= $flight['flight_id']; ?>">
-                                        <input type="hidden" name="year" value="<?= $selected_year; ?>">
-                                        <button type="submit" class="btn-delete" onclick="return confirm('Flug wirklich löschen?');">Löschen</button>
-                                    </form>
+                                    <div class="admin-actions">
+                                        <button type="button" class="btn-edit edit-flight-btn" data-flight-id="<?= $flight['flight_id']; ?>" data-flight-end-date="<?= htmlspecialchars($flight['flight_end_date'] ? toLocalTimeForInput($flight['flight_end_date']) : ''); ?>" data-battery-number="<?= htmlspecialchars($flight['battery_number'] ?? ''); ?>">
+                                            Bearbeiten
+                                        </button>
+                                        <form method="post" action="view_flights.php" class="delete-form" onsubmit="return confirm('Flug wirklich löschen?');">
+                                            <?php require_once __DIR__ . '/../includes/csrf.php'; csrf_field(); ?>
+                                            <input type="hidden" name="delete_flight_id" value="<?= $flight['flight_id']; ?>">
+                                            <input type="hidden" name="year" value="<?= $selected_year; ?>">
+                                            <button type="submit" class="btn-delete">Löschen</button>
+                                        </form>
+                                    </div>
                                 </td>
                             <?php endif; ?>
                         </tr>

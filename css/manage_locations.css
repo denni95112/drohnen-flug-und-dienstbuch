@@ -121,15 +121,7 @@ form[action="manage_locations.php"] button[type="submit"] {
     color: #667eea;
 }
 
-/* Delete button styling - red color */
-.delete-location-btn {
-    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
-    color: white !important;
-    box-shadow: 0 2px 4px rgba(220, 38, 38, 0.3) !important;
-}
-
-.delete-location-btn:hover {
-    background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%) !important;
-    box-shadow: 0 4px 8px rgba(220, 38, 38, 0.4) !important;
-    transform: translateY(-2px);
+/* Admin actions container */
+.admin-actions {
+    width: 100%;
 }

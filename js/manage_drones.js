@@ -51,7 +51,7 @@ async function fetchDrones() {
                     <td>${escapeHtml(drone.drone_name)}</td>
                     <td>
                         <button type="button" 
-                                class="delete-drone-btn" 
+                                class="btn-delete delete-drone-btn" 
                                 data-drone-id="${drone.id}">
                             Löschen
                         </button>

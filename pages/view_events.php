@@ -297,7 +297,7 @@ function calculateDuration($start_date_utc, $end_date_utc) {
                     </div>
 
                     <?php if ($is_admin): ?>
-                        <div class="event-actions">
+                        <div class="admin-actions">
                             <button type="button" class="btn-edit" onclick="openEditModal(<?= htmlspecialchars(json_encode([
                                 'id' => $event['id'],
                                 'event_start_date' => $start_local,

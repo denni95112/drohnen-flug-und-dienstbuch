@@ -17,7 +17,8 @@ $changelog = [
             'Datenbank-Migrationssystem hinzugefügt',
             'Migration-Benachrichtigung in Header',
             'Verbesserte Fehlerbehandlung und Benutzer-Feedback',
-            'Separation of Concerns: API und UI getrennt'
+            'Separation of Concerns: API und UI getrennt',
+            'Seite Einträge löschen entfernt (nun als Admin in Alle Flüge möglich)'
         ],
         'bugfixes' => [
             'Multi-User-Konflikte beim Starten/Beenden von Flügen behoben',

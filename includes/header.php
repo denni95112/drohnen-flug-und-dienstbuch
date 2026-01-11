@@ -193,7 +193,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['admin_password'])) {
                 <button class="nav-dropdown-toggle" id="nav-dropdown-toggle-btn">Verwaltung</button>
                 <ul class="nav-dropdown" id="nav-dropdown">
                     <li><a href="<?php echo $basePath; ?>pages/add_flight.php">Manueller Eintrag</a></li>
-                    <li><a href="<?php echo $basePath; ?>pages/delete_flights.php">Einträge löschen</a></li>
                     <li><a href="<?php echo $basePath; ?>pages/manage_pilots.php">Piloten verwalten</a></li>
                     <li><a href="<?php echo $basePath; ?>pages/manage_drones.php">Drohnen verwalten</a></li>
                     <li><a href="<?php echo $basePath; ?>pages/add_events.php">Dienst anlegen</a></li>

@@ -92,15 +92,16 @@ async function fetchLocations(filterTraining = false) {
                             ` : '<button type="button" disabled>Keine Datei</button>'}
                         </td>
                         <td data-label="Aktionen">
-                            ${window.isAdmin ? `
-                                <button type="button" class="button-full edit-location-btn" data-location-id="${location.id}">
-                                    Bearbeiten
+                            <div class="admin-actions">
+                                ${window.isAdmin ? `
+                                    <button type="button" class="btn-edit edit-location-btn" data-location-id="${location.id}">
+                                        Bearbeiten
+                                    </button>
+                                ` : ''}
+                                <button type="button" class="btn-delete delete-location-btn" data-location-id="${location.id}">
+                                    Löschen
                                 </button>
-                                <br><br>
-                            ` : ''}
-                            <button type="button" class="button-full delete-location-btn" data-location-id="${location.id}">
-                                Löschen
-                            </button>
+                            </div>
                         </td>
                     `;
                     

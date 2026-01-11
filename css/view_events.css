@@ -87,73 +87,10 @@ h1 {
 }
 
 /* Event Actions (Edit/Delete buttons) */
-.event-actions {
+.admin-actions {
     margin-top: 1rem;
     padding-top: 1rem;
     border-top: 1px solid #ddd;
-    display: flex;
-    gap: 0.5rem;
-    justify-content: flex-end;
-}
-
-.event-actions .btn-edit,
-.event-actions .btn-delete {
-    padding: 0.5rem 1rem;
-    border: none;
-    border-radius: 5px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    width: 100px;
-    height: auto;
-    line-height: 1.4;
-    box-sizing: border-box;
-    display: inline-block;
-    text-align: center;
-}
-
-.event-actions .btn-edit {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
-    margin: 0;
-}
-
-.event-actions .btn-edit:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(102, 126, 234, 0.4);
-}
-
-.event-actions .btn-delete {
-    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-    color: white;
-    box-shadow: 0 2px 4px rgba(220, 38, 38, 0.3);
-    margin: 0;
-}
-
-.event-actions .btn-delete:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(220, 38, 38, 0.4);
-}
-
-.event-actions .delete-form {
-    margin: 0;
-    display: inline;
-    padding: 0;
-}
-
-.event-actions .delete-form button {
-    width: 100px;
-    padding: 0.5rem 1rem;
-    border: none;
-    border-radius: 5px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    line-height: 1.4;
-    box-sizing: border-box;
-    display: inline-block;
-    text-align: center;
 }
 
 /* Modal Styles */

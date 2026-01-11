@@ -554,6 +554,83 @@ a:hover {
     text-decoration: underline;
 }
 
+/* ===== Admin Action Buttons (Edit/Delete) ===== */
+.admin-actions {
+    display: flex;
+    gap: 0.5rem;
+    width: 100%;
+    margin-top: 0.5rem;
+}
+
+.admin-actions .btn-edit,
+.admin-actions .btn-delete {
+    flex: 1;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 5px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+.admin-actions .btn-edit {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+}
+
+.admin-actions .btn-edit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(102, 126, 234, 0.4);
+}
+
+.admin-actions .btn-delete {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    color: white;
+    box-shadow: 0 2px 4px rgba(220, 38, 38, 0.3);
+}
+
+.admin-actions .btn-delete:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(220, 38, 38, 0.4);
+}
+
+.admin-actions .delete-form {
+    flex: 1;
+    margin: 0;
+    display: flex;
+}
+
+.admin-actions .delete-form button {
+    width: 100%;
+    margin: 0;
+}
+
+/* Standalone delete button (when no edit button) */
+.btn-delete {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    color: white;
+    box-shadow: 0 2px 4px rgba(220, 38, 38, 0.3);
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 5px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 100%;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+.btn-delete:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(220, 38, 38, 0.4);
+}
+
 /* ===== Responsive ===== */
 @media (max-width: 768px) {
     main {

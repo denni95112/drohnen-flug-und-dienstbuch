@@ -5,42 +5,7 @@ main {
     max-width: 1200px !important;
 }
 
-/* Edit and Delete buttons in table */
-.btn-edit {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-    color: white !important;
-    box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3) !important;
-    padding: 0.5rem 1rem;
-    border: none;
-    border-radius: 5px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
+/* Admin actions container in table cells */
+.admin-actions {
     width: 100%;
-    margin-bottom: 0.5rem;
-}
-
-.btn-edit:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(102, 126, 234, 0.4) !important;
-}
-
-.btn-delete {
-    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
-    color: white !important;
-    box-shadow: 0 2px 4px rgba(220, 38, 38, 0.3) !important;
-    padding: 0.5rem 1rem;
-    border: none;
-    border-radius: 5px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    width: 100%;
-}
-
-.btn-delete:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(220, 38, 38, 0.4) !important;
 }
