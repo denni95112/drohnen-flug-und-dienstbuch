@@ -163,11 +163,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['admin_password'])) {
                     </a>
                 <?php endif; ?>
                 <?php if ($hasUpdate): ?>
-                    <a href="<?php echo htmlspecialchars($versionCheck['url'], ENT_QUOTES, 'UTF-8'); ?>" 
-                       target="_blank" 
-                       rel="noopener noreferrer"
+                    <a href="<?php echo $is_admin ? $basePath . 'updater/updater_page.php' : htmlspecialchars($versionCheck['url'], ENT_QUOTES, 'UTF-8'); ?>" 
+                       <?php if (!$is_admin): ?>target="_blank" rel="noopener noreferrer"<?php endif; ?>
                        class="version-notification" 
-                       title="Neue Version <?php echo htmlspecialchars($versionCheck['version'], ENT_QUOTES, 'UTF-8'); ?> verfügbar! Klicken Sie, um zur GitHub-Seite zu gehen.">
+                       title="Neue Version <?php echo htmlspecialchars($versionCheck['version'], ENT_QUOTES, 'UTF-8'); ?> verfügbar!<?php echo $is_admin ? ' Klicken Sie, um zum Update-Tool zu gehen.' : ' Klicken Sie, um zur GitHub-Seite zu gehen.'; ?>">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
                             <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
