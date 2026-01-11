@@ -92,12 +92,29 @@ async function fetchLocations(filterTraining = false) {
                             ` : '<button type="button" disabled>Keine Datei</button>'}
                         </td>
                         <td data-label="Aktionen">
+                            ${window.isAdmin ? `
+                                <button type="button" class="button-full edit-location-btn" data-location-id="${location.id}">
+                                    Bearbeiten
+                                </button>
+                                <br><br>
+                            ` : ''}
                             <button type="button" class="button-full delete-location-btn" data-location-id="${location.id}">
                                 Löschen
                             </button>
                         </td>
                     `;
+                    
                     tbody.appendChild(row);
+                    
+                    // Attach edit button listener if admin (using closure to preserve location data)
+                    if (window.isAdmin) {
+                        const editBtn = row.querySelector('.edit-location-btn');
+                        if (editBtn) {
+                            editBtn.addEventListener('click', function() {
+                                openEditLocationModal(location);
+                            });
+                        }
+                    }
                 });
                 
                 // Attach event listeners
@@ -225,6 +242,90 @@ async function deleteLocation(locationId) {
     }
 }
 
+// Format date for datetime-local input (Y-m-d\TH:i)
+// Input is in local time format 'Y-m-d H:i:s' from API
+function formatDateForInput(dateString) {
+    if (!dateString) return '';
+    // Convert from 'Y-m-d H:i:s' (local time) to 'Y-m-d\TH:i' format for datetime-local input
+    // The API already returns dates in local time, so we just need to change the format
+    const date = new Date(dateString.replace(' ', 'T'));
+    if (isNaN(date.getTime())) {
+        // Fallback: try to parse as-is
+        const parts = dateString.split(' ');
+        if (parts.length >= 2) {
+            return parts[0] + 'T' + parts[1].substring(0, 5);
+        }
+        return '';
+    }
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
+// Open edit location modal
+function openEditLocationModal(location) {
+    if (!window.isAdmin) return;
+    
+    const modal = document.getElementById('editLocationModal');
+    if (!modal) return;
+    
+    // Populate form fields
+    document.getElementById('edit_location_id').value = location.id;
+    document.getElementById('edit_location_name').value = location.location_name || '';
+    document.getElementById('edit_location_description').value = location.description || '';
+    document.getElementById('edit_location_created_at').value = formatDateForInput(location.created_at);
+    document.getElementById('edit_location_training').checked = location.training;
+    document.getElementById('edit_location_latitude').value = location.latitude || '';
+    document.getElementById('edit_location_longitude').value = location.longitude || '';
+    
+    modal.style.display = 'block';
+}
+
+// Close edit location modal
+function closeEditLocationModal() {
+    const modal = document.getElementById('editLocationModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// Update location
+async function updateLocation(locationData) {
+    try {
+        const basePath = window.basePath || '';
+        const response = await fetch(`${basePath}api/locations.php?action=update`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                id: parseInt(locationData.id),
+                location_name: locationData.name,
+                description: locationData.description || null,
+                training: locationData.training,
+                created_at: locationData.created_at,
+                csrf_token: getCsrfToken()
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showMessage('Standort erfolgreich aktualisiert', 'success');
+            closeEditLocationModal();
+            await fetchLocations();
+        } else {
+            showMessage(data.error || 'Fehler beim Aktualisieren des Standorts', 'error');
+        }
+    } catch (error) {
+        console.error('Error updating location:', error);
+        showMessage('Fehler beim Aktualisieren des Standorts: ' + error.message, 'error');
+    }
+}
+
 // Attach event listeners
 function attachEventListeners() {
     // Delete buttons
@@ -234,6 +335,7 @@ function attachEventListeners() {
             deleteLocation(locationId);
         });
     });
+    
     
     // File upload forms
     document.querySelectorAll('.upload-file-form').forEach(form => {
@@ -322,5 +424,44 @@ document.addEventListener('DOMContentLoaded', function() {
             const filterTraining = filterCheckbox ? filterCheckbox.checked : false;
             fetchLocations(filterTraining);
         });
+    }
+    
+    // Edit location form (admin only)
+    if (window.isAdmin) {
+        const editForm = document.getElementById('editLocationForm');
+        if (editForm) {
+            editForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const locationId = document.getElementById('edit_location_id').value;
+                const name = document.getElementById('edit_location_name').value.trim();
+                const description = document.getElementById('edit_location_description').value.trim();
+                const createdAt = document.getElementById('edit_location_created_at').value;
+                const trainingCheckbox = document.getElementById('edit_location_training');
+                const training = trainingCheckbox ? trainingCheckbox.checked : true;
+                
+                if (!name || !createdAt) {
+                    showMessage('Bitte füllen Sie alle erforderlichen Felder aus.', 'error');
+                    return;
+                }
+                
+                updateLocation({ id: locationId, name, description, training, created_at: createdAt });
+            });
+        }
+        
+        // Close modal on close button click
+        const modalClose = document.querySelector('#editLocationModal .modal-close');
+        if (modalClose) {
+            modalClose.addEventListener('click', closeEditLocationModal);
+        }
+        
+        // Close modal on outside click
+        const editModal = document.getElementById('editLocationModal');
+        if (editModal) {
+            editModal.addEventListener('click', function(e) {
+                if (e.target === editModal) {
+                    closeEditLocationModal();
+                }
+            });
+        }
     }
 });

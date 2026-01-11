@@ -321,25 +321,38 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Get response text first (can only read once)
                 const responseText = await response.text();
                 
-                // Check if response is OK
-                if (!response.ok) {
-                    // Try to parse as JSON for error message
-                    try {
-                        const errorData = JSON.parse(responseText);
-                        throw new Error(errorData.error || `HTTP Fehler: ${response.status}`);
-                    } catch (parseError) {
-                        throw new Error(responseText || `HTTP Fehler: ${response.status}`);
-                    }
-                }
-                
-                // Parse JSON
+                // Parse JSON response
                 let data;
                 try {
                     data = JSON.parse(responseText);
                 } catch (parseError) {
-                    throw new Error('Ungültige JSON-Antwort vom Server: ' + responseText.substring(0, 100));
+                    // If JSON parsing fails, show generic error
+                    throw new Error('Ungültige Antwort vom Server: ' + responseText.substring(0, 100));
                 }
                 
+                // Check if response is OK or if data indicates success
+                if (!response.ok || !data.success) {
+                    // Extract error message from response
+                    const errorMessage = data.error || `HTTP Fehler: ${response.status}`;
+                    
+                    // Show error message
+                    if (messageContainer) {
+                        messageContainer.innerHTML = '<p class="admin-error">' + 
+                            htmlEscape(errorMessage) + 
+                            '</p>';
+                    }
+                    
+                    // Re-enable submit button
+                    if (submitButton) {
+                        submitButton.disabled = false;
+                        submitButton.textContent = 'Als Admin anmelden';
+                    }
+                    
+                    // Keep modal open - don't close it
+                    return;
+                }
+                
+                // Success case
                 if (data.success) {
                     // Show success message
                     if (messageContainer) {
@@ -364,21 +377,6 @@ document.addEventListener('DOMContentLoaded', function() {
                             // The dialog will be shown automatically by install_notification.js after page reload
                         }
                     }, 1500);
-                } else {
-                    // Show error message
-                    if (messageContainer) {
-                        messageContainer.innerHTML = '<p class="admin-error">' + 
-                            htmlEscape(data.error || 'Ein Fehler ist aufgetreten.') + 
-                            '</p>';
-                    }
-                    
-                    // Re-enable submit button
-                    if (submitButton) {
-                        submitButton.disabled = false;
-                        submitButton.textContent = 'Als Admin anmelden';
-                    }
-                    
-                    // Keep modal open - don't close it
                 }
             } catch (error) {
                 // Show error message with actual error details

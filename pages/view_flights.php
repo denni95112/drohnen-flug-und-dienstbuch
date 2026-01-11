@@ -42,13 +42,14 @@ if ($selected_year < 2024) {
     $selected_year = 2024; // Ensure the year is at least 2024
 }
 
-// Fetch all flights, including the drone name
+// Fetch all flights, including the drone name and battery_number
 $stmt = $db->prepare("
     SELECT 
         f.id AS flight_id,
         p.name AS pilot_name,
         f.flight_date,
         f.flight_end_date,
+        f.battery_number,
         l.location_name,
         l.latitude,
         l.longitude,
@@ -78,6 +79,12 @@ if (!$flights) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Alle Flüge anzeigen</title>
     <link rel="stylesheet" href="../css/styles.css?v=<?php echo APP_VERSION; ?>">
+    <link rel="stylesheet" href="../css/view_events.css?v=<?php echo APP_VERSION; ?>">
+    <link rel="stylesheet" href="../css/view_flights.css?v=<?php echo APP_VERSION; ?>">
+    <script>
+        window.isAdmin = <?php echo $is_admin ? 'true' : 'false'; ?>;
+    </script>
+    <script src="../js/view_flights.js"></script>
 </head>
 <body>
     <?php include __DIR__ . '/../includes/header.php'; ?>
@@ -111,22 +118,24 @@ if (!$flights) {
                         <th>Längengrad</th>
                         <th>Beschreibung</th>
                         <th>Drohne</th>
+                        <th>Batterie</th>
                         <th>Google Maps</th>
                         <?php if ($is_admin): ?>
-                            <th>Aktion</th>
+                            <th>Aktionen</th>
                         <?php endif; ?>
                     </tr>
                 </thead>
                 <tbody>
                     <?php while ($flight = $flights->fetchArray(SQLITE3_ASSOC)): ?>
-                        <tr>
+                        <tr data-flight-id="<?= $flight['flight_id']; ?>">
                             <td><?= htmlspecialchars($flight['pilot_name']); ?></td>
-                            <td><?= htmlspecialchars(toLocalTime($flight['flight_date'])); ?> bis <?= htmlspecialchars(toLocalTime($flight['flight_end_date'])); ?></td>
+                            <td><?= htmlspecialchars(toLocalTime($flight['flight_date'])); ?> bis <?= htmlspecialchars($flight['flight_end_date'] ? toLocalTime($flight['flight_end_date']) : 'Nicht beendet'); ?></td>
                             <td><?= htmlspecialchars($flight['location_name'] ?? 'Nicht verfügbar'); ?></td>
                             <td><?= htmlspecialchars($flight['latitude'] ?? ''); ?></td>
                             <td><?= htmlspecialchars($flight['longitude'] ?? ''); ?></td>
                             <td><?= htmlspecialchars($flight['description'] ?? 'Keine Beschreibung'); ?></td>
                             <td><?= htmlspecialchars($flight['drone_name']); ?></td>
+                            <td><?= htmlspecialchars($flight['battery_number'] ?? 'N/A'); ?></td>
                             <td>
                                 <?php if ($flight['latitude'] && $flight['longitude']): ?>
                                     <a href="https://www.google.com/maps?q=<?= $flight['latitude']; ?>,<?= $flight['longitude']; ?>" target="_blank">
@@ -138,10 +147,14 @@ if (!$flights) {
                             </td>
                             <?php if ($is_admin): ?>
                                 <td>
-                                    <form method="post" action="view_flights.php">
+                                    <button type="button" class="btn-edit edit-flight-btn" data-flight-id="<?= $flight['flight_id']; ?>" data-flight-end-date="<?= htmlspecialchars($flight['flight_end_date'] ? toLocalTimeForInput($flight['flight_end_date']) : ''); ?>" data-battery-number="<?= htmlspecialchars($flight['battery_number'] ?? ''); ?>">
+                                        Bearbeiten
+                                    </button>
+                                    <form method="post" action="view_flights.php" style="display: inline-block; margin-top: 0.5rem;">
                                         <?php require_once __DIR__ . '/../includes/csrf.php'; csrf_field(); ?>
                                         <input type="hidden" name="delete_flight_id" value="<?= $flight['flight_id']; ?>">
-                                        <button type="submit" class="btn-delete">Löschen</button>
+                                        <input type="hidden" name="year" value="<?= $selected_year; ?>">
+                                        <button type="submit" class="btn-delete" onclick="return confirm('Flug wirklich löschen?');">Löschen</button>
                                     </form>
                                 </td>
                             <?php endif; ?>
@@ -150,6 +163,35 @@ if (!$flights) {
                 </tbody>
             </table>
         </div>
+
+        <!-- Edit Flight Modal (Admin only) -->
+        <?php if ($is_admin): ?>
+        <div id="editFlightModal" class="modal">
+            <div class="modal-content">
+                <span class="modal-close">&times;</span>
+                <h2>Flug bearbeiten</h2>
+                <form id="editFlightForm">
+                    <?php require_once __DIR__ . '/../includes/csrf.php'; csrf_field(); ?>
+                    <input type="hidden" name="edit_flight_id" id="edit_flight_id">
+                    
+                    <div class="form-group">
+                        <label for="edit_flight_end_date">Enddatum und -zeit</label>
+                        <input type="datetime-local" id="edit_flight_end_date" name="flight_end_date" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="edit_battery_number">Batterienummer</label>
+                        <input type="number" id="edit_battery_number" name="battery_number" min="1" required>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="btn-submit">Speichern</button>
+                        <button type="button" class="btn-cancel" onclick="closeEditFlightModal()">Abbrechen</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <?php endif; ?>
     </main>
     <?php include __DIR__ . '/../includes/footer.php'; ?>
 </body>

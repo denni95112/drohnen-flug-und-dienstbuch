@@ -25,6 +25,8 @@ if ($method === 'POST' && $action === 'start') {
     handleEndFlight($db);
 } elseif ($method === 'POST' && $action === 'create') {
     handleCreateFlight($db);
+} elseif ($method === 'POST' && $action === 'update') {
+    handleUpdateFlight($db);
 } elseif ($method === 'DELETE' && isset($_GET['id'])) {
     handleDeleteFlight($db, intval($_GET['id']));
 } elseif ($method === 'GET' && $action === 'dashboard') {
@@ -32,7 +34,7 @@ if ($method === 'POST' && $action === 'start') {
 } elseif ($method === 'GET' && $action === 'list') {
     handleGetFlightsList($db);
 } else {
-    sendErrorResponse('Invalid endpoint. Use ?action=start|end|create|dashboard|list or ?id= for DELETE', 'INVALID_ENDPOINT', 404);
+    sendErrorResponse('Invalid endpoint. Use ?action=start|end|create|update|dashboard|list or ?id= for DELETE', 'INVALID_ENDPOINT', 404);
 }
 
 /**
@@ -306,6 +308,90 @@ function handleDeleteFlight($db, $flightId) {
 }
 
 /**
+ * Update an existing flight (admin only - end_date and battery_number)
+ */
+function handleUpdateFlight($db) {
+    requireApiAdmin(); // Only admins can update flights
+    verifyApiCsrf();
+    $data = getJsonRequest();
+    
+    $flightId = isset($data['id']) ? intval($data['id']) : 0;
+    $flightEndDate = isset($data['flight_end_date']) ? trim($data['flight_end_date']) : null;
+    $batteryNumber = isset($data['battery_number']) ? intval($data['battery_number']) : null;
+    
+    if ($flightId <= 0) {
+        sendErrorResponse('Invalid flight ID', 'VALIDATION_ERROR', 400);
+    }
+    
+    if ($flightEndDate === null && $batteryNumber === null) {
+        sendErrorResponse('Bitte geben Sie mindestens ein Feld zum Aktualisieren an.', 'VALIDATION_ERROR', 400);
+    }
+    
+    if ($batteryNumber !== null && $batteryNumber <= 0) {
+        sendErrorResponse('Bitte geben Sie eine gültige Batterienummer ein.', 'VALIDATION_ERROR', 400);
+    }
+    
+    try {
+        require_once __DIR__ . '/../includes/utils.php';
+        
+        // Check if flight exists
+        $stmt = $db->prepare('SELECT id FROM flights WHERE id = :id');
+        $stmt->bindValue(':id', $flightId, SQLITE3_INTEGER);
+        $result = $stmt->execute()->fetchArray(SQLITE3_ASSOC);
+        
+        if (!$result) {
+            sendErrorResponse('Flug nicht gefunden.', 'FLIGHT_NOT_FOUND', 404);
+        }
+        
+        // Build update query dynamically based on what fields are provided
+        $updates = [];
+        $params = [':id' => $flightId];
+        
+        if ($flightEndDate !== null && $flightEndDate !== '') {
+            // Convert from local time to UTC
+            $flightEndDateUTC = toUTC($flightEndDate);
+            $updates[] = 'flight_end_date = :flight_end_date';
+            $params[':flight_end_date'] = $flightEndDateUTC;
+        }
+        
+        if ($batteryNumber !== null) {
+            $updates[] = 'battery_number = :battery_number';
+            $params[':battery_number'] = $batteryNumber;
+        }
+        
+        if (empty($updates)) {
+            sendErrorResponse('Keine Felder zum Aktualisieren angegeben.', 'VALIDATION_ERROR', 400);
+        }
+        
+        // Update flight
+        $sql = 'UPDATE flights SET ' . implode(', ', $updates) . ' WHERE id = :id';
+        $stmt = $db->prepare($sql);
+        
+        foreach ($params as $key => $value) {
+            if ($key === ':battery_number') {
+                $stmt->bindValue($key, $value, SQLITE3_INTEGER);
+            } else {
+                $stmt->bindValue($key, $value, SQLITE3_TEXT);
+            }
+        }
+        
+        if (!$stmt->execute()) {
+            sendErrorResponse('Fehler beim Aktualisieren des Flugs.', 'DATABASE_ERROR', 500);
+        }
+        
+        sendSuccessResponse(['flight_id' => $flightId], 'Flug erfolgreich aktualisiert');
+        
+    } catch (Exception $e) {
+        logError("Flight update error: " . $e->getMessage(), [
+            'flight_id' => $flightId ?? null,
+            'file' => $e->getFile(),
+            'line' => $e->getLine()
+        ]);
+        sendErrorResponse('Fehler beim Aktualisieren des Flugs.', 'DATABASE_ERROR', 500);
+    }
+}
+
+/**
  * Get dashboard data
  */
 function handleGetDashboard($db) {
@@ -341,9 +427,10 @@ function handleGetDashboard($db) {
         // Prepare ongoing flight data
         $ongoingFlight = null;
         if ($row['ongoing_flight_id']) {
+            require_once __DIR__ . '/../includes/utils.php';
             $ongoingFlight = [
                 'id' => $row['ongoing_flight_id'],
-                'flight_date' => $row['ongoing_flight_date']
+                'flight_date' => toLocalTime($row['ongoing_flight_date'])
             ];
         }
         

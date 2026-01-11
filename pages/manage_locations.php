@@ -13,6 +13,8 @@ if (isset($config['timezone'])) {
 
 require_once __DIR__ . '/../includes/utils.php';
 require_once __DIR__ . '/../includes/version.php';
+require_once __DIR__ . '/../includes/auth.php';
+$is_admin = isAdmin();
 $dbPath = getDatabasePath();
 $db = new SQLite3($dbPath);
 
@@ -92,6 +94,10 @@ if (isset($_GET['download_file']) && isset($_GET['location_id'])) {
     <title>Flugstandorte verwalten</title>
     <link rel="stylesheet" href="../css/styles.css?v=<?php echo APP_VERSION; ?>">
     <link rel="stylesheet" href="../css/manage_locations.css?v=<?php echo APP_VERSION; ?>">
+    <link rel="stylesheet" href="../css/view_events.css?v=<?php echo APP_VERSION; ?>">
+    <script>
+        window.isAdmin = <?php echo $is_admin ? 'true' : 'false'; ?>;
+    </script>
     <script src="../js/manage_locations.js"></script>
 </head>
 <body>
@@ -172,6 +178,57 @@ if (isset($_GET['download_file']) && isset($_GET['location_id'])) {
                 <!-- Will be populated by JavaScript -->
             </tbody>
         </table>
+
+        <!-- Edit Location Modal -->
+        <?php if ($is_admin): ?>
+        <div id="editLocationModal" class="modal">
+            <div class="modal-content">
+                <span class="modal-close">&times;</span>
+                <h2>Standort bearbeiten</h2>
+                <form id="editLocationForm">
+                    <?php require_once __DIR__ . '/../includes/csrf.php'; csrf_field(); ?>
+                    <input type="hidden" name="edit_location_id" id="edit_location_id">
+                    
+                    <div class="form-group">
+                        <label for="edit_location_name">Standortname</label>
+                        <input type="text" id="edit_location_name" name="location_name" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="edit_location_description">Beschreibung (optional)</label>
+                        <textarea id="edit_location_description" name="description" rows="5"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="edit_location_created_at">Erstellt am</label>
+                        <input type="datetime-local" id="edit_location_created_at" name="created_at" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="edit_location_training" name="training">
+                            Ist ein Übungsflug
+                        </label>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Breitengrad (nicht editierbar)</label>
+                        <input type="text" id="edit_location_latitude" readonly style="background-color: #f0f0f0;">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Längengrad (nicht editierbar)</label>
+                        <input type="text" id="edit_location_longitude" readonly style="background-color: #f0f0f0;">
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="btn-submit">Speichern</button>
+                        <button type="button" class="btn-cancel" onclick="closeEditLocationModal()">Abbrechen</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <?php endif; ?>
     </main>
     <?php include __DIR__ . '/../includes/footer.php'; ?>
 </body>

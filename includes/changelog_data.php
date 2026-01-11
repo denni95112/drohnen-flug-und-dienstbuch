@@ -7,7 +7,7 @@
 $changelog = [
     [
         'version' => '1.1.0',
-        'date' => '2026-01-07',
+        'date' => '2026-01-11',
         'changes' => [
             'Major Refactor: API-basierte Architektur implementiert',
             'Alle Seiten verwenden jetzt RESTful API-Endpunkte',
@@ -24,9 +24,12 @@ $changelog = [
             'Race Conditions bei gleichzeitigen Operationen behoben',
             'Doppelte Requests werden jetzt verhindert',
             'Default min Flugzeit für neue Piloten auf 45 Minuten gesetzt',
-            'DB Update nach Setup nicht mehr notwendig'
+            'DB Update nach Setup nicht mehr notwendig',
+            'Falscher Wert für Standort ob Einsatz oder Übung behoben',
+            'UI Fehler behoben'
         ],
         'new_features' => [
+            'Unterseiten haben nur /pages/ und /api/ als Basispfad',
             'API-Endpunkte für alle Datenoperationen',
             'Auto-Refresh im Dashboard',
             'Datenbank-Migrationssystem',
@@ -34,7 +37,9 @@ $changelog = [
             'Request-Deduplizierung',
             'Optimistic Locking für Concurrency Control',
             'Verbesserte JavaScript-Integration für alle Seiten',
-            'API-Dokumentation im README'
+            'API-Dokumentation im README',
+            'Bearbeiten von Flugstandorten als Admin',
+            'Bearbeiten von Flügen als Admin',
         ],
         'migration_notes' => [
             'Führen Sie die Migrationen aus migrations.php aus',

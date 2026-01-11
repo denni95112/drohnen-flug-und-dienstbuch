@@ -23,12 +23,14 @@ if ($method === 'GET' && $action === 'list') {
     handleGetLocationsList($db);
 } elseif ($method === 'POST' && $action === 'create') {
     handleCreateLocation($db);
+} elseif ($method === 'POST' && $action === 'update') {
+    handleUpdateLocation($db);
 } elseif ($method === 'POST' && $action === 'upload') {
     handleUploadFile($db);
 } elseif ($method === 'DELETE' && isset($_GET['id'])) {
     handleDeleteLocation($db, intval($_GET['id']));
 } else {
-    sendErrorResponse('Invalid endpoint. Use ?action=list|create|upload or ?id=X for DELETE', 'INVALID_ENDPOINT', 404);
+    sendErrorResponse('Invalid endpoint. Use ?action=list|create|update|upload or ?id=X for DELETE', 'INVALID_ENDPOINT', 404);
 }
 
 /**
@@ -133,6 +135,71 @@ function handleCreateLocation($db) {
             'line' => $e->getLine()
         ]);
         sendErrorResponse('Fehler beim Hinzufügen des Standorts.', 'DATABASE_ERROR', 500);
+    }
+}
+
+/**
+ * Update an existing location
+ */
+function handleUpdateLocation($db) {
+    requireApiAdmin(); // Only admins can update locations
+    verifyApiCsrf();
+    $data = getJsonRequest();
+    
+    $locationId = isset($data['id']) ? intval($data['id']) : 0;
+    $locationName = trim($data['location_name'] ?? '');
+    $description = isset($data['description']) ? trim($data['description']) : null;
+    $training = isset($data['training']) ? (bool)$data['training'] : true;
+    $createdAt = isset($data['created_at']) ? trim($data['created_at']) : null;
+    
+    if ($locationId <= 0) {
+        sendErrorResponse('Invalid location ID', 'VALIDATION_ERROR', 400);
+    }
+    
+    if (empty($locationName)) {
+        sendErrorResponse('Bitte geben Sie einen Standortnamen ein.', 'VALIDATION_ERROR', 400);
+    }
+    
+    if (empty($createdAt)) {
+        sendErrorResponse('Bitte geben Sie ein Datum ein.', 'VALIDATION_ERROR', 400);
+    }
+    
+    try {
+        require_once __DIR__ . '/../includes/utils.php';
+        
+        // Convert created_at from local time to UTC
+        $createdAtUTC = toUTC($createdAt);
+        
+        // Check if location exists
+        $stmt = $db->prepare('SELECT id FROM flight_locations WHERE id = :id');
+        $stmt->bindValue(':id', $locationId, SQLITE3_INTEGER);
+        $result = $stmt->execute()->fetchArray(SQLITE3_ASSOC);
+        
+        if (!$result) {
+            sendErrorResponse('Standort nicht gefunden.', 'LOCATION_NOT_FOUND', 404);
+        }
+        
+        // Update location (only editable fields: name, description, training, created_at)
+        $stmt = $db->prepare('UPDATE flight_locations SET location_name = :location_name, description = :description, training = :training, created_at = :created_at WHERE id = :id');
+        $stmt->bindValue(':id', $locationId, SQLITE3_INTEGER);
+        $stmt->bindValue(':location_name', $locationName, SQLITE3_TEXT);
+        $stmt->bindValue(':description', $description, SQLITE3_TEXT);
+        $stmt->bindValue(':training', $training ? 1 : 0, SQLITE3_INTEGER);
+        $stmt->bindValue(':created_at', $createdAtUTC, SQLITE3_TEXT);
+        
+        if (!$stmt->execute()) {
+            sendErrorResponse('Fehler beim Aktualisieren des Standorts.', 'DATABASE_ERROR', 500);
+        }
+        
+        sendSuccessResponse(['location_id' => $locationId], 'Standort erfolgreich aktualisiert');
+        
+    } catch (Exception $e) {
+        logError("Location update error: " . $e->getMessage(), [
+            'location_id' => $locationId ?? null,
+            'file' => $e->getFile(),
+            'line' => $e->getLine()
+        ]);
+        sendErrorResponse('Fehler beim Aktualisieren des Standorts.', 'DATABASE_ERROR', 500);
     }
 }
 
