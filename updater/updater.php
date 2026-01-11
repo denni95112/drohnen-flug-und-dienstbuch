@@ -407,16 +407,49 @@ class Updater {
             throw new Exception('Could not determine ZIP URL for version');
         }
         
+        $this->log('Downloading ZIP from URL', 'INFO', ['url' => $zipUrl]);
+        
         $zipPath = $this->tempDir . '/release_' . $version . '.zip';
         
         $content = $this->fetchUrl($zipUrl);
         if (!$content) {
-            throw new Exception('Failed to download release ZIP');
+            // Get more details about why fetchUrl failed
+            $errorDetails = [];
+            if (function_exists('curl_init')) {
+                $ch = curl_init();
+                curl_setopt($ch, CURLOPT_URL, $zipUrl);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_NOBODY, true);
+                curl_exec($ch);
+                $curlError = curl_error($ch);
+                $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                curl_close($ch);
+                if ($curlError) {
+                    $errorDetails['curl_error'] = $curlError;
+                }
+                if ($httpCode && $httpCode !== 200) {
+                    $errorDetails['http_code'] = $httpCode;
+                }
+            }
+            
+            $this->log('Failed to download ZIP', 'ERROR', array_merge([
+                'url' => $zipUrl
+            ], $errorDetails));
+            
+            throw new Exception('Failed to download release ZIP' . (!empty($errorDetails) ? ': ' . json_encode($errorDetails) : ''));
         }
         
+        $this->log('ZIP downloaded successfully', 'INFO', ['size' => strlen($content)]);
+        
         if (@file_put_contents($zipPath, $content) === false) {
-            throw new Exception('Failed to save downloaded ZIP');
+            $this->log('Failed to save ZIP file', 'ERROR', [
+                'path' => $zipPath,
+                'writable' => is_writable(dirname($zipPath))
+            ]);
+            throw new Exception('Failed to save downloaded ZIP to: ' . $zipPath);
         }
+        
+        $this->log('ZIP saved', 'INFO', ['path' => $zipPath, 'size' => filesize($zipPath)]);
         
         return $zipPath;
     }
@@ -688,6 +721,8 @@ class Updater {
      * @return string|null Content or null on error
      */
     private function fetchUrl(string $url): ?string {
+        $this->log('Fetching URL', 'INFO', ['url' => $url]);
+        
         if (function_exists('curl_init')) {
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, $url);
@@ -705,11 +740,19 @@ class Updater {
             $response = curl_exec($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             $curlError = curl_error($ch);
+            $curlErrno = curl_errno($ch);
             curl_close($ch);
             
             if ($curlError) {
+                $this->log('cURL error on first attempt', 'WARNING', [
+                    'error' => $curlError,
+                    'errno' => $curlErrno,
+                    'http_code' => $httpCode
+                ]);
+                
                 // If SSL verification failed, try without verification (less secure but works)
-                if (strpos($curlError, 'SSL') !== false || strpos($curlError, 'certificate') !== false) {
+                if (strpos($curlError, 'SSL') !== false || strpos($curlError, 'certificate') !== false || $curlErrno === 60) {
+                    $this->log('Retrying without SSL verification', 'INFO');
                     $ch = curl_init();
                     curl_setopt($ch, CURLOPT_URL, $url);
                     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -725,14 +768,26 @@ class Updater {
                     
                     $response = curl_exec($ch);
                     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                    $curlError = curl_error($ch);
                     curl_close($ch);
                 }
             }
             
             if ($httpCode === 200 && $response !== false) {
+                $this->log('URL fetched successfully', 'INFO', [
+                    'http_code' => $httpCode,
+                    'size' => strlen($response)
+                ]);
                 return $response;
+            } else {
+                $this->log('Failed to fetch URL', 'ERROR', [
+                    'http_code' => $httpCode,
+                    'curl_error' => $curlError,
+                    'curl_errno' => $curlErrno ?? null
+                ]);
             }
         } elseif (ini_get('allow_url_fopen')) {
+            $this->log('Using file_get_contents (allow_url_fopen)', 'INFO');
             $context = stream_context_create([
                 'http' => [
                     'method' => 'GET',
@@ -750,10 +805,12 @@ class Updater {
             
             $response = @file_get_contents($url, false, $context);
             if ($response !== false) {
+                $this->log('URL fetched successfully via file_get_contents', 'INFO', ['size' => strlen($response)]);
                 return $response;
             }
             
             // Try without SSL verification if first attempt failed
+            $this->log('Retrying file_get_contents without SSL verification', 'INFO');
             $context = stream_context_create([
                 'http' => [
                     'method' => 'GET',
@@ -771,8 +828,16 @@ class Updater {
             
             $response = @file_get_contents($url, false, $context);
             if ($response !== false) {
+                $this->log('URL fetched successfully via file_get_contents (no SSL)', 'INFO', ['size' => strlen($response)]);
                 return $response;
+            } else {
+                $this->log('file_get_contents failed', 'ERROR', ['url' => $url]);
             }
+        } else {
+            $this->log('No method available to fetch URL', 'ERROR', [
+                'curl_available' => function_exists('curl_init'),
+                'allow_url_fopen' => ini_get('allow_url_fopen')
+            ]);
         }
         
         return null;
