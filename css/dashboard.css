@@ -1,5 +1,32 @@
 /* Dashboard Styles */
 
+/* Search Container */
+#search-container {
+    margin-bottom: 1.5rem;
+}
+
+#pilot-search {
+    width: 100%;
+    max-width: 400px;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    border: 2px solid #d1d5db;
+    border-radius: 8px;
+    background-color: #fff;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+#pilot-search:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+#pilot-search::placeholder {
+    color: #9ca3af;
+}
+
 .error-message {
     color: #dc2626;
     background-color: #fef2f2;

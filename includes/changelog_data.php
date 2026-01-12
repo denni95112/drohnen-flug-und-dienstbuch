@@ -9,12 +9,15 @@ $changelog = [
         'version' => '1.1.1',
         'date' => '2026-01-XX',
         'changes' => [
-            'Bearbeiten von Piloten hinzugefügt',
+            'Bearbeiten von Piloten geändert',
+            'Aktive Flüge werden jetzt im Dashboard immer als erstes angezeigt',
         ],
         'bugfixes' => [
         ],
         'new_features' => [
             'A1/A3 und A2 Fernpilotenschein Felder hinzugefügt',
+            'Pilotensuchen im Dashboard hinzugefügt',
+
         ]
     ],
     [

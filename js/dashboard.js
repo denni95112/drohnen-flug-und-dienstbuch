@@ -97,26 +97,62 @@ async function fetchDashboardData(force = false) {
 function renderDashboard(data) {
     const pilotsContainer = document.getElementById('pilots-container');
     const welcomeSection = document.getElementById('welcome-section');
+    const searchContainer = document.getElementById('search-container');
     
     if (!pilotsContainer) {
         return;
     }
     
-    // Show/hide welcome section
+    // Show/hide welcome section and search container
     if (data.pilots && data.pilots.length > 0) {
         if (welcomeSection) {
             welcomeSection.style.display = 'none';
         }
+        if (searchContainer) {
+            searchContainer.style.display = 'block';
+        }
+        
+        // Get search term
+        const searchInput = document.getElementById('pilot-search');
+        const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+        
+        // Filter and sort pilots
+        let filteredPilots = data.pilots;
+        
+        // Filter by name if search term exists
+        if (searchTerm) {
+            filteredPilots = data.pilots.filter(pilot => 
+                pilot.name.toLowerCase().includes(searchTerm)
+            );
+        }
+        
+        // Sort: active flights (ongoing_flight) first, then by name
+        filteredPilots.sort((a, b) => {
+            const aHasActive = a.ongoing_flight ? 1 : 0;
+            const bHasActive = b.ongoing_flight ? 1 : 0;
+            
+            // If one has active flight and the other doesn't, prioritize active
+            if (aHasActive !== bHasActive) {
+                return bHasActive - aHasActive;
+            }
+            
+            // Otherwise sort alphabetically by name
+            return a.name.localeCompare(b.name);
+        });
+        
         pilotsContainer.innerHTML = '';
         
         // Render each pilot
-        data.pilots.forEach(pilot => {
+        filteredPilots.forEach(pilot => {
             const pilotElement = createPilotElement(pilot, data.locations || [], data.drones || []);
             pilotsContainer.appendChild(pilotElement);
         });
     } else {
         if (welcomeSection) {
             welcomeSection.style.display = 'block';
+        }
+        if (searchContainer) {
+            searchContainer.style.display = 'none';
         }
         pilotsContainer.innerHTML = '';
     }
@@ -342,6 +378,17 @@ document.addEventListener('DOMContentLoaded', function() {
     fetchDashboardData().then(() => {
         showLoading(false);
     });
+    
+    // Search input event listener
+    const searchInput = document.getElementById('pilot-search');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            // Re-render dashboard with current data and search filter
+            if (dashboardData) {
+                renderDashboard(dashboardData);
+            }
+        });
+    }
     
     // Auto-refresh every 30 seconds
     refreshInterval = setInterval(() => {

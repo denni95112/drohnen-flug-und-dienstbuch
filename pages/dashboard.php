@@ -34,6 +34,11 @@ require_once __DIR__ . '/../includes/version.php';
         <main>
             <h1>Dashboard</h1>
 
+            <!-- Search input -->
+            <div id="search-container" style="display: none;">
+                <input type="text" id="pilot-search" placeholder="Pilot nach Name suchen..." autocomplete="off">
+            </div>
+
             <!-- Error message container -->
             <div id="error-message-container" class="error-message" style="display: none;"></div>
             
