@@ -35,7 +35,8 @@ function up($db) {
     // SQLite doesn't support ALTER TABLE to change default values
     // We need to recreate the table with the new default
     // Note: Transaction is already started by migration_runner.php
-    $db->exec('PRAGMA foreign_keys = OFF');
+    // Foreign keys are already disabled by migration_runner.php before the transaction
+    
     $db->exec('PRAGMA busy_timeout = 10000'); // 10 seconds for better lock handling
     
     // Check if pilots_new already exists (from a failed migration)
@@ -66,8 +67,8 @@ function up($db) {
         throw new Exception("Data loss detected: Old table had {$countOld} entries, new table has {$countNew} entries");
     }
     
-    // Drop old table
-    $db->exec('DROP TABLE pilots');
+    // Drop old table (foreign keys are disabled, so this should work)
+    $db->exec('DROP TABLE IF EXISTS pilots');
     
     // Rename new table to original name
     $db->exec('ALTER TABLE pilots_new RENAME TO pilots');
@@ -75,7 +76,7 @@ function up($db) {
     // Recreate indexes
     $db->exec('CREATE INDEX IF NOT EXISTS idx_flights_pilot_date ON flights(pilot_id, flight_date)');
     
-    $db->exec('PRAGMA foreign_keys = ON');
+    // Note: Foreign keys will be re-enabled by migration_runner.php after commit
     
     return true;
 }
@@ -102,7 +103,8 @@ function down($db) {
     }
     
     // Note: Transaction is already started by migration_runner.php
-    $db->exec('PRAGMA foreign_keys = OFF');
+    // Foreign keys are already disabled by migration_runner.php before the transaction
+    
     $db->exec('PRAGMA busy_timeout = 10000'); // 10 seconds for better lock handling
     
     $checkNew = $db->query("SELECT name FROM sqlite_master WHERE type='table' AND name='pilots_new'");
@@ -132,8 +134,8 @@ function down($db) {
         throw new Exception("Data loss detected: Old table had {$countOld} entries, new table has {$countNew} entries");
     }
     
-    // Drop old table
-    $db->exec('DROP TABLE pilots');
+    // Drop old table (foreign keys are disabled, so this should work)
+    $db->exec('DROP TABLE IF EXISTS pilots');
     
     // Rename new table
     $db->exec('ALTER TABLE pilots_new RENAME TO pilots');
@@ -141,7 +143,7 @@ function down($db) {
     // Recreate indexes
     $db->exec('CREATE INDEX IF NOT EXISTS idx_flights_pilot_date ON flights(pilot_id, flight_date)');
     
-    $db->exec('PRAGMA foreign_keys = ON');
+    // Note: Foreign keys will be re-enabled by migration_runner.php after commit
     
     return true;
 }

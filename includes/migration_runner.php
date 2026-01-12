@@ -145,6 +145,11 @@ function runMigration($db, $migrationPath, $migrationName, $executedBy = null) {
     try {
         // Set busy timeout for better lock handling
         $db->exec('PRAGMA busy_timeout = 10000'); // 10 seconds
+        
+        // Disable foreign keys before transaction to allow table drops/recreates
+        // Migrations can re-enable them if needed
+        $db->exec('PRAGMA foreign_keys = OFF');
+        
         // Use IMMEDIATE transaction to get exclusive lock for table operations
         $db->exec('BEGIN IMMEDIATE TRANSACTION');
         
@@ -166,11 +171,24 @@ function runMigration($db, $migrationPath, $migrationName, $executedBy = null) {
         // Commit transaction
         $db->exec('COMMIT');
         
+        // Re-enable foreign keys after successful migration
+        $db->exec('PRAGMA foreign_keys = ON');
+        
         return ['success' => true, 'execution_time_ms' => $executionTime];
         
     } catch (Exception $e) {
         // Rollback on error
-        $db->exec('ROLLBACK');
+        try {
+            $db->exec('ROLLBACK');
+        } catch (Exception $rollbackException) {
+            // Ignore rollback errors
+        }
+        // Re-enable foreign keys even on error
+        try {
+            $db->exec('PRAGMA foreign_keys = ON');
+        } catch (Exception $fkException) {
+            // Ignore foreign key re-enable errors
+        }
         return ['success' => false, 'error' => $e->getMessage()];
     }
 }
