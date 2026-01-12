@@ -6,23 +6,8 @@
 
 $changelog = [
     [
-        'version' => '1.1.1',
-        'date' => '2026-01-XX',
-        'changes' => [
-            'Bearbeiten von Piloten geändert',
-            'Aktive Flüge werden jetzt im Dashboard immer als erstes angezeigt',
-        ],
-        'bugfixes' => [
-        ],
-        'new_features' => [
-            'A1/A3 und A2 Fernpilotenschein Felder hinzugefügt',
-            'Pilotensuchen im Dashboard hinzugefügt',
-
-        ]
-    ],
-    [
         'version' => '1.1.0',
-        'date' => '2026-01-11',
+        'date' => '2026-01-12',
         'changes' => [
             'Major Refactor: API-basierte Architektur implementiert',
             'Alle Seiten verwenden jetzt RESTful API-Endpunkte',
@@ -33,7 +18,9 @@ $changelog = [
             'Migration-Benachrichtigung in Header',
             'Verbesserte Fehlerbehandlung und Benutzer-Feedback',
             'Separation of Concerns: API und UI getrennt',
-            'Seite Einträge löschen entfernt (nun als Admin in Alle Flüge möglich)'
+            'Bearbeiten von Piloten geändert',
+            'Seite Einträge löschen entfernt (nun als Admin in Alle Flüge möglich)',
+            'Aktive Flüge werden jetzt im Dashboard immer als erstes angezeigt',
         ],
         'bugfixes' => [
             'Multi-User-Konflikte beim Starten/Beenden von Flügen behoben',
@@ -42,7 +29,8 @@ $changelog = [
             'Default min Flugzeit für neue Piloten auf 45 Minuten gesetzt',
             'DB Update nach Setup nicht mehr notwendig',
             'Falscher Wert für Standort ob Einsatz oder Übung behoben',
-            'UI Fehler behoben'
+            'UI Fehler behoben',
+            
         ],
         'new_features' => [
             'Unterseiten haben nur /pages/ und /api/ als Basispfad',
@@ -57,6 +45,8 @@ $changelog = [
             'Bearbeiten von Flugstandorten als Admin',
             'Bearbeiten von Flügen als Admin',
             'Update Tool für Administratoren',
+            'A1/A3 und A2 Fernpilotenschein Felder hinzugefügt',
+            'Pilotensuchen im Dashboard hinzugefügt',
         ],
         'migration_notes' => [
             'Führen Sie die Migrationen aus migrations.php aus',
