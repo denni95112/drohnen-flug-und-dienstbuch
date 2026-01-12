@@ -1,7 +1,7 @@
 <?php
 /**
  * Migration: 003 - Update pilots default minutes_of_flights_needed from 3 to 45
- * Date: 2025-01-XX
+ * Date: 2025-01-12
  * 
  * Description: Updates the default value for minutes_of_flights_needed in the pilots table
  * from 3 to 45. This only affects the schema default for new pilots - existing pilot data

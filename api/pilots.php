@@ -23,12 +23,14 @@ if ($method === 'GET' && $action === 'list') {
     handleGetPilotsList($db);
 } elseif ($method === 'POST' && $action === 'create') {
     handleCreatePilot($db);
+} elseif ($method === 'POST' && $action === 'update' && isset($_GET['id'])) {
+    handleUpdatePilot($db, intval($_GET['id']));
 } elseif ($method === 'DELETE' && isset($_GET['id'])) {
     handleDeletePilot($db, intval($_GET['id']));
 } elseif ($method === 'PUT' && isset($_GET['id']) && $action === 'minutes') {
     handleUpdatePilotMinutes($db, intval($_GET['id']));
 } else {
-    sendErrorResponse('Invalid endpoint. Use ?action=list|create or ?id=X&action=minutes for PUT/DELETE', 'INVALID_ENDPOINT', 404);
+    sendErrorResponse('Invalid endpoint. Use ?action=list|create|update or ?id=X&action=minutes for PUT/DELETE', 'INVALID_ENDPOINT', 404);
 }
 
 /**
@@ -47,6 +49,25 @@ function handleGetPilotsList($db) {
 }
 
 /**
+ * Validate that at least one license with valid date is provided
+ */
+function validateLicenseRequirement($lockOnInvalid, $a1A3LicenseId, $a1A3LicenseValidUntil, $a2LicenseId, $a2LicenseValidUntil) {
+    if (!$lockOnInvalid) {
+        return true; // No validation needed if checkbox is not checked
+    }
+    
+    // Check if at least one license has a valid date
+    $hasValidA1A3 = !empty($a1A3LicenseValidUntil);
+    $hasValidA2 = !empty($a2LicenseValidUntil);
+    
+    if (!$hasValidA1A3 && !$hasValidA2) {
+        return false;
+    }
+    
+    return true;
+}
+
+/**
  * Create a new pilot
  */
 function handleCreatePilot($db) {
@@ -55,6 +76,14 @@ function handleCreatePilot($db) {
     
     $name = trim($data['name'] ?? '');
     $requestId = $data['request_id'] ?? '';
+    $minutes = max(1, intval($data['minutes_of_flights_needed'] ?? 45));
+    $lockOnInvalid = isset($data['lock_on_invalid_license']) && $data['lock_on_invalid_license'] == '1';
+    
+    // License fields (optional)
+    $a1A3LicenseId = !empty($data['a1_a3_license_id']) ? trim($data['a1_a3_license_id']) : null;
+    $a1A3LicenseValidUntil = !empty($data['a1_a3_license_valid_until']) ? $data['a1_a3_license_valid_until'] : null;
+    $a2LicenseId = !empty($data['a2_license_id']) ? trim($data['a2_license_id']) : null;
+    $a2LicenseValidUntil = !empty($data['a2_license_valid_until']) ? $data['a2_license_valid_until'] : null;
     
     // Check for duplicate request
     checkDuplicateRequest($db, $requestId, 'create_pilot');
@@ -63,9 +92,48 @@ function handleCreatePilot($db) {
         sendErrorResponse('Der Name darf nicht leer sein.', 'VALIDATION_ERROR', 400);
     }
     
+    // Validate license requirement if checkbox is checked
+    if (!validateLicenseRequirement($lockOnInvalid, $a1A3LicenseId, $a1A3LicenseValidUntil, $a2LicenseId, $a2LicenseValidUntil)) {
+        sendErrorResponse('Wenn "Sperren wenn Fernpilotenschein ungültig" aktiviert ist, muss mindestens eine Lizenz mit gültigem Datum angegeben werden.', 'VALIDATION_ERROR', 400);
+    }
+    
     try {
-        $stmt = $db->prepare('INSERT INTO pilots (name) VALUES (:name)');
-        $stmt->bindValue(':name', $name, SQLITE3_TEXT);
+        // Check if license columns exist (for backward compatibility)
+        $result = $db->query("PRAGMA table_info(pilots)");
+        $columns = [];
+        while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+            $columns[] = $row['name'];
+        }
+        $result->finalize();
+        
+        $hasLicenseColumns = in_array('a1_a3_license_id', $columns);
+        $hasLockColumn = in_array('lock_on_invalid_license', $columns);
+        
+        if ($hasLicenseColumns && $hasLockColumn) {
+            $stmt = $db->prepare('INSERT INTO pilots (name, minutes_of_flights_needed, a1_a3_license_id, a1_a3_license_valid_until, a2_license_id, a2_license_valid_until, lock_on_invalid_license) 
+                                   VALUES (:name, :minutes, :a1_a3_id, :a1_a3_valid_until, :a2_id, :a2_valid_until, :lock_on_invalid)');
+            $stmt->bindValue(':name', $name, SQLITE3_TEXT);
+            $stmt->bindValue(':minutes', $minutes, SQLITE3_INTEGER);
+            $stmt->bindValue(':a1_a3_id', $a1A3LicenseId, $a1A3LicenseId !== null ? SQLITE3_TEXT : SQLITE3_NULL);
+            $stmt->bindValue(':a1_a3_valid_until', $a1A3LicenseValidUntil, $a1A3LicenseValidUntil !== null ? SQLITE3_TEXT : SQLITE3_NULL);
+            $stmt->bindValue(':a2_id', $a2LicenseId, $a2LicenseId !== null ? SQLITE3_TEXT : SQLITE3_NULL);
+            $stmt->bindValue(':a2_valid_until', $a2LicenseValidUntil, $a2LicenseValidUntil !== null ? SQLITE3_TEXT : SQLITE3_NULL);
+            $stmt->bindValue(':lock_on_invalid', $lockOnInvalid ? 1 : 0, SQLITE3_INTEGER);
+        } elseif ($hasLicenseColumns) {
+            $stmt = $db->prepare('INSERT INTO pilots (name, minutes_of_flights_needed, a1_a3_license_id, a1_a3_license_valid_until, a2_license_id, a2_license_valid_until) 
+                                   VALUES (:name, :minutes, :a1_a3_id, :a1_a3_valid_until, :a2_id, :a2_valid_until)');
+            $stmt->bindValue(':name', $name, SQLITE3_TEXT);
+            $stmt->bindValue(':minutes', $minutes, SQLITE3_INTEGER);
+            $stmt->bindValue(':a1_a3_id', $a1A3LicenseId, $a1A3LicenseId !== null ? SQLITE3_TEXT : SQLITE3_NULL);
+            $stmt->bindValue(':a1_a3_valid_until', $a1A3LicenseValidUntil, $a1A3LicenseValidUntil !== null ? SQLITE3_TEXT : SQLITE3_NULL);
+            $stmt->bindValue(':a2_id', $a2LicenseId, $a2LicenseId !== null ? SQLITE3_TEXT : SQLITE3_NULL);
+            $stmt->bindValue(':a2_valid_until', $a2LicenseValidUntil, $a2LicenseValidUntil !== null ? SQLITE3_TEXT : SQLITE3_NULL);
+        } else {
+            // Fallback for databases without license columns
+            $stmt = $db->prepare('INSERT INTO pilots (name, minutes_of_flights_needed) VALUES (:name, :minutes)');
+            $stmt->bindValue(':name', $name, SQLITE3_TEXT);
+            $stmt->bindValue(':minutes', $minutes, SQLITE3_INTEGER);
+        }
         
         if (!$stmt->execute()) {
             sendErrorResponse('Fehler beim Hinzufügen des Piloten.', 'DATABASE_ERROR', 500);
@@ -120,6 +188,115 @@ function handleDeletePilot($db, $pilotId) {
             'line' => $e->getLine()
         ]);
         sendErrorResponse('Fehler beim Löschen des Piloten.', 'DATABASE_ERROR', 500);
+    }
+}
+
+/**
+ * Update a pilot (all fields)
+ */
+function handleUpdatePilot($db, $pilotId) {
+    verifyApiCsrf();
+    $data = getJsonRequest();
+    
+    if ($pilotId <= 0) {
+        sendErrorResponse('Invalid pilot ID', 'VALIDATION_ERROR', 400);
+    }
+    
+    $name = trim($data['name'] ?? '');
+    $minutes = max(1, intval($data['minutes_of_flights_needed'] ?? 45));
+    $lockOnInvalid = isset($data['lock_on_invalid_license']) && $data['lock_on_invalid_license'] == '1';
+    
+    // License fields (optional)
+    $a1A3LicenseId = !empty($data['a1_a3_license_id']) ? trim($data['a1_a3_license_id']) : null;
+    $a1A3LicenseValidUntil = !empty($data['a1_a3_license_valid_until']) ? $data['a1_a3_license_valid_until'] : null;
+    $a2LicenseId = !empty($data['a2_license_id']) ? trim($data['a2_license_id']) : null;
+    $a2LicenseValidUntil = !empty($data['a2_license_valid_until']) ? $data['a2_license_valid_until'] : null;
+    
+    if (empty($name)) {
+        sendErrorResponse('Der Name darf nicht leer sein.', 'VALIDATION_ERROR', 400);
+    }
+    
+    if ($minutes <= 0) {
+        sendErrorResponse('Anzahl der benötigten Flugminuten muss mindestens 1 sein.', 'VALIDATION_ERROR', 400);
+    }
+    
+    // Validate license requirement if checkbox is checked
+    if (!validateLicenseRequirement($lockOnInvalid, $a1A3LicenseId, $a1A3LicenseValidUntil, $a2LicenseId, $a2LicenseValidUntil)) {
+        sendErrorResponse('Wenn "Sperren wenn Fernpilotenschein ungültig" aktiviert ist, muss mindestens eine Lizenz mit gültigem Datum angegeben werden.', 'VALIDATION_ERROR', 400);
+    }
+    
+    try {
+        // Check if pilot exists
+        $stmt = $db->prepare('SELECT id FROM pilots WHERE id = :id');
+        $stmt->bindValue(':id', $pilotId, SQLITE3_INTEGER);
+        $result = $stmt->execute()->fetchArray(SQLITE3_ASSOC);
+        
+        if (!$result) {
+            sendErrorResponse('Pilot nicht gefunden.', 'PILOT_NOT_FOUND', 404);
+        }
+        
+        // Check if license columns exist (for backward compatibility)
+        $result = $db->query("PRAGMA table_info(pilots)");
+        $columns = [];
+        while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+            $columns[] = $row['name'];
+        }
+        $result->finalize();
+        
+        $hasLicenseColumns = in_array('a1_a3_license_id', $columns);
+        $hasLockColumn = in_array('lock_on_invalid_license', $columns);
+        
+        if ($hasLicenseColumns && $hasLockColumn) {
+            $stmt = $db->prepare('UPDATE pilots SET name = :name, minutes_of_flights_needed = :minutes, 
+                                   a1_a3_license_id = :a1_a3_id, a1_a3_license_valid_until = :a1_a3_valid_until, 
+                                   a2_license_id = :a2_id, a2_license_valid_until = :a2_valid_until,
+                                   lock_on_invalid_license = :lock_on_invalid
+                                   WHERE id = :id');
+            $stmt->bindValue(':name', $name, SQLITE3_TEXT);
+            $stmt->bindValue(':minutes', $minutes, SQLITE3_INTEGER);
+            $stmt->bindValue(':a1_a3_id', $a1A3LicenseId, $a1A3LicenseId !== null ? SQLITE3_TEXT : SQLITE3_NULL);
+            $stmt->bindValue(':a1_a3_valid_until', $a1A3LicenseValidUntil, $a1A3LicenseValidUntil !== null ? SQLITE3_TEXT : SQLITE3_NULL);
+            $stmt->bindValue(':a2_id', $a2LicenseId, $a2LicenseId !== null ? SQLITE3_TEXT : SQLITE3_NULL);
+            $stmt->bindValue(':a2_valid_until', $a2LicenseValidUntil, $a2LicenseValidUntil !== null ? SQLITE3_TEXT : SQLITE3_NULL);
+            $stmt->bindValue(':lock_on_invalid', $lockOnInvalid ? 1 : 0, SQLITE3_INTEGER);
+            $stmt->bindValue(':id', $pilotId, SQLITE3_INTEGER);
+        } elseif ($hasLicenseColumns) {
+            $stmt = $db->prepare('UPDATE pilots SET name = :name, minutes_of_flights_needed = :minutes, 
+                                   a1_a3_license_id = :a1_a3_id, a1_a3_license_valid_until = :a1_a3_valid_until, 
+                                   a2_license_id = :a2_id, a2_license_valid_until = :a2_valid_until 
+                                   WHERE id = :id');
+            $stmt->bindValue(':name', $name, SQLITE3_TEXT);
+            $stmt->bindValue(':minutes', $minutes, SQLITE3_INTEGER);
+            $stmt->bindValue(':a1_a3_id', $a1A3LicenseId, $a1A3LicenseId !== null ? SQLITE3_TEXT : SQLITE3_NULL);
+            $stmt->bindValue(':a1_a3_valid_until', $a1A3LicenseValidUntil, $a1A3LicenseValidUntil !== null ? SQLITE3_TEXT : SQLITE3_NULL);
+            $stmt->bindValue(':a2_id', $a2LicenseId, $a2LicenseId !== null ? SQLITE3_TEXT : SQLITE3_NULL);
+            $stmt->bindValue(':a2_valid_until', $a2LicenseValidUntil, $a2LicenseValidUntil !== null ? SQLITE3_TEXT : SQLITE3_NULL);
+            $stmt->bindValue(':id', $pilotId, SQLITE3_INTEGER);
+        } else {
+            // Fallback for databases without license columns
+            $stmt = $db->prepare('UPDATE pilots SET name = :name, minutes_of_flights_needed = :minutes WHERE id = :id');
+            $stmt->bindValue(':name', $name, SQLITE3_TEXT);
+            $stmt->bindValue(':minutes', $minutes, SQLITE3_INTEGER);
+            $stmt->bindValue(':id', $pilotId, SQLITE3_INTEGER);
+        }
+        
+        if (!$stmt->execute()) {
+            sendErrorResponse('Fehler beim Aktualisieren des Piloten.', 'DATABASE_ERROR', 500);
+        }
+        
+        if ($db->changes() === 0) {
+            sendErrorResponse('Pilot nicht gefunden.', 'PILOT_NOT_FOUND', 404);
+        }
+        
+        sendSuccessResponse(null, 'Pilot erfolgreich aktualisiert');
+        
+    } catch (Exception $e) {
+        logError("Pilot update error: " . $e->getMessage(), [
+            'pilot_id' => $pilotId ?? null,
+            'file' => $e->getFile(),
+            'line' => $e->getLine()
+        ]);
+        sendErrorResponse('Fehler beim Aktualisieren des Piloten.', 'DATABASE_ERROR', 500);
     }
 }
 

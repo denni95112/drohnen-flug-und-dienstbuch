@@ -57,6 +57,41 @@ function handleStartFlight($db) {
     if ($pilotId <= 0) {
         sendErrorResponse('Invalid pilot ID', 'VALIDATION_ERROR', 400);
     }
+    
+    // Check if pilot is locked due to invalid license
+    $stmt = $db->prepare('SELECT lock_on_invalid_license, a1_a3_license_valid_until, a2_license_valid_until FROM pilots WHERE id = :pilot_id');
+    $stmt->bindValue(':pilot_id', $pilotId, SQLITE3_INTEGER);
+    $pilotResult = $stmt->execute()->fetchArray(SQLITE3_ASSOC);
+    
+    if ($pilotResult) {
+        $lockOnInvalid = isset($pilotResult['lock_on_invalid_license']) && $pilotResult['lock_on_invalid_license'] == 1;
+        
+        if ($lockOnInvalid) {
+            $hasValidLicense = false;
+            $currentDate = new DateTime('now', new DateTimeZone('UTC'));
+            
+            // Check A1/A3 license
+            if (!empty($pilotResult['a1_a3_license_valid_until'])) {
+                $validUntil = new DateTime($pilotResult['a1_a3_license_valid_until'], new DateTimeZone('UTC'));
+                if ($validUntil >= $currentDate) {
+                    $hasValidLicense = true;
+                }
+            }
+            
+            // Check A2 license if A1/A3 is not valid
+            if (!$hasValidLicense && !empty($pilotResult['a2_license_valid_until'])) {
+                $validUntil = new DateTime($pilotResult['a2_license_valid_until'], new DateTimeZone('UTC'));
+                if ($validUntil >= $currentDate) {
+                    $hasValidLicense = true;
+                }
+            }
+            
+            if (!$hasValidLicense) {
+                sendErrorResponse('Flug kann nicht gestartet werden: Fernpilotenschein ungültig.', 'LICENSE_INVALID', 400);
+            }
+        }
+    }
+    
     if ($droneId <= 0) {
         sendErrorResponse('Invalid drone ID', 'VALIDATION_ERROR', 400);
     }
@@ -213,6 +248,41 @@ function handleCreateFlight($db) {
     if ($pilotId <= 0) {
         sendErrorResponse('Invalid pilot ID', 'VALIDATION_ERROR', 400);
     }
+    
+    // Check if pilot is locked due to invalid license
+    $stmt = $db->prepare('SELECT lock_on_invalid_license, a1_a3_license_valid_until, a2_license_valid_until FROM pilots WHERE id = :pilot_id');
+    $stmt->bindValue(':pilot_id', $pilotId, SQLITE3_INTEGER);
+    $pilotResult = $stmt->execute()->fetchArray(SQLITE3_ASSOC);
+    
+    if ($pilotResult) {
+        $lockOnInvalid = isset($pilotResult['lock_on_invalid_license']) && $pilotResult['lock_on_invalid_license'] == 1;
+        
+        if ($lockOnInvalid) {
+            $hasValidLicense = false;
+            $currentDate = new DateTime('now', new DateTimeZone('UTC'));
+            
+            // Check A1/A3 license
+            if (!empty($pilotResult['a1_a3_license_valid_until'])) {
+                $validUntil = new DateTime($pilotResult['a1_a3_license_valid_until'], new DateTimeZone('UTC'));
+                if ($validUntil >= $currentDate) {
+                    $hasValidLicense = true;
+                }
+            }
+            
+            // Check A2 license if A1/A3 is not valid
+            if (!$hasValidLicense && !empty($pilotResult['a2_license_valid_until'])) {
+                $validUntil = new DateTime($pilotResult['a2_license_valid_until'], new DateTimeZone('UTC'));
+                if ($validUntil >= $currentDate) {
+                    $hasValidLicense = true;
+                }
+            }
+            
+            if (!$hasValidLicense) {
+                sendErrorResponse('Flug kann nicht gestartet werden: Fernpilotenschein ungültig.', 'LICENSE_INVALID', 400);
+            }
+        }
+    }
+    
     if (empty($flightDate) || empty($flightEndDate)) {
         sendErrorResponse('Start- und Enddatum sind erforderlich.', 'VALIDATION_ERROR', 400);
     }
@@ -437,6 +507,33 @@ function handleGetDashboard($db) {
         $nextFlightDue = getNextDueDate($db, $pilotId);
         $flightTime = getPilotFlightTime($db, $pilotId);
         
+        // Check license validity if lock_on_invalid_license is enabled
+        $isLocked = false;
+        $lockOnInvalid = isset($row['lock_on_invalid_license']) && $row['lock_on_invalid_license'] == 1;
+        
+        if ($lockOnInvalid) {
+            $hasValidLicense = false;
+            $currentDate = new DateTime('now', new DateTimeZone('UTC'));
+            
+            // Check A1/A3 license
+            if (!empty($row['a1_a3_license_valid_until'])) {
+                $validUntil = new DateTime($row['a1_a3_license_valid_until'], new DateTimeZone('UTC'));
+                if ($validUntil >= $currentDate) {
+                    $hasValidLicense = true;
+                }
+            }
+            
+            // Check A2 license if A1/A3 is not valid
+            if (!$hasValidLicense && !empty($row['a2_license_valid_until'])) {
+                $validUntil = new DateTime($row['a2_license_valid_until'], new DateTimeZone('UTC'));
+                if ($validUntil >= $currentDate) {
+                    $hasValidLicense = true;
+                }
+            }
+            
+            $isLocked = !$hasValidLicense;
+        }
+        
         $pilots[] = [
             'id' => $row['id'],
             'name' => $row['name'],
@@ -444,7 +541,8 @@ function handleGetDashboard($db) {
             'has_enough_flights' => $row['flight_count'] >= 3,
             'next_flight_due' => $nextFlightDue,
             'ongoing_flight' => $ongoingFlight,
-            'required_minutes' => $row['minutes_of_flights_needed']
+            'required_minutes' => $row['minutes_of_flights_needed'],
+            'is_locked_license' => $isLocked
         ];
     }
     

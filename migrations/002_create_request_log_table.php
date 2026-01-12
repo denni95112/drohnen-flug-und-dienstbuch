@@ -1,7 +1,7 @@
 <?php
 /**
  * Migration: 002 - Create request_log table
- * Date: 2024-01-XX
+ * Date: 2025-12-XX
  * 
  * Description: Creates the request_log table for tracking processed API requests
  * to prevent duplicate operations. Used for request deduplication.

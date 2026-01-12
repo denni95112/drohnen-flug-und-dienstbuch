@@ -125,7 +125,10 @@ function renderDashboard(data) {
 // Create pilot element
 function createPilotElement(pilot, locations, drones) {
     const hasEnoughMinutes = pilot.flight_count >= pilot.required_minutes;
-    const colorClass = hasEnoughMinutes ? 'bg-green' : 'bg-red';
+    const isLockedLicense = pilot.is_locked_license === true || pilot.is_locked_license === 1;
+    
+    // Use bg-red if locked by license or not enough minutes
+    const colorClass = (hasEnoughMinutes && !isLockedLicense) ? 'bg-green' : 'bg-red';
     const ongoingClass = pilot.ongoing_flight ? 'bg-orange' : '';
     
     const div = document.createElement('div');
@@ -138,7 +141,14 @@ function createPilotElement(pilot, locations, drones) {
         html += `<p>Flugminuten der letzten 3 Monate: ${pilot.flight_count}</p>`;
         html += `<p>Benötigte Flugminuten: ${pilot.required_minutes}</p>`;
         
-        if (hasEnoughMinutes && pilot.next_flight_due) {
+        // Show license lock warning
+        if (isLockedLicense) {
+            html += `<p style="font-weight: bold; color: #fff; background-color: rgba(0,0,0,0.2); padding: 0.5rem; border-radius: 4px; margin-top: 0.5rem;">
+                ⚠️ Fernpilotenschein ungültig - Flug kann nicht gestartet werden
+            </p>`;
+        }
+        
+        if (hasEnoughMinutes && !isLockedLicense && pilot.next_flight_due) {
             // Check if next flight due is in the future
             const nextDueDate = new Date(pilot.next_flight_due + 'T00:00:00');
             const now = new Date();
@@ -162,26 +172,30 @@ function createPilotElement(pilot, locations, drones) {
             </button>
         `;
     } else {
+        // Disable form if locked by license
+        const disabledAttr = isLockedLicense ? 'disabled' : '';
+        const disabledClass = isLockedLicense ? 'disabled' : '';
+        
         html += `
             <div>
                 <label for="location_id_${pilot.id}">Standort</label>
-                <select id="location_id_${pilot.id}" required>
+                <select id="location_id_${pilot.id}" required ${disabledAttr}>
                     <option value="">Bitte wählen</option>
                     ${locations.map(loc => `<option value="${loc.id}">${escapeHtml(loc.location_name)}</option>`).join('')}
                 </select>
             </div>
             <div>
                 <label for="drone_id_${pilot.id}">Drohne</label>
-                <select id="drone_id_${pilot.id}" required>
+                <select id="drone_id_${pilot.id}" required ${disabledAttr}>
                     <option value="">Bitte wählen</option>
                     ${drones.map(drone => `<option value="${drone.id}">${escapeHtml(drone.drone_name)}</option>`).join('')}
                 </select>
             </div>
             <div>
                 <label for="battery_number_${pilot.id}">Batterienummer</label>
-                <input type="number" id="battery_number_${pilot.id}" min="1" required>
+                <input type="number" id="battery_number_${pilot.id}" min="1" required ${disabledAttr}>
             </div>
-            <button type="button" onclick="startFlight(${pilot.id})" class="start-flight-btn">
+            <button type="button" onclick="startFlight(${pilot.id})" class="start-flight-btn" ${disabledAttr}>
                 Flug beginnen
             </button>
         `;
@@ -193,6 +207,13 @@ function createPilotElement(pilot, locations, drones) {
 
 // Start flight
 async function startFlight(pilotId) {
+    // Check if pilot is locked (button should be disabled, but double-check)
+    const btn = document.querySelector(`[onclick="startFlight(${pilotId})"]`);
+    if (btn && btn.disabled) {
+        showError('Flug kann nicht gestartet werden: Fernpilotenschein ungültig.');
+        return;
+    }
+    
     const locationId = document.getElementById(`location_id_${pilotId}`).value;
     const droneId = document.getElementById(`drone_id_${pilotId}`).value;
     const batteryNumber = document.getElementById(`battery_number_${pilotId}`).value;
@@ -203,7 +224,11 @@ async function startFlight(pilotId) {
     }
     
     const requestId = generateRequestId();
-    const btn = document.querySelector(`[onclick="startFlight(${pilotId})"]`);
+    // Reuse btn variable from above
+    if (!btn) {
+        showError('Fehler: Button nicht gefunden.');
+        return;
+    }
     const originalText = btn.textContent;
     btn.disabled = true;
     btn.textContent = 'Wird gestartet...';

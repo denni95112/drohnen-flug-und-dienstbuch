@@ -1,7 +1,7 @@
 <?php
 /**
  * Migration: 001 - Create schema_migrations table
- * Date: 2024-01-XX
+ * Date: 2025-12-XX
  * 
  * Description: Creates the table to track which migrations have been executed.
  * This is the first migration and must be run before any other migrations.

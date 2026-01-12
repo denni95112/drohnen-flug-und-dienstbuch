@@ -5,7 +5,7 @@ Eine Progressive Web App (PWA) zur Verwaltung von Drohnen-Flugprotokollen, Pilot
 ## Funktionen
 
 - ✈️ **Flugprotokoll-Verwaltung**: Drohnenflüge mit detaillierten Informationen erfassen und verfolgen
-- 👨‍✈️ **Pilot-Verwaltung**: Fluganforderungen verfolgen
+- 👨‍✈️ **Pilot-Verwaltung**: Fluganforderungen verfolgen mit Lizenzverwaltung und Sperrfunktion
 - 🔋 **Batterie-Verfolgung**: Batterienutzung überwachen
 - 📍 **Standort-Verwaltung**: Flugstandorte speichern und verwalten mit verschlüsselten Datei-Uploads für Einsatzberichte
 - 📊 **Dashboard**: Übersicht über Flugstatistiken und Pilotstatus mit Auto-Refresh (30 Sekunden)
@@ -102,6 +102,7 @@ Die Anwendung verwendet eine RESTful API-Architektur. Alle Datenoperationen werd
 - **`/api/pilots.php`** - Pilot-Verwaltung
   - `GET ?action=list` - Alle Piloten abrufen
   - `POST ?action=create` - Neuen Piloten erstellen
+  - `POST ?action=update&id=X` - Piloten bearbeiten (alle Felder)
   - `PUT ?id=X&action=minutes` - Benötigte Flugminuten aktualisieren
   - `DELETE ?id=X` - Piloten löschen
 
@@ -358,13 +359,57 @@ drohnen-flug-und-dienstbuch/
 └── service-worker.js      # PWA Service Worker (muss im Root sein)
 ```
 
+## Pilot-Verwaltung
+
+Die Pilot-Verwaltung bietet umfassende Funktionen zur Verwaltung von Piloten und deren Lizenzen.
+
+### Funktionen
+
+- **Pilot-Informationen**: Name und benötigte Flugminuten pro 3 Monate
+- **Lizenz-Verwaltung**: 
+  - A1/A3 Fernpilotenschein mit ID und Ablaufdatum
+  - A2 Fernpilotenschein mit ID und Ablaufdatum
+  - Beide Lizenzen sind optional
+- **Sperrfunktion**: Option "Sperren wenn Fernpilotenschein ungültig"
+  - Wenn aktiviert, muss mindestens eine Lizenz mit gültigem Ablaufdatum angegeben werden
+  - Piloten mit ungültigen Lizenzen können keine neuen Flüge starten
+  - Wird im Dashboard mit rotem Hintergrund und Warnung angezeigt
+- **Sortierung**: 
+  - Sortierung nach ID, Name (Standard), A1/A3 Ablaufdatum oder A2 Ablaufdatum
+- **Bearbeitung**: 
+  - Vollständige Bearbeitung aller Pilot-Informationen über ein Modal
+  - Keine Admin-Rechte erforderlich für die Bearbeitung
+
+### Verwendung
+
+1. **Pilot hinzufügen**:
+   - Name eingeben (Pflichtfeld)
+   - Benötigte Flugminuten festlegen (Standard: 45)
+   - Optional: A1/A3 und/oder A2 Lizenz-Informationen eingeben
+   - Optional: "Sperren wenn Fernpilotenschein ungültig" aktivieren
+   
+2. **Pilot bearbeiten**:
+   - Auf "Bearbeiten" klicken
+   - Alle Felder im Modal anpassen
+   - Änderungen speichern
+
+3. **Sortierung**:
+   - Dropdown-Menü "Sortieren nach" verwenden
+   - Auswahl zwischen ID, Name, A1/A3 Ablaufdatum oder A2 Ablaufdatum
+
+4. **Lizenz-Sperre**:
+   - Wenn aktiviert und keine gültige Lizenz vorhanden:
+     - Pilot wird im Dashboard rot angezeigt
+     - Warnung: "⚠️ Fernpilotenschein ungültig - Flug kann nicht gestartet werden"
+     - Flug-Start-Formular ist deaktiviert
+
 ## Verwendung
 
 1. **Login**: Verwenden Sie das während des Setups festgelegte Passwort
 2. **Dashboard**: Flugstatistiken und Pilotstatus anzeigen
 3. **Flug hinzufügen**: Neue Flugeinträge manuell erfassen
 4. **Flüge anzeigen**: Alle erfassten Flüge durchsuchen und filtern
-5. **Piloten verwalten**: Pilotinformationen und -anforderungen hinzufügen/bearbeiten
+5. **Piloten verwalten**: Pilotinformationen und -anforderungen hinzufügen/bearbeiten (siehe [Pilot-Verwaltung](#pilot-verwaltung))
 6. **Drohnen verwalten**: Drohnenbestand verfolgen
 7. **Standorte verwalten**: Flugstandorte mit optionalen Dateianhängen hinzufügen
 8. **Batterie-Übersicht**: Batterienutzung über Flüge hinweg überwachen
