@@ -1,0 +1,197 @@
+/* About Page Styles */
+
+.about-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.about-section {
+    background: #fff;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 2rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.about-section:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+    border-color: #cbd5e1;
+}
+
+.about-section h2 {
+    margin: 0 0 1.5rem 0;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #1e3c72;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 0.75rem;
+}
+
+.about-content {
+    color: #2d3748;
+    line-height: 1.7;
+}
+
+.about-content p {
+    margin: 0.75rem 0;
+}
+
+.github-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #2563eb;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s ease;
+    margin-top: 0.5rem;
+}
+
+.github-link:hover {
+    color: #1d4ed8;
+    text-decoration: underline;
+}
+
+.version-badge {
+    display: inline-block;
+    padding: 0.5rem 1.25rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin: 0.5rem 0;
+}
+
+.changelog-link {
+    display: inline-block;
+    color: #2563eb;
+    text-decoration: none;
+    font-weight: 500;
+    margin-top: 0.5rem;
+    transition: color 0.2s ease;
+}
+
+.changelog-link:hover {
+    color: #1d4ed8;
+    text-decoration: underline;
+}
+
+.project-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.project-item {
+    padding: 1.5rem;
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s ease;
+}
+
+.project-item:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    transform: translateX(4px);
+}
+
+.project-item h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1e3c72;
+}
+
+.project-description {
+    color: #64748b;
+    margin: 0.5rem 0 1rem 0;
+    font-size: 0.95rem;
+}
+
+.project-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #2563eb;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    padding: 0.5rem 1rem;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+}
+
+.project-link:hover {
+    color: #1d4ed8;
+    background: #eff6ff;
+    border-color: #93c5fd;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.project-link.coming-soon {
+    color: #64748b;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.project-link.coming-soon:hover {
+    color: #64748b;
+    background: #fff;
+    border-color: #e2e8f0;
+    transform: none;
+    box-shadow: none;
+}
+
+.license-text {
+    font-size: 0.9rem;
+    color: #475569;
+    margin: 0.75rem 0;
+    line-height: 1.6;
+}
+
+.license-text strong {
+    color: #1e3c72;
+    font-weight: 600;
+}
+
+/* Buy Me a Coffee Container */
+.bmc-button-container {
+    margin-top: 1.5rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .about-section {
+        padding: 1.5rem;
+    }
+
+    .about-section h2 {
+        font-size: 1.5rem;
+    }
+
+    .project-item {
+        padding: 1.25rem;
+    }
+
+    .project-item h3 {
+        font-size: 1.1rem;
+    }
+
+    .version-badge {
+        font-size: 1rem;
+        padding: 0.4rem 1rem;
+    }
+}
