@@ -196,6 +196,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['admin_password'])) {
                     <li><a href="<?php echo $basePath; ?>pages/manage_drones.php">Drohnen verwalten</a></li>
                     <li><a href="<?php echo $basePath; ?>pages/add_events.php">Dienst anlegen</a></li>
                     <li><a href="<?php echo $basePath; ?>pages/view_events.php">Dienste ansehen</a></li>
+                    <li><a href="<?php echo $basePath; ?>pages/documents.php">Dokumente</a></li>
                     <li><a href="<?php echo $basePath; ?>pages/migrations.php">Datenbank Update</a></li>
                     <?php if ($is_admin): ?>
                         <li><a href="<?php echo $basePath; ?>updater/updater_page.php">Update Tool</a></li>

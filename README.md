@@ -2,12 +2,39 @@
 
 Eine Progressive Web App (PWA) zur Verwaltung von Drohnen-Flugprotokollen, Pilotinformationen, Batterieverfolgung und Flugstandorten. Entwickelt mit PHP und SQLite, konzipiert für einfache Bereitstellung und Nutzung für BOS und Drohnenbetreiber.
 
-## Funktionen
+## 📋 Inhaltsverzeichnis
+
+- [Funktionen](#-funktionen)
+- [Screenshots](#-screenshots)
+- [Schnellstart](#-schnellstart)
+  - [Anforderungen](#anforderungen)
+  - [Installation](#installation)
+  - [Konfiguration](#konfiguration)
+- [Verwendung](#-verwendung)
+- [Hauptfunktionen](#-hauptfunktionen)
+  - [Pilot-Verwaltung](#pilot-verwaltung)
+  - [Dokumenten-Verwaltung](#dokumenten-verwaltung)
+- [Sicherheit](#-sicherheit)
+- [Fehlerbehebung](#-fehlerbehebung)
+- [Für Entwickler](#-für-entwickler)
+  - [API-Architektur](#api-architektur)
+  - [Datenbank-Migrationen](#datenbank-migrationen)
+  - [Automatisches Update-System](#automatisches-update-system)
+  - [Projektstruktur](#projektstruktur)
+- [Weitere Informationen](#-weitere-informationen)
+  - [Verwandte Projekte](#verwandte-projekte)
+  - [Lizenz](#lizenz)
+  - [Autor](#autor)
+
+---
+
+## ✨ Funktionen
 
 - ✈️ **Flugprotokoll-Verwaltung**: Drohnenflüge mit detaillierten Informationen erfassen und verfolgen
 - 👨‍✈️ **Pilot-Verwaltung**: Fluganforderungen verfolgen mit Lizenzverwaltung und Sperrfunktion
 - 🔋 **Batterie-Verfolgung**: Batterienutzung überwachen
 - 📍 **Standort-Verwaltung**: Flugstandorte speichern und verwalten mit verschlüsselten Datei-Uploads für Einsatzberichte
+- 📄 **Dokumenten-Verwaltung**: PDF-Dokumente hochladen, verwalten und sicher teilen mit Verschlüsselung und Authentifizierung
 - 📊 **Dashboard**: Übersicht über Flugstatistiken und Pilotstatus mit Auto-Refresh (30 Sekunden)
 - 🔐 **Sichere Authentifizierung**: Passwortgeschützt mit Admin-Funktionalität
 - 📱 **PWA-Unterstützung**: Installierbar als mobile/Desktop-App
@@ -18,7 +45,7 @@ Eine Progressive Web App (PWA) zur Verwaltung von Drohnen-Flugprotokollen, Pilot
 - 📦 **Datenbank-Migrationen**: Versionsgesteuerte Schema-Updates
 - 🚀 **Automatisches Update-System**: Ein-Klick-Updates direkt über die Weboberfläche
 
-## Screenshots 
+## 📸 Screenshots
 
 <p float="left">
    <img src="https://github.com/user-attachments/assets/07de6c74-dc8a-4746-9fbe-101998a8f5d9" width="150" />
@@ -33,14 +60,18 @@ Eine Progressive Web App (PWA) zur Verwaltung von Drohnen-Flugprotokollen, Pilot
    <img src="https://github.com/user-attachments/assets/1f14e56f-400f-4da9-bb1a-5b722406eb8c" width="150" />
 </p>
 
-## Anforderungen
+---
+
+## 🚀 Schnellstart
+
+### Anforderungen
 
 - PHP 7.4 oder höher
 - SQLite3-Erweiterung
 - Webserver (Apache, Nginx oder IIS)
 - Schreibrechte für Datenbank- und Upload-Verzeichnisse
 
-## Installation
+### Installation
 
 1. **Repository klonen oder herunterladen**
    ```bash
@@ -76,7 +107,7 @@ Eine Progressive Web App (PWA) zur Verwaltung von Drohnen-Flugprotokollen, Pilot
      - Linux: `/var/data/database.sqlite`
    - Der Setup-Assistent führt Sie durch diesen Prozess
 
-## Konfiguration
+### Konfiguration
 
 Nach dem Setup wird die Konfiguration in `config/config.php` gespeichert. Sie können diese Datei manuell bearbeiten, um anzupassen:
 
@@ -85,11 +116,168 @@ Nach dem Setup wird die Konfiguration in `config/config.php` gespeichert. Sie k�
 - `database_path`: Datenbankspeicherort aktualisieren
 - `external_documentation_url`: Link zur externen Dokumentation
 
-## API-Architektur
+---
 
-Die Anwendung verwendet eine RESTful API-Architektur. Alle Datenoperationen werden über API-Endpunkte abgewickelt:
+## 📖 Verwendung
 
-### API-Endpunkte
+1. **Login**: Verwenden Sie das während des Setups festgelegte Passwort
+2. **Dashboard**: Flugstatistiken und Pilotstatus anzeigen
+3. **Flug hinzufügen**: Neue Flugeinträge manuell erfassen
+4. **Flüge anzeigen**: Alle erfassten Flüge durchsuchen und filtern
+5. **Piloten verwalten**: Pilotinformationen und -anforderungen hinzufügen/bearbeiten (siehe [Pilot-Verwaltung](#pilot-verwaltung))
+6. **Drohnen verwalten**: Drohnenbestand verfolgen
+7. **Standorte verwalten**: Flugstandorte mit optionalen Dateianhängen hinzufügen
+8. **Dokumente verwalten**: PDF-Dokumente hochladen, durchsuchen, anzeigen und herunterladen (siehe [Dokumenten-Verwaltung](#dokumenten-verwaltung))
+9. **Batterie-Übersicht**: Batterienutzung über Flüge hinweg überwachen
+10. **Admin-Funktionen**: Auf Admin-Funktionen mit Admin-Passwort zugreifen
+
+---
+
+## 🎯 Hauptfunktionen
+
+### Pilot-Verwaltung
+
+Die Pilot-Verwaltung bietet umfassende Funktionen zur Verwaltung von Piloten und deren Lizenzen.
+
+#### Funktionen
+
+- **Pilot-Informationen**: Name und benötigte Flugminuten pro 3 Monate
+- **Lizenz-Verwaltung**: 
+  - A1/A3 Fernpilotenschein mit ID und Ablaufdatum
+  - A2 Fernpilotenschein mit ID und Ablaufdatum
+  - Beide Lizenzen sind optional
+- **Sperrfunktion**: Option "Sperren wenn Fernpilotenschein ungültig"
+  - Wenn aktiviert, muss mindestens eine Lizenz mit gültigem Ablaufdatum angegeben werden
+  - Piloten mit ungültigen Lizenzen können keine neuen Flüge starten
+  - Wird im Dashboard mit rotem Hintergrund und Warnung angezeigt
+- **Sortierung**: 
+  - Sortierung nach ID, Name (Standard), A1/A3 Ablaufdatum oder A2 Ablaufdatum
+- **Bearbeitung**: 
+  - Vollständige Bearbeitung aller Pilot-Informationen über ein Modal
+  - Keine Admin-Rechte erforderlich für die Bearbeitung
+
+#### Verwendung
+
+1. **Pilot hinzufügen**:
+   - Name eingeben (Pflichtfeld)
+   - Benötigte Flugminuten festlegen (Standard: 45)
+   - Optional: A1/A3 und/oder A2 Lizenz-Informationen eingeben
+   - Optional: "Sperren wenn Fernpilotenschein ungültig" aktivieren
+   
+2. **Pilot bearbeiten**:
+   - Auf "Bearbeiten" klicken
+   - Alle Felder im Modal anpassen
+   - Änderungen speichern
+
+3. **Sortierung**:
+   - Dropdown-Menü "Sortieren nach" verwenden
+   - Auswahl zwischen ID, Name, A1/A3 Ablaufdatum oder A2 Ablaufdatum
+
+4. **Lizenz-Sperre**:
+   - Wenn aktiviert und keine gültige Lizenz vorhanden:
+     - Pilot wird im Dashboard rot angezeigt
+     - Warnung: "⚠️ Fernpilotenschein ungültig - Flug kann nicht gestartet werden"
+     - Flug-Start-Formular ist deaktiviert
+
+### Dokumenten-Verwaltung
+
+Die Dokumenten-Verwaltung ermöglicht es, PDF-Dokumente sicher zu speichern, zu verwalten und zu teilen.
+
+#### Funktionen
+
+- **PDF-Upload**: Administratoren können PDF-Dokumente hochladen (max. 10MB)
+- **Verschlüsselung**: Alle Dokumente werden verschlüsselt gespeichert
+- **Sichere Downloads**: Dokumente können nur von authentifizierten Benutzern heruntergeladen werden
+- **Vorschau**: PDF-Dokumente können direkt im Browser angezeigt werden
+- **Suche**: Dokumente können nach Dateiname oder Beschreibung durchsucht werden
+- **Beschreibungen**: Optional können Beschreibungen zu Dokumenten hinzugefügt werden
+- **Löschen**: Administratoren können Dokumente löschen
+
+#### Sicherheit
+
+- ✅ **Authentifizierung erforderlich**: Downloads und Vorschauen erfordern eine aktive Session
+- ✅ **Verschlüsselung**: Alle Dateien werden mit OpenSSL verschlüsselt gespeichert
+- ✅ **Kein direkter Zugriff**: Verschlüsselte Dateien können nicht ohne Authentifizierung heruntergeladen werden
+- ✅ **Admin-Berechtigungen**: Nur Administratoren können Dokumente hochladen oder löschen
+- ✅ **Alle Benutzer können anzeigen**: Alle authentifizierten Benutzer können Dokumente anzeigen und herunterladen
+
+#### Verwendung
+
+1. **Dokument hochladen** (nur Admin):
+   - Navigieren Sie zu `Verwaltung > Dokumente`
+   - Klicken Sie auf "Dokument hochladen"
+   - Wählen Sie eine PDF-Datei aus (max. 10MB)
+   - Optional: Beschreibung hinzufügen
+   - Klicken Sie auf "Dokument hochladen"
+
+2. **Dokumente durchsuchen**:
+   - Verwenden Sie das Suchfeld über der Dokumentenliste
+   - Die Suche filtert nach Dateiname oder Beschreibung
+   - Die Filterung erfolgt in Echtzeit während der Eingabe
+
+3. **Dokument anzeigen**:
+   - Klicken Sie auf "Vorschau", um das PDF im Browser anzuzeigen
+   - Oder klicken Sie auf "Herunterladen", um die Datei herunterzuladen
+
+4. **Dokument löschen** (nur Admin):
+   - Klicken Sie auf "Löschen" neben dem Dokument
+   - Bestätigen Sie die Löschung
+
+#### Technische Details
+
+- **Speicherort**: Dokumente werden in `uploads/documents/` gespeichert
+- **Dateiformat**: Alle Dateien werden als `.enc` Dateien mit IV:verschlüsselte_Daten Format gespeichert
+- **Migration**: Migration 005 erstellt die `documents` Tabelle in der Datenbank
+
+---
+
+## 🔒 Sicherheit
+
+Die Anwendung implementiert umfassende Sicherheitsmaßnahmen:
+
+- ✅ **SQL-Injection-Schutz**: Prepared Statements für alle Datenbankabfragen
+- ✅ **CSRF-Schutz**: Für alle Formulare und API-Requests
+- ✅ **Sichere Passwort-Hashierung**: bcrypt/argon2
+- ✅ **Rate Limiting**: Für Anmeldeversuche
+- ✅ **Sichere Session-Verwaltung**: Mit entsprechenden Sicherheitsmaßnahmen
+- ✅ **Verschlüsselung**: Von Datei-Uploads
+- ✅ **HTTP-Sicherheitsheader**: XSS-Schutz und weitere Header
+- ✅ **Request-Deduplizierung**: Verhindert Doppeloperationen
+- ✅ **Concurrency Control**: Für Multi-User-Szenarien
+
+---
+
+## 🔧 Fehlerbehebung
+
+### Datenbankverbindungsfehler
+
+- Überprüfen Sie die Dateiberechtigungen im Datenbankverzeichnis
+- Überprüfen Sie den Datenbankpfad in `config/config.php`
+- Stellen Sie sicher, dass die SQLite3-Erweiterung aktiviert ist: `php -m | grep sqlite`
+
+### Berechtigungsfehler
+
+- Stellen Sie sicher, dass der Webserver Lese-/Schreibzugriff auf folgende Verzeichnisse hat:
+  - `db/` Verzeichnis
+  - `uploads/` Verzeichnis
+  - `logs/` Verzeichnis
+  - `config/` Verzeichnis
+
+### Setup funktioniert nicht
+
+- Überprüfen Sie die PHP-Fehlerprotokolle
+- Aktivieren Sie `debugMode` in der Konfiguration, um Fehler zu sehen
+- Überprüfen Sie, ob alle erforderlichen PHP-Erweiterungen installiert sind
+
+---
+
+## 👨‍💻 Für Entwickler
+
+### API-Architektur
+
+Die Anwendung verwendet eine RESTful API-Architektur. Alle Datenoperationen werden über API-Endpunkte abgewickelt.
+
+#### API-Endpunkte
 
 - **`/api/flights.php`** - Flugoperationen
   - `GET ?action=dashboard` - Dashboard-Daten abrufen
@@ -122,12 +310,17 @@ Die Anwendung verwendet eine RESTful API-Architektur. Alle Datenoperationen werd
   - `POST ?action=create` - Neues Ereignis erstellen
   - `DELETE ?id=X` - Ereignis löschen
 
+- **`/api/documents.php`** - Dokumenten-Verwaltung
+  - `GET ?action=list` - Alle Dokumente abrufen
+  - `POST ?action=upload` - PDF-Dokument hochladen (multipart/form-data, nur Admin)
+  - `DELETE ?id=X` - Dokument löschen (nur Admin)
+
 - **`/api/migrations.php`** - Datenbank-Migrationen
   - `GET ?action=list` - Verfügbare Migrationen anzeigen
   - `GET ?action=status` - Status der Migrationen prüfen
   - `POST ?action=run` - Migration ausführen (nur Admin)
 
-### API-Features
+#### API-Features
 
 - **Request-Deduplizierung**: Verhindert doppelte Operationen durch eindeutige Request-IDs
 - **Concurrency Control**: Optimistic Locking verhindert Konflikte bei gleichzeitiger Nutzung
@@ -135,7 +328,7 @@ Die Anwendung verwendet eine RESTful API-Architektur. Alle Datenoperationen werd
 - **Authentifizierung**: Alle Endpunkte erfordern Authentifizierung
 - **JSON-Format**: Einheitliches JSON-Request/Response-Format
 
-### Beispiel-Request
+#### Beispiel-Request
 
 ```javascript
 // Flug starten
@@ -155,18 +348,18 @@ fetch('api/flights.php?action=start', {
 });
 ```
 
-## Datenbank-Migrationen
+### Datenbank-Migrationen
 
 Die Anwendung verwendet ein Migrationssystem zur Verwaltung von Datenbank-Schema-Änderungen.
 
-### Migrationen ausführen
+#### Migrationen ausführen
 
 1. Navigieren Sie zu `migrations.php` im Browser
 2. Die Seite zeigt alle verfügbaren Migrationen (höchste Nummer zuerst)
 3. Nur Administratoren können Migrationen ausführen
 4. Klicken Sie auf "Ausführen" neben einer ausstehenden Migration
 
-### Migrationen erstellen
+#### Migrationen erstellen
 
 Migrationen befinden sich im `migrations/` Verzeichnis und folgen dem Format:
 - `001_beschreibung.php`
@@ -177,7 +370,7 @@ Jede Migration muss zwei Funktionen enthalten:
 - `up($db)` - Führt die Migration aus
 - `down($db)` - Rollback-Funktion (optional)
 
-### Beispiel-Migration
+#### Beispiel-Migration
 
 ```php
 <?php
@@ -192,28 +385,28 @@ function down($db) {
 }
 ```
 
-### Migration-Benachrichtigung
+#### Migration-Benachrichtigung
 
 Wenn ausstehende Migrationen vorhanden sind, wird ein Benachrichtigungssymbol in der Kopfzeile angezeigt, das zur Migrations-Seite führt.
 
-## Automatisches Update-System
+### Automatisches Update-System
 
 Die Anwendung verfügt über ein integriertes Update-System, das es Administratoren ermöglicht, die Anwendung direkt über die Weboberfläche zu aktualisieren.
 
-### Update-Benachrichtigung
+#### Update-Benachrichtigung
 
 - Wenn eine neue Version verfügbar ist, wird ein Benachrichtigungssymbol in der Kopfzeile angezeigt
 - **Für Administratoren**: Klicken auf die Benachrichtigung führt direkt zum Update-Tool
 - **Für normale Benutzer**: Klicken auf die Benachrichtigung führt zur GitHub-Release-Seite
 
-### Update-Tool verwenden
+#### Update-Tool verwenden
 
 1. **Zugriff**: Navigieren Sie zu `Verwaltung > Update Tool` (nur für Administratoren)
 2. **Update prüfen**: Klicken Sie auf "Auf Updates prüfen", um nach verfügbaren Updates zu suchen
 3. **Update installieren**: Wenn ein Update verfügbar ist, klicken Sie auf "Jetzt aktualisieren"
 4. **Fortschritt**: Der Update-Fortschritt wird in Echtzeit angezeigt
 
-### Wie funktioniert das Update?
+#### Wie funktioniert das Update?
 
 Das Update-System:
 - **Lädt automatisch** die neueste Release-Version von GitHub herunter
@@ -229,13 +422,13 @@ Das Update-System:
 - **Stellt geschützte Dateien wieder her** nach dem Update
 - **Führt automatisch ein Rollback durch**, falls ein Fehler auftritt
 
-### Update-Anforderungen
+#### Update-Anforderungen
 
 - **Admin-Zugriff**: Nur Administratoren können Updates durchführen
 - **Schreibrechte**: Der Webserver benötigt Schreibrechte auf das Projektverzeichnis
 - **PHP-ZipArchive**: Die PHP-ZipArchive-Erweiterung muss installiert sein
 
-### Update-Logs
+#### Update-Logs
 
 Update-Protokolle werden in `logs/updater.log` gespeichert und enthalten:
 - Update-Prüfungen
@@ -244,7 +437,7 @@ Update-Protokolle werden in `logs/updater.log` gespeichert und enthalten:
 - Erfolgreiche Updates
 - Fehler und Warnungen
 
-### Fehlerbehebung bei Updates
+#### Fehlerbehebung bei Updates
 
 **Update schlägt fehl:**
 - Überprüfen Sie die Update-Logs in `logs/updater.log`
@@ -260,29 +453,13 @@ Update-Protokolle werden in `logs/updater.log` gespeichert und enthalten:
 - Die Versionsprüfung verwendet einen Cache (1 Stunde)
 - Bei Problemen können Sie die Cache-Datei `logs/github_version_cache.json` löschen
 
-## Sicherheitsfunktionen
-
-- ✅ SQL-Injection-Schutz (Prepared Statements)
-- ✅ CSRF-Schutz für alle Formulare und API-Requests
-- ✅ Sichere Passwort-Hashierung (bcrypt/argon2)
-- ✅ Rate Limiting für Anmeldeversuche
-- ✅ Sichere Session-Verwaltung
-- ✅ Verschlüsselung von Datei-Uploads
-- ✅ HTTP-Sicherheitsheader
-- ✅ XSS-Schutz
-- ✅ Request-Deduplizierung zur Verhinderung von Doppeloperationen
-- ✅ Concurrency Control für Multi-User-Szenarien
-
-## Verwandte Projekte
-
-Dieses Projekt kann zusammen mit dem **[Drohnen-Einsatztagebuch](https://github.com/denni95112/drohnen-einsatztagebuch)** verwendet werden. Das Einsatztagebuch bietet zusätzliche Funktionen zur Dokumentation von Drohnen-Einsätzen und ergänzt die Flugprotokoll-Verwaltung dieses Projekts.
-
-## Projektstruktur
+### Projektstruktur
 
 ```
 drohnen-flug-und-dienstbuch/
 ├── api/                    # API-Endpunkte
 │   ├── admin_api.php      # Admin-API
+│   ├── documents.php      # Dokumenten-Verwaltung
 │   ├── drones.php         # Drohnen-Verwaltung
 │   ├── events.php         # Ereignis-Verwaltung
 │   ├── flights.php        # Flugoperationen
@@ -316,6 +493,7 @@ drohnen-flug-und-dienstbuch/
 │   ├── add_flight.js
 │   ├── dashboard.js       # Dashboard mit API-Integration
 │   ├── delete_flights.js
+│   ├── documents.js       # Dokumenten-Verwaltung
 │   ├── header.js
 │   ├── index.js
 │   ├── install_notification.js
@@ -327,6 +505,9 @@ drohnen-flug-und-dienstbuch/
 ├── migrations/             # Datenbank-Migrationen
 │   ├── 001_create_schema_migrations_table.php
 │   ├── 002_create_request_log_table.php
+│   ├── 003_update_pilots_default_minutes.php
+│   ├── 004_add_pilot_license_fields.php
+│   ├── 005_create_documents_table.php
 │   └── ...                # Weitere Migrationen
 ├── pages/                  # Benutzeroberflächen-Seiten
 │   ├── add_events.php     # Dienst anlegen
@@ -335,6 +516,7 @@ drohnen-flug-und-dienstbuch/
 │   ├── changelog.php      # Changelog
 │   ├── dashboard.php      # Dashboard (API-basiert)
 │   ├── delete_flights.php # Flüge löschen
+│   ├── documents.php      # Dokumenten-Verwaltung
 │   ├── logout.php         # Logout
 │   ├── manage_drones.php  # Drohnen-Verwaltung (API-basiert)
 │   ├── manage_locations.php  # Standort-Verwaltung (API-basiert)
@@ -353,96 +535,26 @@ drohnen-flug-und-dienstbuch/
 │   └── updater.css        # Update-Tool Stylesheet
 ├── logs/                   # Anwendungsprotokolle
 ├── uploads/                # Verschlüsselte Datei-Uploads
+│   └── documents/         # Verschlüsselte Dokumente
 ├── index.php              # Login-Seite (Haupteingangspunkt)
 ├── setup.php              # Initialer Setup-Assistent
 ├── manifest.json          # PWA-Manifest (muss im Root sein)
 └── service-worker.js      # PWA Service Worker (muss im Root sein)
 ```
 
-## Pilot-Verwaltung
+---
 
-Die Pilot-Verwaltung bietet umfassende Funktionen zur Verwaltung von Piloten und deren Lizenzen.
+## ℹ️ Weitere Informationen
 
-### Funktionen
+### Verwandte Projekte
 
-- **Pilot-Informationen**: Name und benötigte Flugminuten pro 3 Monate
-- **Lizenz-Verwaltung**: 
-  - A1/A3 Fernpilotenschein mit ID und Ablaufdatum
-  - A2 Fernpilotenschein mit ID und Ablaufdatum
-  - Beide Lizenzen sind optional
-- **Sperrfunktion**: Option "Sperren wenn Fernpilotenschein ungültig"
-  - Wenn aktiviert, muss mindestens eine Lizenz mit gültigem Ablaufdatum angegeben werden
-  - Piloten mit ungültigen Lizenzen können keine neuen Flüge starten
-  - Wird im Dashboard mit rotem Hintergrund und Warnung angezeigt
-- **Sortierung**: 
-  - Sortierung nach ID, Name (Standard), A1/A3 Ablaufdatum oder A2 Ablaufdatum
-- **Bearbeitung**: 
-  - Vollständige Bearbeitung aller Pilot-Informationen über ein Modal
-  - Keine Admin-Rechte erforderlich für die Bearbeitung
+Dieses Projekt kann zusammen mit dem **[Drohnen-Einsatztagebuch](https://github.com/denni95112/drohnen-einsatztagebuch)** verwendet werden. Das Einsatztagebuch bietet zusätzliche Funktionen zur Dokumentation von Drohnen-Einsätzen und ergänzt die Flugprotokoll-Verwaltung dieses Projekts.
 
-### Verwendung
-
-1. **Pilot hinzufügen**:
-   - Name eingeben (Pflichtfeld)
-   - Benötigte Flugminuten festlegen (Standard: 45)
-   - Optional: A1/A3 und/oder A2 Lizenz-Informationen eingeben
-   - Optional: "Sperren wenn Fernpilotenschein ungültig" aktivieren
-   
-2. **Pilot bearbeiten**:
-   - Auf "Bearbeiten" klicken
-   - Alle Felder im Modal anpassen
-   - Änderungen speichern
-
-3. **Sortierung**:
-   - Dropdown-Menü "Sortieren nach" verwenden
-   - Auswahl zwischen ID, Name, A1/A3 Ablaufdatum oder A2 Ablaufdatum
-
-4. **Lizenz-Sperre**:
-   - Wenn aktiviert und keine gültige Lizenz vorhanden:
-     - Pilot wird im Dashboard rot angezeigt
-     - Warnung: "⚠️ Fernpilotenschein ungültig - Flug kann nicht gestartet werden"
-     - Flug-Start-Formular ist deaktiviert
-
-## Verwendung
-
-1. **Login**: Verwenden Sie das während des Setups festgelegte Passwort
-2. **Dashboard**: Flugstatistiken und Pilotstatus anzeigen
-3. **Flug hinzufügen**: Neue Flugeinträge manuell erfassen
-4. **Flüge anzeigen**: Alle erfassten Flüge durchsuchen und filtern
-5. **Piloten verwalten**: Pilotinformationen und -anforderungen hinzufügen/bearbeiten (siehe [Pilot-Verwaltung](#pilot-verwaltung))
-6. **Drohnen verwalten**: Drohnenbestand verfolgen
-7. **Standorte verwalten**: Flugstandorte mit optionalen Dateianhängen hinzufügen
-8. **Batterie-Übersicht**: Batterienutzung über Flüge hinweg überwachen
-9. **Admin-Funktionen**: Auf Admin-Funktionen mit Admin-Passwort zugreifen
-
-
-## Fehlerbehebung
-
-### Datenbankverbindungsfehler
-
-- Überprüfen Sie die Dateiberechtigungen im Datenbankverzeichnis
-- Überprüfen Sie den Datenbankpfad in `config/config.php`
-- Stellen Sie sicher, dass die SQLite3-Erweiterung aktiviert ist: `php -m | grep sqlite`
-
-### Berechtigungsfehler
-
-- Stellen Sie sicher, dass der Webserver Lese-/Schreibzugriff auf folgende Verzeichnisse hat:
-  - `db/` Verzeichnis
-  - `uploads/` Verzeichnis
-  - `logs/` Verzeichnis
-  - `config/` Verzeichnis
-
-### Setup funktioniert nicht
-
-- Überprüfen Sie die PHP-Fehlerprotokolle
-- Aktivieren Sie `debugMode` in der Konfiguration, um Fehler zu sehen
-- Überprüfen Sie, ob alle erforderlichen PHP-Erweiterungen installiert sind
-
-## Lizenz
+### Lizenz
 
 Dieses Projekt ist unter der MIT-Lizenz lizenziert - siehe [LICENSE](LICENSE) Datei für Details.
 
-## Autor
+### Autor
 
 **Dennis Bögner (denni95112)**
 
