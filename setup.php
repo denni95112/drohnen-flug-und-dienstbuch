@@ -144,6 +144,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         // Only proceed if there are no errors
         if (empty($error)) {
+            // Generate random encryption key (32 bytes = 64 hex chars for AES-256)
+            $encryption_key = bin2hex(random_bytes(32));
             // Generate random IV (16 bytes for AES-256-CBC)
             $iv = bin2hex(random_bytes(8)); // 8 bytes = 16 hex chars (16 bytes total when used)
 
@@ -191,6 +193,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // Create config.php
             $logoConfigLine = !empty($logo_path) ? "    'logo_path' => '{$logo_path_escaped}'," : '';
+            $encryption_key_escaped = addslashes($encryption_key);
             $config = <<<PHP
 <?php
 return [
@@ -203,6 +206,7 @@ return [
 {$logoConfigLine}
     'encryption' => [
         'method' => 'aes-256-cbc',
+        'key' => '{$encryption_key_escaped}',
         'iv' => '{$iv}',
     ],
     'password_hash' => '{$password_hash}', // password_hash (bcrypt/argon2)

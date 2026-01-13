@@ -42,9 +42,13 @@ if (isset($_GET['download_file']) && isset($_GET['document_id'])) {
             $encryptedContent = $parts[1];
             $iv = hex2bin($ivHex);
             
-            // Get encryption key from session
-            $encryptionKey = getEncryptionKey();
-            $encryptionMethod = $config['encryption']['method'];
+            // Get encryption key from config
+            try {
+                $encryptionKey = getEncryptionKey();
+                $encryptionMethod = $config['encryption']['method'] ?? 'aes-256-cbc';
+            } catch (Exception $e) {
+                die('<p>Fehler beim Laden des Verschlüsselungsschlüssels: ' . htmlspecialchars($e->getMessage()) . '</p>');
+            }
 
             // Decrypt the file content
             $decryptedContent = openssl_decrypt($encryptedContent, $encryptionMethod, $encryptionKey, 0, $iv);
@@ -99,9 +103,13 @@ if (isset($_GET['preview_file']) && isset($_GET['document_id'])) {
             $encryptedContent = $parts[1];
             $iv = hex2bin($ivHex);
             
-            // Get encryption key from session
-            $encryptionKey = getEncryptionKey();
-            $encryptionMethod = $config['encryption']['method'];
+            // Get encryption key from config
+            try {
+                $encryptionKey = getEncryptionKey();
+                $encryptionMethod = $config['encryption']['method'] ?? 'aes-256-cbc';
+            } catch (Exception $e) {
+                die('<p>Fehler beim Laden des Verschlüsselungsschlüssels: ' . htmlspecialchars($e->getMessage()) . '</p>');
+            }
 
             // Decrypt the file content
             $decryptedContent = openssl_decrypt($encryptedContent, $encryptionMethod, $encryptionKey, 0, $iv);

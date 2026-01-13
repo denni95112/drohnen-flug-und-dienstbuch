@@ -41,6 +41,7 @@ return [
     // Encryption settings for file uploads
     'encryption' => [
         'method' => 'aes-256-cbc',
+        'key' => '', // Will be generated during setup (64 hex characters = 32 bytes for AES-256)
         'iv' => '', // Will be generated during setup
     ],
     

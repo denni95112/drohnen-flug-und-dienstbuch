@@ -6,13 +6,24 @@
 
 $changelog = [
     [
+        'version' => '1.1.2',
+        'date' => '2026-01-13',
+        'changes' => [
+
+        ],
+        'bugfixes' => [
+            'Fehler beim Entschlüsseln von Dateien behoben',
+        ],
+        'new_features' => [
+        ]
+    ],
+    [
         'version' => '1.1.1',
         'date' => '2026-01-13',
         'changes' => [
 
         ],
         'bugfixes' => [
-            '',
         ],
         'new_features' => [
             'Dokumenten-Management-Funktion hinzugefügt (Verwaltung -> Dokumente). PDF Upload nur für Administratoren möglich.',

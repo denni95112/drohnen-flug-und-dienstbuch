@@ -100,16 +100,72 @@ function setLoginCookie() {
 }
 
 /**
- * Get encryption key from session for file encryption
- * @return string Encryption key
+ * Get encryption key from config file for file encryption
+ * Generates and stores key in config if it doesn't exist
+ * Returns the key as binary (for OpenSSL functions)
+ * @return string Encryption key (binary format)
  */
 function getEncryptionKey() {
-    if (isset($_SESSION['encryption_key'])) {
-        return $_SESSION['encryption_key'];
+    $configFile = __DIR__ . '/../config/config.php';
+    if (!file_exists($configFile)) {
+        throw new Exception('Configuration file not found');
     }
-    $key = bin2hex(random_bytes(32));
-    $_SESSION['encryption_key'] = $key;
-    return $key;
+    
+    $config = include $configFile;
+    if (!is_array($config)) {
+        throw new Exception('Invalid configuration file');
+    }
+    
+    // Check if encryption key exists in config
+    if (isset($config['encryption']['key']) && !empty($config['encryption']['key'])) {
+        $keyHex = $config['encryption']['key'];
+        // Convert hex to binary for OpenSSL functions
+        // If it's already binary (length 32), return as-is
+        // If it's hex (length 64), convert to binary
+        if (strlen($keyHex) === 64 && ctype_xdigit($keyHex)) {
+            return hex2bin($keyHex);
+        } elseif (strlen($keyHex) === 32) {
+            // Already binary, return as-is
+            return $keyHex;
+        } else {
+            // Invalid key format, generate new one
+            $key = bin2hex(random_bytes(32));
+            require_once __DIR__ . '/utils.php';
+            if (!isset($config['encryption'])) {
+                $config['encryption'] = [];
+            }
+            $config['encryption']['key'] = $key;
+            if (!isset($config['encryption']['method'])) {
+                $config['encryption']['method'] = 'aes-256-cbc';
+            }
+            updateConfig('encryption', $config['encryption']);
+            return hex2bin($key);
+        }
+    }
+    
+    // Generate new key if it doesn't exist
+    $keyHex = bin2hex(random_bytes(32)); // 64 hex characters = 32 bytes for AES-256
+    
+    // Update config with new key
+    require_once __DIR__ . '/utils.php';
+    if (!isset($config['encryption'])) {
+        $config['encryption'] = [];
+    }
+    
+    // Preserve existing encryption settings (method, iv) if they exist
+    $encryptionConfig = $config['encryption'];
+    $encryptionConfig['key'] = $keyHex;
+    
+    // Ensure encryption method is set
+    if (!isset($encryptionConfig['method'])) {
+        $encryptionConfig['method'] = 'aes-256-cbc';
+    }
+    
+    // Save updated config (preserves existing 'iv' and other settings)
+    updateConfig('encryption', $encryptionConfig);
+    
+    // Return binary key for OpenSSL functions
+    return hex2bin($keyHex);
 }
 
 /**
