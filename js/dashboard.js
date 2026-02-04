@@ -371,6 +371,23 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+// Returns true if any pilot has partial form data (user may be starting a flight) – skip refresh to avoid disrupting input
+function hasStartFlightFormWithValues() {
+    const containers = document.querySelectorAll('.pilot-container[data-pilot-id]');
+    for (const container of containers) {
+        const pilotId = container.getAttribute('data-pilot-id');
+        if (!pilotId) continue;
+        if (container.querySelector('.end-flight-btn')) continue; // ongoing flight – no start form
+        const locationSelect = document.getElementById(`location_id_${pilotId}`);
+        const droneSelect = document.getElementById(`drone_id_${pilotId}`);
+        const batteryInput = document.getElementById(`battery_number_${pilotId}`);
+        if (!locationSelect || !droneSelect || !batteryInput) continue;
+        const hasValue = locationSelect.value !== '' || droneSelect.value !== '' || (batteryInput.value.trim() !== '');
+        if (hasValue) return true;
+    }
+    return false;
+}
+
 // Initialize dashboard
 document.addEventListener('DOMContentLoaded', function() {
     // Initial load
@@ -390,9 +407,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Auto-refresh every 30 seconds
+    // Auto-refresh every 30 seconds (skip if user has filled start-flight fields but not started yet)
     refreshInterval = setInterval(() => {
-        if (!isRefreshing) {
+        if (!isRefreshing && !hasStartFlightFormWithValues()) {
             fetchDashboardData();
         }
     }, 30000);
@@ -404,10 +421,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 clearInterval(refreshInterval);
             }
         } else {
-            // Resume refresh and immediately fetch
-            fetchDashboardData();
+            // Resume refresh and immediately fetch (skip if user has filled start-flight fields)
+            if (!hasStartFlightFormWithValues()) {
+                fetchDashboardData();
+            }
             refreshInterval = setInterval(() => {
-                if (!isRefreshing) {
+                if (!isRefreshing && !hasStartFlightFormWithValues()) {
                     fetchDashboardData();
                 }
             }, 30000);
