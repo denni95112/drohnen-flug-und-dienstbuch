@@ -9,7 +9,7 @@ $changelog = [
         'version' => '1.1.3',
         'date' => '2026-02-04',
         'changes' => [
-            'Dialog für neue Installtion entfernt',
+            'Dialog für neue Installation entfernt',
             'GIT Hub Referenz gegen open-drone-tools.de getauscht'
         ],
         'bugfixes' => [
