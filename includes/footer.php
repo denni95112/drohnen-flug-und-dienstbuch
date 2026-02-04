@@ -9,6 +9,6 @@ if (strpos($_SERVER['PHP_SELF'], '/pages/') !== false) {
 <footer>
     <p>MIT License - Erstellt von <a href="https://github.com/denni95112">Dennis Bögner</a></p>
     <p>Version <?php echo APP_VERSION; ?> - <a href="<?php echo $basePath; ?>pages/changelog.php">Changelog</a></p>
-    <p>GitHub: <a href="https://github.com/denni95112/drohnen-flug-und-dienstbuch">https://github.com/denni95112/drohnen-flug-und-dienstbuch</a></p>
-    <?php include __DIR__ . '/buy_me_a_coffee.php'; ?>
+    <p><a href="https://open-drone-tools.de/">open-drone-tools.de</a></p>
+    <?php if (function_exists('isAuthenticated') && isAuthenticated()) { include __DIR__ . '/buy_me_a_coffee.php'; } ?>
 </footer>

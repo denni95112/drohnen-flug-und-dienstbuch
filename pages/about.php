@@ -43,6 +43,21 @@ require_once __DIR__ . '/../includes/version.php';
                 </div>
             </section>
 
+            <!-- Project / Contact Section -->
+            <section class="about-section">
+                <h2>Projekt</h2>
+                <div class="about-content">
+                    <p>
+                        <strong>Website:</strong>
+                        <a href="https://open-drone-tools.de/" target="_blank" rel="noopener noreferrer">https://open-drone-tools.de/</a>
+                    </p>
+                    <p>
+                        <strong>E-Mail:</strong>
+                        <a href="mailto:info@open-drone-tools.de">info@open-drone-tools.de</a>
+                    </p>
+                </div>
+            </section>
+
             <!-- Version Section -->
             <section class="about-section">
                 <h2>Version</h2>

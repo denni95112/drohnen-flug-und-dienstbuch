@@ -118,11 +118,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php endif; ?>
             <button type="submit" class="btn-login">Einloggen</button>
         </form>
-        <footer>
-            <p>MIT License - Erstellt von <a href="https://github.com/denni95112">Dennis Bögner</a></p>
-            <p>Version <?php echo APP_VERSION; ?></p>
-            <p><a href="https://github.com/denni95112/drohnen-flug-und-dienstbuch">Visit GitHub</a></p>
-        </footer>
+        <?php include __DIR__ . '/includes/footer.php'; ?>
     </div>
 </body>
 </html>
