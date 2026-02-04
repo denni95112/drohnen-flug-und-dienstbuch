@@ -6,6 +6,22 @@
 
 $changelog = [
     [
+        'version' => '1.1.3',
+        'date' => '2026-02-04',
+        'changes' => [
+            'Dialog für neue Installtion entfernt',
+            'GIT Hub Referenz gegen open-drone-tools.de getauscht'
+        ],
+        'bugfixes' => [
+            'Dashboard aktualisiert nicht mehr, wenn Daten im Formular sind, aber der Flug noch nicht gestartet wurde',
+            'Falsche Version im Login'
+        ],
+        'new_features' => [
+            'Anonymes senden der Installation an open-drone-tools.de hinzugefügt (Version & Repo Name sonst nichts)',
+            'Kontakt E-Mail in ÜBER-Seite hinzugefügt'
+        ]
+    ],
+    [
         'version' => '1.1.2',
         'date' => '2026-01-13',
         'changes' => [
