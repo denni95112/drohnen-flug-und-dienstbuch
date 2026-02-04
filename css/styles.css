@@ -509,18 +509,6 @@ th {
     box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4) !important;
 }
 
-#install-notification-message-container .success {
-    color: #10b981;
-    font-weight: 500;
-    margin-top: 1rem;
-}
-
-#install-notification-message-container .error {
-    color: #ef4444;
-    font-weight: 500;
-    margin-top: 1rem;
-}
-
 .admin-error {
     color: #dc2626;
     font-size: 0.9rem;

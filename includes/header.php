@@ -18,13 +18,6 @@ require_once __DIR__ . '/version.php';
 require_once __DIR__ . '/utils.php';
 $config = include $configFile;
 
-// For older installations: add ask_for_install_notification config option if it doesn't exist
-if (!isset($config['ask_for_install_notification'])) {
-    updateConfig('ask_for_install_notification', true);
-    // Reload config after update
-    $config = include $configFile;
-}
-
 if (isset($config['timezone'])) {
     date_default_timezone_set($config['timezone']);
 }
@@ -98,11 +91,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['admin_password'])) {
             clearRateLimit('admin_login');
             session_regenerate_id(true);
             setAdminStatus(true);
-            
-            // Set session flag to show install notification dialog after admin login
-            if (isset($config['ask_for_install_notification']) && $config['ask_for_install_notification'] === true) {
-                $_SESSION['show_install_notification'] = true;
-            }
             
             if ($isAjax) {
                 header('Content-Type: application/json');
@@ -242,88 +230,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['admin_password'])) {
         </form>
     </div>
 </div>
-
-<!-- Install Notification Dialog -->
-<?php 
-// Only show dialog in these cases:
-// 1. Admin just logged in (session flag set) - for older installations
-// 2. User is admin AND config is true - for older installations
-// 3. New installation: check if database has no pilots/drones yet (fresh setup)
-$showNotificationDialog = false;
-if (isset($config['ask_for_install_notification']) && $config['ask_for_install_notification'] === true) {
-    // Check if admin just logged in (session flag)
-    if (isset($_SESSION['show_install_notification']) && $_SESSION['show_install_notification'] === true) {
-        $showNotificationDialog = true;
-        // Clear the flag so it doesn't show again on next page load
-        unset($_SESSION['show_install_notification']);
-    } 
-    // Or show to current admins (for older installations)
-    elseif ($is_admin) {
-        $showNotificationDialog = true;
-    } 
-    // Or show for new installations (database has no pilots or drones yet)
-    else {
-        try {
-            require_once __DIR__ . '/utils.php';
-            $dbPath = getDatabasePath();
-            if (file_exists($dbPath)) {
-                $checkDb = new SQLite3($dbPath);
-                $checkDb->enableExceptions(false); // Don't throw exceptions, return false on error
-                
-                // Check if tables exist first
-                $pilotsTableExists = $checkDb->querySingle("SELECT name FROM sqlite_master WHERE type='table' AND name='pilots'");
-                $dronesTableExists = $checkDb->querySingle("SELECT name FROM sqlite_master WHERE type='table' AND name='drones'");
-                
-                if ($pilotsTableExists && $dronesTableExists) {
-                    // Check if this is a fresh installation (no pilots or drones)
-                    $pilotCount = $checkDb->querySingle("SELECT COUNT(*) FROM pilots");
-                    $droneCount = $checkDb->querySingle("SELECT COUNT(*) FROM drones");
-                    // Show if database is empty (new installation)
-                    if ($pilotCount == 0 && $droneCount == 0) {
-                        $showNotificationDialog = true;
-                    }
-                }
-                $checkDb->close();
-            }
-        } catch (Exception $e) {
-            // If we can't check, don't show to non-admins
-            $showNotificationDialog = false;
-            error_log("Error checking for new installation: " . $e->getMessage());
-        }
-    }
-}
-?>
-<?php if ($showNotificationDialog): ?>
-<div id="install-notification-modal" class="modal" style="display: none;">
-    <div class="modal-content">
-        <h2>Installationsbenachrichtigung</h2>
-        <p>Möchten Sie den Entwickler über diese Installation informieren?</p>
-        <p><strong>Hinweis:</strong> Es werden keine privaten Daten übertragen. Es wird nur eine Benachrichtigung mit dem aktuellen Datum und der Uhrzeit gesendet. Optional können Sie den Namen Ihrer Organisation teilen, wenn Sie dies wünschen.</p>
-        <div id="install-notification-form" style="margin: 1.5rem 0;">
-            <div style="margin-bottom: 1rem;">
-                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                    <input type="checkbox" id="install-notification-share-org" style="cursor: pointer;">
-                    <span>Ich möchte den Namen meiner Organisation teilen</span>
-                </label>
-            </div>
-            <div style="margin-bottom: 1rem;">
-                <label for="install-notification-organization" style="display: block; margin-bottom: 0.5rem;">Organisation (optional):</label>
-                <input type="text" id="install-notification-organization" placeholder="Name Ihrer Organisation" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;" disabled>
-            </div>
-        </div>
-        <div id="install-notification-message-container"></div>
-        <div class="modal-buttons">
-            <button type="button" id="install-notification-yes" class="modal-button">Ja</button>
-            <button type="button" id="install-notification-no" class="modal-button modal-button-no">Nein</button>
-        </div>
-    </div>
-</div>
-<script>
-    // Make config value available to JavaScript
-    window.showInstallNotification = true;
-</script>
-<script src="<?php echo $basePath; ?>js/install_notification.js"></script>
-<?php endif; ?>
 
 <script>
     // Define base path for API calls - works from root or pages/ directory

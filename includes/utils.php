@@ -567,3 +567,44 @@ function updateConfig(string $key, $value): bool {
     return $result;
 }
 
+/**
+ * Send install/update tracking webhook to open-drone-tools.de.
+ * Fire-and-forget: does not throw or block on failure.
+ *
+ * @param string $repo Repository name (e.g. GITHUB_REPO_NAME)
+ * @param string $version Version string (e.g. APP_VERSION or update version)
+ */
+function sendInstallTrackingWebhook(string $repo, string $version): void {
+    $url = 'https://open-drone-tools.de/webhook.php';
+    $payload = json_encode([
+        'repo' => trim($repo),
+        'version' => trim($version),
+    ]);
+    if (function_exists('curl_init')) {
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+        ]);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+        @curl_exec($ch);
+        @curl_close($ch);
+    } elseif (ini_get('allow_url_fopen')) {
+        $context = stream_context_create([
+            'http' => [
+                'method' => 'POST',
+                'header' => "Content-Type: application/json\r\n",
+                'content' => $payload,
+                'timeout' => 5,
+            ],
+        ]);
+        @file_get_contents($url, false, $context);
+    }
+}
+

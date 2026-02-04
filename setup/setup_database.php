@@ -196,6 +196,10 @@ foreach ($migrationFiles as $migrationFile) {
     }
 }
 
+// Notify install tracking webhook (fire-and-forget)
+require_once __DIR__ . '/../includes/version.php';
+sendInstallTrackingWebhook(GITHUB_REPO_NAME, (string) APP_VERSION);
+
 echo "Database setup completed successfully! Redirecting...";
 
 header("Refresh: 2; url=../index.php");

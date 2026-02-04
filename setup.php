@@ -211,7 +211,6 @@ return [
     ],
     'password_hash' => '{$password_hash}', // password_hash (bcrypt/argon2)
     'admin_hash' => '{$admin_hash}',
-    'ask_for_install_notification' => true,
 ];
 PHP;
             file_put_contents($configPath, $config);
