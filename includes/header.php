@@ -197,6 +197,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['admin_password'])) {
             <?php if (!empty($url)): ?>
                 <li><a href="<?= htmlspecialchars($url, ENT_QUOTES, 'UTF-8') ?>">Einsatzdoku</a></li>
             <?php endif; ?>
+            <li><a href="https://github.com/<?php echo GITHUB_REPO_OWNER . '/' . GITHUB_REPO_NAME; ?>/wiki" target="_blank" rel="noopener noreferrer">Hilfe / Wiki</a></li>
             <li><a href="<?php echo $basePath; ?>pages/about.php">Über</a></li>
             <li><a href="<?php echo $basePath; ?>pages/logout.php">Logout</a></li>
         </ul>
