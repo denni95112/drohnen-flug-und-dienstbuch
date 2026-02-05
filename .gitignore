@@ -71,3 +71,5 @@ node_modules/
 package-lock.json
 yarn.lock
 
+# Wiki (GitHub manages wiki in separate clone)
+drohnen-flug-und-dienstbuch.wiki/
