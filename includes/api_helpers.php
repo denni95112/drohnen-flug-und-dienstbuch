@@ -9,6 +9,7 @@ require_once __DIR__ . '/security_headers.php';
 require_once __DIR__ . '/csrf.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/utils.php';
+require_once __DIR__ . '/api_auth.php';
 
 /**
  * Send JSON response
@@ -47,8 +48,22 @@ function sendErrorResponse($error, $errorCode = null, $statusCode = 400) {
 
 /**
  * Require authentication for API endpoint
+ * Checks for token auth first, then falls back to session auth
  */
 function requireApiAuth() {
+    // Check for token authentication first
+    $tokenInfo = verifyApiToken();
+    if ($tokenInfo !== null) {
+        // Token is valid, set API context flag
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        $_SESSION['api_authenticated_via_token'] = true;
+        $_SESSION['api_token_id'] = $tokenInfo['id'];
+        return; // Token auth successful
+    }
+    
+    // Fall back to session authentication
     if (!isAuthenticated()) {
         sendErrorResponse('Authentication required', 'AUTHENTICATION_ERROR', 401);
     }
@@ -66,8 +81,14 @@ function requireApiAdmin() {
 
 /**
  * Verify CSRF token from JSON request
+ * Skips CSRF check if authenticated via API token
  */
 function verifyApiCsrf() {
+    // Skip CSRF for token-authenticated requests
+    if (session_status() !== PHP_SESSION_NONE && isset($_SESSION['api_authenticated_via_token']) && $_SESSION['api_authenticated_via_token'] === true) {
+        return; // Token auth doesn't need CSRF
+    }
+    
     $input = json_decode(file_get_contents('php://input'), true);
     $token = $input['csrf_token'] ?? $_POST['csrf_token'] ?? '';
     
@@ -164,8 +185,12 @@ function cleanupExpiredRequestLogs($db) {
 /**
  * Initialize API endpoint
  * Sets up error handling, security headers, authentication
+ * 
+ * @param bool $requireAuth Require authentication (session or token)
+ * @param bool $requireAdmin Require admin privileges (only for session auth, not token)
+ * @param bool $allowTokenAuth Allow token-based authentication (default: true)
  */
-function initApiEndpoint($requireAuth = true, $requireAdmin = false) {
+function initApiEndpoint($requireAuth = true, $requireAdmin = false, $allowTokenAuth = true) {
     ob_start(); // Start output buffering
     
     // Set security headers
@@ -178,12 +203,28 @@ function initApiEndpoint($requireAuth = true, $requireAdmin = false) {
     
     // Require authentication
     if ($requireAuth) {
+        // Check token auth first if allowed
+        if ($allowTokenAuth) {
+            $tokenInfo = verifyApiToken();
+            if ($tokenInfo !== null) {
+                // Token is valid, set API context
+                $_SESSION['api_authenticated_via_token'] = true;
+                $_SESSION['api_token_id'] = $tokenInfo['id'];
+                // Token auth doesn't require admin check (tokens have full API access)
+                // Clear output and set headers
+                ob_clean();
+                header('Content-Type: application/json; charset=utf-8');
+                return; // Token auth successful, skip session auth
+            }
+        }
+        
+        // Fall back to session authentication
         requireApiAuth();
-    }
-    
-    // Require admin
-    if ($requireAdmin) {
-        requireApiAdmin();
+        
+        // Require admin (only for session auth)
+        if ($requireAdmin) {
+            requireApiAdmin();
+        }
     }
     
     // Clear any output
