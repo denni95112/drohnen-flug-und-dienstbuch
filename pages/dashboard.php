@@ -34,9 +34,18 @@ require_once __DIR__ . '/../includes/version.php';
         <main>
             <h1>Dashboard</h1>
 
-            <!-- Search input -->
+            <!-- Search input and filters -->
             <div id="search-container" style="display: none;">
-                <input type="text" id="pilot-search" placeholder="Pilot nach Name suchen..." autocomplete="off">
+                <div class="dashboard-toolbar">
+                    <input type="text" id="pilot-search" placeholder="Pilot nach Name suchen..." autocomplete="off">
+                    <label class="green-only-toggle switch-label">
+                        <input type="checkbox" id="green-only-toggle" class="switch-input" autocomplete="off">
+                        <span class="switch-track" aria-hidden="true">
+                            <span class="switch-thumb"></span>
+                        </span>
+                        <span class="switch-label-text">Nur grüne Pilot:innen</span>
+                    </label>
+                </div>
             </div>
 
             <!-- Error message container -->

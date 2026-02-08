@@ -16,6 +16,7 @@ Eine Progressive Web App (PWA) zur Verwaltung von Drohnen-Flugprotokollen, Pilot
 - 📊 **Dashboard** – Pilotstatus, Flugstart/-ende
 - 📅 **Dienstbuch** – Dienste, Einsätze und Verwaltungstermine
 - 🔐 **Authentifizierung** – Passwort + Admin-Rechte
+- 🛠️ **Admin-Seite** – Datenbank, Einstellungen, Logo, Passwörter; [API-Tokens](https://github.com/denni95112/drohnen-flug-und-dienstbuch/wiki/Admin-Seite) für externen API-Zugriff (z. B. Einsatztagebuch)
 - 📱 **PWA** – Installierbar als App ([Anleitung](https://github.com/denni95112/drohnen-flug-und-dienstbuch/wiki/PWA-installieren))
 
 ---
@@ -77,7 +78,7 @@ Die ausführliche Bedienungsanleitung mit allen Funktionen und Screenshots finde
 | Piloten & Drohnen | [Piloten verwalten](https://github.com/denni95112/drohnen-flug-und-dienstbuch/wiki/Piloten-verwalten), [Drohnen verwalten](https://github.com/denni95112/drohnen-flug-und-dienstbuch/wiki/Drohnen-verwalten) |
 | Dienste | [Dienst hinzufügen](https://github.com/denni95112/drohnen-flug-und-dienstbuch/wiki/Dienst-hinzufügen), [Dienstbuch](https://github.com/denni95112/drohnen-flug-und-dienstbuch/wiki/Dienstbuch) |
 | Dokumente | [Dokumente](https://github.com/denni95112/drohnen-flug-und-dienstbuch/wiki/Dokumente) |
-| Admin & Benachrichtigungen | [Admin Login](https://github.com/denni95112/drohnen-flug-und-dienstbuch/wiki/Admin-Login), [Kopfzeilen-Benachrichtigungen](https://github.com/denni95112/drohnen-flug-und-dienstbuch/wiki/Kopfzeilen-Benachrichtigungen) |
+| Admin & Benachrichtigungen | [Admin Login](https://github.com/denni95112/drohnen-flug-und-dienstbuch/wiki/Admin-Login), [Admin-Seite (Verwaltung & API-Tokens)](https://github.com/denni95112/drohnen-flug-und-dienstbuch/wiki/Admin-Seite), [Kopfzeilen-Benachrichtigungen](https://github.com/denni95112/drohnen-flug-und-dienstbuch/wiki/Kopfzeilen-Benachrichtigungen) |
 | PWA installieren | [PWA – Als App installieren](https://github.com/denni95112/drohnen-flug-und-dienstbuch/wiki/PWA-installieren) |
 | Datenbank-Update | [Datenbank Update](https://github.com/denni95112/drohnen-flug-und-dienstbuch/wiki/Datenbank-Update) |
 
@@ -106,9 +107,10 @@ Die ausführliche Bedienungsanleitung mit allen Funktionen und Screenshots finde
 | `/api/locations.php` | Standort-Verwaltung |
 | `/api/events.php` | Ereignis/Dienst-Verwaltung |
 | `/api/documents.php` | Dokumenten-Verwaltung |
+| `/api/admin.php` | Admin-Login/Logout (POST), API-Tokens (list_tokens, create_token, revoke_token) |
 | `/api/migrations.php` | Datenbank-Migrationen |
 
-Alle API-Requests erfordern Authentifizierung und CSRF-Token.
+API-Zugriff: **Session** (Browser) oder **Bearer-Token** (Header `Authorization: Bearer <token>`). Token werden in der [Admin-Seite](https://github.com/denni95112/drohnen-flug-und-dienstbuch/wiki/Admin-Seite) unter „API-Tokens“ erstellt. Alle API-Requests erfordern Authentifizierung (Session oder Token) bzw. CSRF-Token bei Formularen.
 
 ### Datenbank-Migrationen
 

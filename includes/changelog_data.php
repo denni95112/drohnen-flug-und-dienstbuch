@@ -6,6 +6,19 @@
 
 $changelog = [
     [
+        'version' => '1.1.5 - Hotfix',
+        'date' => '2026-02-08',
+        'changes' => [
+
+        ],
+        'bugfixes' => [
+            'Nächster Flug fällig Meldung wurde in einigen Fällen nicht angezeigt'
+        ],
+        'new_features' => [
+            'Switch im Dashboard um nur taugliche Pilot:innen zu sehen',
+        ]
+    ],
+    [
         'version' => '1.1.4',
         'date' => '2026-02-08',
         'changes' => [

@@ -112,16 +112,27 @@ function renderDashboard(data) {
             searchContainer.style.display = 'block';
         }
         
-        // Get search term
+        // Get search term and green-only toggle
         const searchInput = document.getElementById('pilot-search');
         const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+        const greenOnlyToggle = document.getElementById('green-only-toggle');
+        const greenOnly = greenOnlyToggle ? greenOnlyToggle.checked : false;
         
         // Filter and sort pilots
         let filteredPilots = data.pilots;
         
+        // Filter by green only (enough minutes + license not locked)
+        if (greenOnly) {
+            filteredPilots = filteredPilots.filter(pilot => {
+                const hasEnoughMinutes = pilot.flight_count >= pilot.required_minutes;
+                const isLockedLicense = pilot.is_locked_license === true || pilot.is_locked_license === 1;
+                return hasEnoughMinutes && !isLockedLicense;
+            });
+        }
+        
         // Filter by name if search term exists
         if (searchTerm) {
-            filteredPilots = data.pilots.filter(pilot => 
+            filteredPilots = filteredPilots.filter(pilot => 
                 pilot.name.toLowerCase().includes(searchTerm)
             );
         }
@@ -400,10 +411,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('pilot-search');
     if (searchInput) {
         searchInput.addEventListener('input', function() {
-            // Re-render dashboard with current data and search filter
-            if (dashboardData) {
-                renderDashboard(dashboardData);
-            }
+            if (dashboardData) renderDashboard(dashboardData);
+        });
+    }
+    
+    // Green-only toggle event listener
+    const greenOnlyToggle = document.getElementById('green-only-toggle');
+    if (greenOnlyToggle) {
+        greenOnlyToggle.addEventListener('change', function() {
+            if (dashboardData) renderDashboard(dashboardData);
         });
     }
     

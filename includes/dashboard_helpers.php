@@ -45,9 +45,7 @@ function getNextDueDate($db, $pilot_id) {
 
         if ($start_date->format('Y-m-d H:i:s') >= $threeMonthsCutoffUTC) {
             $total_minutes += $duration;
-        }
-        
-        if($duration <= $required_minutes){
+            // Use the most recent flight that contributed to the total (we iterate newest first)
             $last_counted_flight_date = $row['flight_date'];
         }
         
