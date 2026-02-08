@@ -6,6 +6,19 @@
 
 $changelog = [
     [
+        'version' => '1.1.4',
+        'date' => '2026-02-08',
+        'changes' => [
+
+        ],
+        'bugfixes' => [
+        ],
+        'new_features' => [
+            'API für Einsatztagebuch Integration hinzugefügt',
+            'Drohnen Mission Mapper-Beta jetzt verfügbar',
+        ]
+    ],
+    [
         'version' => '1.1.3',
         'date' => '2026-02-04',
         'changes' => [
