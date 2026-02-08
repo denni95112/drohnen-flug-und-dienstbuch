@@ -202,6 +202,7 @@ sendInstallTrackingWebhook(GITHUB_REPO_NAME, (string) APP_VERSION);
 
 echo "Database setup completed successfully! Redirecting...";
 
-header("Refresh: 2; url=../index.php");
+$redirect = isset($_GET['from_admin']) ? '../pages/admin.php?success=db_neu_erstellt' : '../index.php';
+header("Refresh: 2; url=" . $redirect);
 exit;
 ?>
