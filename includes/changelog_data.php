@@ -6,6 +6,17 @@
 
 $changelog = [
     [
+        'version' => '1.1.6',
+        'date' => '2026-02-12',
+        'changes' => [
+            'Verbesserte API Integration zwischen Einsatztagebuch und Flug-Dienstbuch',
+        ],
+        'bugfixes' => [
+        ],
+        'new_features' => [
+        ]
+    ],
+    [
         'version' => '1.1.5 - Hotfix',
         'date' => '2026-02-08',
         'changes' => [

@@ -175,9 +175,18 @@ try {
             }
             
             if ($result['success']) {
-                // Notify install tracking webhook (fire-and-forget)
+                // Notify install tracking webhook (fire-and-forget, log result for debugging)
                 require_once __DIR__ . '/../includes/version.php';
-                sendInstallTrackingWebhook(GITHUB_REPO_NAME, $version);
+                $webhookOk = sendInstallTrackingWebhook(GITHUB_REPO_NAME, $version);
+                $logFile = __DIR__ . '/../logs/updater.log';
+                $logDir = dirname($logFile);
+                if (is_dir($logDir)) {
+                    $ts = date('Y-m-d H:i:s');
+                    $msg = $webhookOk
+                        ? "[$ts] [INFO] Install webhook sent successfully for " . GITHUB_REPO_NAME . " $version\n"
+                        : "[$ts] [WARN] Install webhook failed (no 200 response) for " . GITHUB_REPO_NAME . " $version – check URL https://open-drone-tools.de/webhook.php\n";
+                    @file_put_contents($logFile, $msg, FILE_APPEND);
+                }
                 echo json_encode([
                     'success' => true,
                     'message' => $result['message'],

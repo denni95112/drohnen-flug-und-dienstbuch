@@ -34,37 +34,47 @@ if ($method === 'GET' && $action === 'list') {
 }
 
 /**
- * Get list of all pilots
+ * Get list of all pilots (with is_locked_license computed when columns exist)
  */
 function handleGetPilotsList($db) {
     $pilots = [];
     $stmt = $db->prepare('SELECT * FROM pilots ORDER BY name');
     $result = $stmt->execute();
-    
+    $hasLockColumns = null;
     while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+        if ($hasLockColumns === null) {
+            $hasLockColumns = array_key_exists('lock_on_invalid_license', $row);
+        }
+        $row['is_locked_license'] = $hasLockColumns ? computeIsLockedLicense($row) : false;
         $pilots[] = $row;
     }
-    
     sendSuccessResponse(['pilots' => $pilots]);
 }
 
 /**
- * Validate that at least one license with valid date is provided
+ * Compute whether a pilot is locked (no valid license) when lock_on_invalid_license is set.
+ * When lock is on and no license (or no valid date) is provided, pilot is locked.
  */
-function validateLicenseRequirement($lockOnInvalid, $a1A3LicenseId, $a1A3LicenseValidUntil, $a2LicenseId, $a2LicenseValidUntil) {
+function computeIsLockedLicense(array $row): bool {
+    $lockOnInvalid = isset($row['lock_on_invalid_license']) && $row['lock_on_invalid_license'] == 1;
     if (!$lockOnInvalid) {
-        return true; // No validation needed if checkbox is not checked
-    }
-    
-    // Check if at least one license has a valid date
-    $hasValidA1A3 = !empty($a1A3LicenseValidUntil);
-    $hasValidA2 = !empty($a2LicenseValidUntil);
-    
-    if (!$hasValidA1A3 && !$hasValidA2) {
         return false;
     }
-    
-    return true;
+    $hasValidLicense = false;
+    $currentDate = new DateTime('now', new DateTimeZone('UTC'));
+    if (!empty($row['a1_a3_license_valid_until'])) {
+        $validUntil = new DateTime($row['a1_a3_license_valid_until'], new DateTimeZone('UTC'));
+        if ($validUntil >= $currentDate) {
+            $hasValidLicense = true;
+        }
+    }
+    if (!$hasValidLicense && !empty($row['a2_license_valid_until'])) {
+        $validUntil = new DateTime($row['a2_license_valid_until'], new DateTimeZone('UTC'));
+        if ($validUntil >= $currentDate) {
+            $hasValidLicense = true;
+        }
+    }
+    return !$hasValidLicense;
 }
 
 /**
@@ -90,11 +100,6 @@ function handleCreatePilot($db) {
     
     if (empty($name)) {
         sendErrorResponse('Der Name darf nicht leer sein.', 'VALIDATION_ERROR', 400);
-    }
-    
-    // Validate license requirement if checkbox is checked
-    if (!validateLicenseRequirement($lockOnInvalid, $a1A3LicenseId, $a1A3LicenseValidUntil, $a2LicenseId, $a2LicenseValidUntil)) {
-        sendErrorResponse('Wenn "Sperren wenn Fernpilotenschein ungültig" aktiviert ist, muss mindestens eine Lizenz mit gültigem Datum angegeben werden.', 'VALIDATION_ERROR', 400);
     }
     
     try {
@@ -218,11 +223,6 @@ function handleUpdatePilot($db, $pilotId) {
     
     if ($minutes <= 0) {
         sendErrorResponse('Anzahl der benötigten Flugminuten muss mindestens 1 sein.', 'VALIDATION_ERROR', 400);
-    }
-    
-    // Validate license requirement if checkbox is checked
-    if (!validateLicenseRequirement($lockOnInvalid, $a1A3LicenseId, $a1A3LicenseValidUntil, $a2LicenseId, $a2LicenseValidUntil)) {
-        sendErrorResponse('Wenn "Sperren wenn Fernpilotenschein ungültig" aktiviert ist, muss mindestens eine Lizenz mit gültigem Datum angegeben werden.', 'VALIDATION_ERROR', 400);
     }
     
     try {

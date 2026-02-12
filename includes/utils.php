@@ -570,11 +570,13 @@ function updateConfig(string $key, $value): bool {
 /**
  * Send install/update tracking webhook to open-drone-tools.de.
  * Fire-and-forget: does not throw or block on failure.
+ * Returns true if the server responded with HTTP 200, false otherwise (for logging).
  *
  * @param string $repo Repository name (e.g. GITHUB_REPO_NAME)
  * @param string $version Version string (e.g. APP_VERSION or update version)
+ * @return bool True if webhook returned HTTP 200, false otherwise
  */
-function sendInstallTrackingWebhook(string $repo, string $version): void {
+function sendInstallTrackingWebhook(string $repo, string $version): bool {
     $url = 'https://open-drone-tools.de/webhook.php';
     $payload = json_encode([
         'repo' => trim($repo),
@@ -594,17 +596,28 @@ function sendInstallTrackingWebhook(string $repo, string $version): void {
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
         @curl_exec($ch);
+        $httpCode = (int) (curl_getinfo($ch, CURLINFO_HTTP_CODE) ?: 0);
         @curl_close($ch);
-    } elseif (ini_get('allow_url_fopen')) {
+        return ($httpCode === 200);
+    }
+    if (ini_get('allow_url_fopen')) {
         $context = stream_context_create([
             'http' => [
                 'method' => 'POST',
                 'header' => "Content-Type: application/json\r\n",
                 'content' => $payload,
                 'timeout' => 5,
+                'ignore_errors' => true,
             ],
         ]);
         @file_get_contents($url, false, $context);
+        // $http_response_header is set by file_get_contents when ignore_errors is true
+        $httpCode = 0;
+        if (!empty($http_response_header[0]) && preg_match('/\s(\d{3})\s/', $http_response_header[0], $m)) {
+            $httpCode = (int) $m[1];
+        }
+        return ($httpCode === 200);
     }
+    return false;
 }
 
