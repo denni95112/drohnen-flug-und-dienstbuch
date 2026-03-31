@@ -37,10 +37,15 @@ if ($flight_date) {
         $end_local = $date_str . ' 23:59:59';
         $end_utc = toUTC($end_local);
         
-        // Fetch locations that match the selected flight date (stored in UTC)
-        $stmt = $db->prepare("SELECT * FROM flight_locations WHERE created_at >= :start_date AND created_at <= :end_date");
+        // Fetch locations for that calendar day, only if created within the last 7 days (UTC)
+        $weekCutoff = new DateTime('now', new DateTimeZone('UTC'));
+        $weekCutoff->modify('-7 days');
+        $week_cutoff_utc = $weekCutoff->format('Y-m-d H:i:s');
+
+        $stmt = $db->prepare('SELECT * FROM flight_locations WHERE created_at >= :start_date AND created_at <= :end_date AND created_at >= :week_cutoff');
         $stmt->bindValue(':start_date', $start_utc, SQLITE3_TEXT);
         $stmt->bindValue(':end_date', $end_utc, SQLITE3_TEXT);
+        $stmt->bindValue(':week_cutoff', $week_cutoff_utc, SQLITE3_TEXT);
         $locations = $stmt->execute();
     } else {
         $locations = false;

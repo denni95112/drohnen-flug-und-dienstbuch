@@ -34,7 +34,7 @@ async function fetchLocationsByDate(flightDate) {
     
     try {
         const basePath = window.basePath || '';
-        const response = await fetch(`${basePath}api/locations.php?action=list&date=${datePart}`);
+        const response = await fetch(`${basePath}api/locations.php?action=list&date=${encodeURIComponent(datePart)}&max_age_days=7`);
         const data = await response.json();
         
         const locationSelect = document.getElementById('location_id');

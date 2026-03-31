@@ -6,6 +6,17 @@
 
 $changelog = [
     [
+        'version' => '1.1.7',
+        'date' => '2026-03-31',
+        'changes' => [
+            'API `locations.php?action=list`: optionaler Parameter `max_age_days` (1–365) zur Begrenzung nach Alter; ohne Parameter und ohne Datum weiterhin vollständige Liste für die Verwaltung',
+        ],
+        'bugfixes' => [
+        ],
+        'new_features' => [
+        ]
+    ],
+    [
         'version' => '1.1.6',
         'date' => '2026-02-12',
         'changes' => [

@@ -65,7 +65,7 @@ require_once __DIR__ . '/../includes/version.php';
                         <p>Es scheint, als ob du dein Dashboard gerade erst erstellt hast. Diese Dinge müssen noch erledigt werden.</p>
                         <p>Vorweg ein paar Tips:</p>
                         <ul class="welcome-tips">
-                            <li>Lege vor jedem Flug einen <a href="manage_locations.php">Flugstandort</a> an. Es werden nur die vom aktuellen Tag zur Auswahl gestellt.</li>
+                            <li>Lege vor jedem Flug einen <a href="manage_locations.php">Flugstandort</a> an. Im Dropdown erscheinen nur Standorte, die in den letzten 7 Tagen angelegt wurden.</li>
                             <li>Nutzt du auch die Einsatzdoku? Diese übernimmt automatisch den zuletzt hinzugefügten Flugstandort. Danach übernimmt die Doku alles, du musst hier in der Zeit nichts mehr machen</li>
                             <li>Flüge im Dashboard sollten am besten nur von einem Gerät gleichzeit gestartet und beendet werden.</li>
                             <li>Das Dashboard ist eine WebApp, anstannt eine Verknüfung zu erstllen, kannst du sie aus dem Browser heraus installieren.</li>

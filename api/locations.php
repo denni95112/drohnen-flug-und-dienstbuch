@@ -34,31 +34,54 @@ if ($method === 'GET' && $action === 'list') {
 }
 
 /**
- * Get list of locations (optionally filtered by date)
+ * Get list of locations (optionally filtered by date and/or max age in days).
+ * Omit max_age_days for full list (e.g. manage_locations admin UI).
  */
 function handleGetLocationsList($db) {
+    require_once __DIR__ . '/../includes/utils.php';
+
     $dateFilter = $_GET['date'] ?? null;
-    
+    $maxAgeParam = $_GET['max_age_days'] ?? null;
+    $maxAgeDays = null;
+    if ($maxAgeParam !== null && $maxAgeParam !== '') {
+        $maxAgeDays = filter_var($maxAgeParam, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 365]]);
+        if ($maxAgeDays === false) {
+            sendErrorResponse('max_age_days must be an integer between 1 and 365', 'VALIDATION_ERROR', 400);
+        }
+    }
+
+    $cutoffUTC = null;
+    if ($maxAgeDays !== null) {
+        $dt = new DateTime('now', new DateTimeZone('UTC'));
+        $dt->modify('-' . $maxAgeDays . ' days');
+        $cutoffUTC = $dt->format('Y-m-d H:i:s');
+    }
+
     if ($dateFilter) {
-        // Filter by date (for dashboard - today's locations)
         $currentDateLocal = $dateFilter;
-        require_once __DIR__ . '/../includes/utils.php';
         $currentDateUTCStart = toUTC($currentDateLocal . ' 00:00:00');
         $currentDateUTCEnd = toUTC($currentDateLocal . ' 23:59:59');
-        
-        $stmt = $db->prepare("SELECT id, location_name FROM flight_locations WHERE created_at >= :start_date AND created_at <= :end_date");
+
+        $sql = 'SELECT id, location_name FROM flight_locations WHERE created_at >= :start_date AND created_at <= :end_date';
+        if ($cutoffUTC !== null) {
+            $sql .= ' AND created_at >= :cutoff';
+        }
+        $stmt = $db->prepare($sql);
         $stmt->bindValue(':start_date', $currentDateUTCStart, SQLITE3_TEXT);
         $stmt->bindValue(':end_date', $currentDateUTCEnd, SQLITE3_TEXT);
+        if ($cutoffUTC !== null) {
+            $stmt->bindValue(':cutoff', $cutoffUTC, SQLITE3_TEXT);
+        }
+    } elseif ($cutoffUTC !== null) {
+        $stmt = $db->prepare('SELECT * FROM flight_locations WHERE created_at >= :cutoff ORDER BY created_at DESC');
+        $stmt->bindValue(':cutoff', $cutoffUTC, SQLITE3_TEXT);
     } else {
-        // Get all locations
-        $stmt = $db->prepare("SELECT * FROM flight_locations ORDER BY created_at DESC");
+        $stmt = $db->prepare('SELECT * FROM flight_locations ORDER BY created_at DESC');
     }
     
     $result = $stmt->execute();
     $locations = [];
-    
-    require_once __DIR__ . '/../includes/utils.php';
-    
+
     while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
         // Convert UTC datetime to local time for display
         if (isset($row['created_at'])) {

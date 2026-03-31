@@ -546,18 +546,16 @@ function handleGetDashboard($db) {
         ];
     }
     
-    // Get locations for today
-    $currentDateUTC = getCurrentUTC();
-    $currentDateLocal = toLocalTime($currentDateUTC, 'Y-m-d');
-    $currentDateUTCStart = toUTC($currentDateLocal . ' 00:00:00');
-    $currentDateUTCEnd = toUTC($currentDateLocal . ' 23:59:59');
-    
+    // Get locations for Flugstandort dropdown: created within the last 7 days (UTC)
+    $weekCutoff = new DateTime('now', new DateTimeZone('UTC'));
+    $weekCutoff->modify('-7 days');
+    $weekCutoffUTC = $weekCutoff->format('Y-m-d H:i:s');
+
     $locations = [];
     $tableExists = $db->querySingle("SELECT name FROM sqlite_master WHERE type='table' AND name='flight_locations'");
     if ($tableExists) {
-        $stmt = $db->prepare("SELECT id, location_name FROM flight_locations WHERE created_at >= :start_date AND created_at <= :end_date");
-        $stmt->bindValue(':start_date', $currentDateUTCStart, SQLITE3_TEXT);
-        $stmt->bindValue(':end_date', $currentDateUTCEnd, SQLITE3_TEXT);
+        $stmt = $db->prepare('SELECT id, location_name FROM flight_locations WHERE created_at >= :week_cutoff ORDER BY created_at DESC');
+        $stmt->bindValue(':week_cutoff', $weekCutoffUTC, SQLITE3_TEXT);
         $locationsResult = $stmt->execute();
         while ($loc = $locationsResult->fetchArray(SQLITE3_ASSOC)) {
             $locations[] = $loc;
