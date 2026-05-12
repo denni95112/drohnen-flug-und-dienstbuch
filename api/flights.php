@@ -58,6 +58,15 @@ function handleStartFlight($db) {
         sendErrorResponse('Invalid pilot ID', 'VALIDATION_ERROR', 400);
     }
     
+    $stmt = $db->prepare('SELECT id FROM pilots WHERE id = :pilot_id');
+    $stmt->bindValue(':pilot_id', $pilotId, SQLITE3_INTEGER);
+    if (!$stmt->execute()->fetchArray(SQLITE3_ASSOC)) {
+        sendErrorResponse('Pilot nicht gefunden.', 'PILOT_NOT_FOUND', 404);
+    }
+    if (isPilotDisabled($db, $pilotId)) {
+        sendErrorResponse('Flug kann nicht gestartet werden: Pilot ist deaktiviert.', 'PILOT_DISABLED', 400);
+    }
+    
     // Check if pilot is locked due to invalid license
     $stmt = $db->prepare('SELECT lock_on_invalid_license, a1_a3_license_valid_until, a2_license_valid_until FROM pilots WHERE id = :pilot_id');
     $stmt->bindValue(':pilot_id', $pilotId, SQLITE3_INTEGER);
@@ -247,6 +256,15 @@ function handleCreateFlight($db) {
     // Validation
     if ($pilotId <= 0) {
         sendErrorResponse('Invalid pilot ID', 'VALIDATION_ERROR', 400);
+    }
+    
+    $stmt = $db->prepare('SELECT id FROM pilots WHERE id = :pilot_id');
+    $stmt->bindValue(':pilot_id', $pilotId, SQLITE3_INTEGER);
+    if (!$stmt->execute()->fetchArray(SQLITE3_ASSOC)) {
+        sendErrorResponse('Pilot nicht gefunden.', 'PILOT_NOT_FOUND', 404);
+    }
+    if (isPilotDisabled($db, $pilotId)) {
+        sendErrorResponse('Flug kann nicht eingetragen werden: Pilot ist deaktiviert.', 'PILOT_DISABLED', 400);
     }
     
     // Check if pilot is locked due to invalid license
@@ -473,7 +491,7 @@ function handleGetDashboard($db) {
     $cutoffDateUTC = $cutoffDate->format('Y-m-d H:i:s');
     
     // Optimized query: Get all pilot data with ongoing flights and flight counts in single query
-    $query = "
+    $queryTemplate = "
         SELECT 
             p.*,
             of.id as ongoing_flight_id,
@@ -482,9 +500,16 @@ function handleGetDashboard($db) {
         FROM pilots p
         LEFT JOIN flights of ON p.id = of.pilot_id AND of.flight_end_date IS NULL
         LEFT JOIN flights f ON p.id = f.pilot_id
+        %s
         GROUP BY p.id
         ORDER BY p.name
     ";
+    
+    $disabledWhere = '';
+    if (pilotsHasDisabledColumn($db)) {
+        $disabledWhere = 'WHERE ((p.disabled IS NULL OR p.disabled = 0) OR of.id IS NOT NULL)';
+    }
+    $query = sprintf($queryTemplate, $disabledWhere);
     
     $stmt = $db->prepare($query);
     $stmt->bindValue(':cutoff_date', $cutoffDateUTC, SQLITE3_TEXT);

@@ -73,6 +73,13 @@ require_once __DIR__ . '/../includes/version.php';
                 </label>
             </div>
             
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="disabled" name="disabled" value="1">
+                    Pilot deaktivieren (nicht im Dashboard und Standard-Pilotenliste)
+                </label>
+            </div>
+            
             <button type="submit" class="button-full">Hinzufügen</button>
         </form>
 
@@ -93,6 +100,7 @@ require_once __DIR__ . '/../includes/version.php';
                 <tr>
                     <th>ID</th>
                     <th>Name</th>
+                    <th>Status</th>
                     <th>Benötigte Flugminuten</th>
                     <th>A1/A3 Fernpilotenschein</th>
                     <th>A2 Fernpilotenschein</th>
@@ -143,6 +151,13 @@ require_once __DIR__ . '/../includes/version.php';
                         <label>
                             <input type="checkbox" id="edit_lock_on_invalid_license" name="lock_on_invalid_license" value="1">
                             Sperren wenn Fernpilotenschein ungültig
+                        </label>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="edit_disabled" name="disabled" value="1">
+                            Pilot deaktivieren (nicht im Dashboard und Standard-Pilotenliste)
                         </label>
                     </div>
                     

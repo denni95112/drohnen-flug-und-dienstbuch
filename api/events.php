@@ -113,6 +113,13 @@ function handleCreateEvent($db) {
         sendErrorResponse('Bitte mindestens einen Piloten auswählen.', 'VALIDATION_ERROR', 400);
     }
     
+    foreach ($pilotIds as $pilotIdRaw) {
+        $pid = intval($pilotIdRaw);
+        if ($pid > 0 && isPilotDisabled($db, $pid)) {
+            sendErrorResponse('Deaktivierte Piloten können nicht zugewiesen werden.', 'PILOT_DISABLED', 400);
+        }
+    }
+    
     try {
         require_once __DIR__ . '/../includes/utils.php';
         

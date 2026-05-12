@@ -234,3 +234,41 @@ function initApiEndpoint($requireAuth = true, $requireAdmin = false, $allowToken
     header('Content-Type: application/json; charset=utf-8');
 }
 
+/**
+ * Whether pilots.disabled exists (migration 007).
+ */
+function pilotsHasDisabledColumn(SQLite3 $db): bool {
+    static $cached = null;
+    if ($cached !== null) {
+        return $cached;
+    }
+    $tableExists = $db->querySingle("SELECT name FROM sqlite_master WHERE type='table' AND name='pilots'");
+    if (!$tableExists) {
+        $cached = false;
+        return false;
+    }
+    $result = $db->query('PRAGMA table_info(pilots)');
+    $cached = false;
+    while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+        if (($row['name'] ?? '') === 'disabled') {
+            $cached = true;
+            break;
+        }
+    }
+    $result->finalize();
+    return $cached;
+}
+
+/**
+ * True if pilot is deactivated (disabled = 1). False if column missing or pilot not found.
+ */
+function isPilotDisabled(SQLite3 $db, int $pilotId): bool {
+    if ($pilotId <= 0 || !pilotsHasDisabledColumn($db)) {
+        return false;
+    }
+    $stmt = $db->prepare('SELECT disabled FROM pilots WHERE id = :id');
+    $stmt->bindValue(':id', $pilotId, SQLITE3_INTEGER);
+    $row = $stmt->execute()->fetchArray(SQLITE3_ASSOC);
+    return $row !== false && isset($row['disabled']) && (int) $row['disabled'] === 1;
+}
+

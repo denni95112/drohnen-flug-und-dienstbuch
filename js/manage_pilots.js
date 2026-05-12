@@ -103,10 +103,19 @@ function renderPilotsTable(pilots) {
                 const a1A3Info = formatLicenseInfo(pilot.a1_a3_license_id, pilot.a1_a3_license_valid_until);
                 const a2Info = formatLicenseInfo(pilot.a2_license_id, pilot.a2_license_valid_until);
                 
+                const isDisabled = pilot.disabled == 1 || pilot.disabled === true;
+                const statusLabel = isDisabled
+                    ? '<span class="pilot-status-deactivated">Deaktiviert</span>'
+                    : '<span class="pilot-status-active">Aktiv</span>';
+                
                 const row = document.createElement('tr');
+                if (isDisabled) {
+                    row.classList.add('pilot-row-disabled');
+                }
                 row.innerHTML = `
                     <td data-label="ID">${escapeHtml(pilot.id)}</td>
                     <td data-label="Name">${escapeHtml(pilot.name)}</td>
+                    <td data-label="Status">${statusLabel}</td>
                     <td data-label="Flugminuten">${escapeHtml(pilot.minutes_of_flights_needed ?? 45)}</td>
                     <td data-label="A1/A3 Fernpilotenschein">${a1A3Info}</td>
                     <td data-label="A2 Fernpilotenschein">${a2Info}</td>
@@ -152,7 +161,7 @@ async function fetchPilots(useCache = false) {
         }
         
         const basePath = window.basePath || '';
-        const response = await fetch(`${basePath}api/pilots.php?action=list`);
+        const response = await fetch(`${basePath}api/pilots.php?action=list&include_disabled=1`);
         const data = await response.json();
         
         if (data.success && tbody) {
@@ -198,6 +207,7 @@ async function addPilot(formData) {
                 a2_license_id: formData.a2_license_id || null,
                 a2_license_valid_until: formData.a2_license_valid_until || null,
                 lock_on_invalid_license: formData.lock_on_invalid_license || '0',
+                disabled: formData.disabled || '0',
                 request_id: requestId,
                 csrf_token: getCsrfToken()
             })
@@ -293,6 +303,7 @@ function openEditPilotModal(pilotData) {
     document.getElementById('edit_a2_license_id').value = pilotData.a2_license_id || '';
     document.getElementById('edit_a2_license_valid_until').value = pilotData.a2_license_valid_until || '';
     document.getElementById('edit_lock_on_invalid_license').checked = pilotData.lock_on_invalid_license == 1 || pilotData.lock_on_invalid_license === true;
+    document.getElementById('edit_disabled').checked = pilotData.disabled == 1 || pilotData.disabled === true;
     
     modal.style.display = 'block';
 }
@@ -322,6 +333,7 @@ async function updatePilot(pilotData) {
                 a2_license_id: pilotData.a2_license_id || null,
                 a2_license_valid_until: pilotData.a2_license_valid_until || null,
                 lock_on_invalid_license: pilotData.lock_on_invalid_license || '0',
+                disabled: pilotData.disabled || '0',
                 csrf_token: getCsrfToken()
             })
         });
@@ -395,7 +407,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     a1_a3_license_valid_until: document.getElementById('a1_a3_license_valid_until').value || null,
                     a2_license_id: document.getElementById('a2_license_id').value.trim() || null,
                     a2_license_valid_until: document.getElementById('a2_license_valid_until').value || null,
-                    lock_on_invalid_license: document.getElementById('lock_on_invalid_license').checked ? '1' : '0'
+                    lock_on_invalid_license: document.getElementById('lock_on_invalid_license').checked ? '1' : '0',
+                    disabled: document.getElementById('disabled').checked ? '1' : '0'
                 };
                 addPilot(formData);
             } else {
@@ -417,7 +430,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 a1_a3_license_valid_until: document.getElementById('edit_a1_a3_license_valid_until').value || null,
                 a2_license_id: document.getElementById('edit_a2_license_id').value.trim() || null,
                 a2_license_valid_until: document.getElementById('edit_a2_license_valid_until').value || null,
-                lock_on_invalid_license: document.getElementById('edit_lock_on_invalid_license').checked ? '1' : '0'
+                lock_on_invalid_license: document.getElementById('edit_lock_on_invalid_license').checked ? '1' : '0',
+                disabled: document.getElementById('edit_disabled').checked ? '1' : '0'
             };
             
             if (!pilotData.name) {

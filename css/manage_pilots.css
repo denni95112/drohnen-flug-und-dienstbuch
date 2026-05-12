@@ -353,3 +353,11 @@ input[type="number"][name="minutes_of_flights_needed"] {
     }
 }
 
+#pilots-table tbody tr.pilot-row-disabled {
+    opacity: 0.65;
+}
+
+#pilots-table tbody tr.pilot-row-disabled td[data-label="Name"] {
+    text-decoration: line-through;
+}
+

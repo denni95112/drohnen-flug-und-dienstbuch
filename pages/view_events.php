@@ -12,6 +12,7 @@ if (isset($config['timezone'])) {
 
 require_once __DIR__ . '/../includes/utils.php';
 require_once __DIR__ . '/../includes/version.php';
+require_once __DIR__ . '/../includes/api_helpers.php';
 $dbPath = getDatabasePath();
 $db = new SQLite3($dbPath);
 
@@ -73,33 +74,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_event_id'])) {
     } elseif (empty($pilot_ids)) {
         $error_message = 'Bitte mindestens einen Piloten auswählen.';
     } else {
-        $event_start_date_utc = toUTC($event_start_date);
-        $event_end_date_utc = toUTC($event_end_date);
-        
-        // Update the event
-        $stmt = $db->prepare('UPDATE events SET event_start_date = :event_start_date, event_end_date = :event_end_date, type_id = :type_id, notes = :notes WHERE id = :event_id');
-        $stmt->bindValue(':event_start_date', $event_start_date_utc, SQLITE3_TEXT);
-        $stmt->bindValue(':event_end_date', $event_end_date_utc, SQLITE3_TEXT);
-        $stmt->bindValue(':type_id', $type_id, SQLITE3_INTEGER);
-        $stmt->bindValue(':notes', $notes, SQLITE3_TEXT);
-        $stmt->bindValue(':event_id', $event_id, SQLITE3_INTEGER);
-        $stmt->execute();
-        
-        // Delete existing pilot_events associations
-        $stmt = $db->prepare('DELETE FROM pilot_events WHERE event_id = :event_id');
-        $stmt->bindValue(':event_id', $event_id, SQLITE3_INTEGER);
-        $stmt->execute();
-        
-        // Insert new pilot_events associations
+        $blockedDisabled = false;
         foreach ($pilot_ids as $pilot_id) {
-            $stmt = $db->prepare('INSERT INTO pilot_events (event_id, pilot_id) VALUES (:event_id, :pilot_id)');
-            $stmt->bindValue(':event_id', $event_id, SQLITE3_INTEGER);
-            $stmt->bindValue(':pilot_id', intval($pilot_id), SQLITE3_INTEGER);
-            $stmt->execute();
+            $pid = intval($pilot_id);
+            if ($pid > 0 && isPilotDisabled($db, $pid)) {
+                $blockedDisabled = true;
+                break;
+            }
         }
-        
-        header("Location: view_events.php?year=$selected_year");
-        exit();
+        if ($blockedDisabled) {
+            $error_message = 'Deaktivierte Piloten können nicht zugewiesen werden.';
+        } else {
+            $event_start_date_utc = toUTC($event_start_date);
+            $event_end_date_utc = toUTC($event_end_date);
+            
+            // Update the event
+            $stmt = $db->prepare('UPDATE events SET event_start_date = :event_start_date, event_end_date = :event_end_date, type_id = :type_id, notes = :notes WHERE id = :event_id');
+            $stmt->bindValue(':event_start_date', $event_start_date_utc, SQLITE3_TEXT);
+            $stmt->bindValue(':event_end_date', $event_end_date_utc, SQLITE3_TEXT);
+            $stmt->bindValue(':type_id', $type_id, SQLITE3_INTEGER);
+            $stmt->bindValue(':notes', $notes, SQLITE3_TEXT);
+            $stmt->bindValue(':event_id', $event_id, SQLITE3_INTEGER);
+            $stmt->execute();
+            
+            // Delete existing pilot_events associations
+            $stmt = $db->prepare('DELETE FROM pilot_events WHERE event_id = :event_id');
+            $stmt->bindValue(':event_id', $event_id, SQLITE3_INTEGER);
+            $stmt->execute();
+            
+            // Insert new pilot_events associations
+            foreach ($pilot_ids as $pilot_id) {
+                $stmt = $db->prepare('INSERT INTO pilot_events (event_id, pilot_id) VALUES (:event_id, :pilot_id)');
+                $stmt->bindValue(':event_id', $event_id, SQLITE3_INTEGER);
+                $stmt->bindValue(':pilot_id', intval($pilot_id), SQLITE3_INTEGER);
+                $stmt->execute();
+            }
+            
+            header("Location: view_events.php?year=$selected_year");
+            exit();
+        }
     }
 }
 

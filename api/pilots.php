@@ -34,11 +34,17 @@ if ($method === 'GET' && $action === 'list') {
 }
 
 /**
- * Get list of all pilots (with is_locked_license computed when columns exist)
+ * Get pilots list. By default excludes disabled pilots; pass include_disabled=1 for manage UI.
  */
 function handleGetPilotsList($db) {
     $pilots = [];
-    $stmt = $db->prepare('SELECT * FROM pilots ORDER BY name');
+    $includeDisabled = isset($_GET['include_disabled']) && $_GET['include_disabled'] === '1';
+    $sql = 'SELECT * FROM pilots';
+    if (!$includeDisabled && pilotsHasDisabledColumn($db)) {
+        $sql .= ' WHERE (disabled IS NULL OR disabled = 0)';
+    }
+    $sql .= ' ORDER BY name';
+    $stmt = $db->prepare($sql);
     $result = $stmt->execute();
     $hasLockColumns = null;
     while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
@@ -88,6 +94,7 @@ function handleCreatePilot($db) {
     $requestId = $data['request_id'] ?? '';
     $minutes = max(1, intval($data['minutes_of_flights_needed'] ?? 45));
     $lockOnInvalid = isset($data['lock_on_invalid_license']) && $data['lock_on_invalid_license'] == '1';
+    $disabled = !empty($data['disabled']) && ($data['disabled'] === '1' || $data['disabled'] === true || $data['disabled'] === 1);
     
     // License fields (optional)
     $a1A3LicenseId = !empty($data['a1_a3_license_id']) ? trim($data['a1_a3_license_id']) : null;
@@ -113,10 +120,13 @@ function handleCreatePilot($db) {
         
         $hasLicenseColumns = in_array('a1_a3_license_id', $columns);
         $hasLockColumn = in_array('lock_on_invalid_license', $columns);
+        $hasDisabledColumn = in_array('disabled', $columns);
         
         if ($hasLicenseColumns && $hasLockColumn) {
-            $stmt = $db->prepare('INSERT INTO pilots (name, minutes_of_flights_needed, a1_a3_license_id, a1_a3_license_valid_until, a2_license_id, a2_license_valid_until, lock_on_invalid_license) 
-                                   VALUES (:name, :minutes, :a1_a3_id, :a1_a3_valid_until, :a2_id, :a2_valid_until, :lock_on_invalid)');
+            $disabledSql = $hasDisabledColumn ? ', disabled' : '';
+            $disabledVal = $hasDisabledColumn ? ', :disabled' : '';
+            $stmt = $db->prepare("INSERT INTO pilots (name, minutes_of_flights_needed, a1_a3_license_id, a1_a3_license_valid_until, a2_license_id, a2_license_valid_until, lock_on_invalid_license{$disabledSql}) 
+                                   VALUES (:name, :minutes, :a1_a3_id, :a1_a3_valid_until, :a2_id, :a2_valid_until, :lock_on_invalid{$disabledVal})");
             $stmt->bindValue(':name', $name, SQLITE3_TEXT);
             $stmt->bindValue(':minutes', $minutes, SQLITE3_INTEGER);
             $stmt->bindValue(':a1_a3_id', $a1A3LicenseId, $a1A3LicenseId !== null ? SQLITE3_TEXT : SQLITE3_NULL);
@@ -124,20 +134,35 @@ function handleCreatePilot($db) {
             $stmt->bindValue(':a2_id', $a2LicenseId, $a2LicenseId !== null ? SQLITE3_TEXT : SQLITE3_NULL);
             $stmt->bindValue(':a2_valid_until', $a2LicenseValidUntil, $a2LicenseValidUntil !== null ? SQLITE3_TEXT : SQLITE3_NULL);
             $stmt->bindValue(':lock_on_invalid', $lockOnInvalid ? 1 : 0, SQLITE3_INTEGER);
+            if ($hasDisabledColumn) {
+                $stmt->bindValue(':disabled', $disabled ? 1 : 0, SQLITE3_INTEGER);
+            }
         } elseif ($hasLicenseColumns) {
-            $stmt = $db->prepare('INSERT INTO pilots (name, minutes_of_flights_needed, a1_a3_license_id, a1_a3_license_valid_until, a2_license_id, a2_license_valid_until) 
-                                   VALUES (:name, :minutes, :a1_a3_id, :a1_a3_valid_until, :a2_id, :a2_valid_until)');
+            $disabledSql = $hasDisabledColumn ? ', disabled' : '';
+            $disabledVal = $hasDisabledColumn ? ', :disabled' : '';
+            $stmt = $db->prepare("INSERT INTO pilots (name, minutes_of_flights_needed, a1_a3_license_id, a1_a3_license_valid_until, a2_license_id, a2_license_valid_until{$disabledSql}) 
+                                   VALUES (:name, :minutes, :a1_a3_id, :a1_a3_valid_until, :a2_id, :a2_valid_until{$disabledVal})");
             $stmt->bindValue(':name', $name, SQLITE3_TEXT);
             $stmt->bindValue(':minutes', $minutes, SQLITE3_INTEGER);
             $stmt->bindValue(':a1_a3_id', $a1A3LicenseId, $a1A3LicenseId !== null ? SQLITE3_TEXT : SQLITE3_NULL);
             $stmt->bindValue(':a1_a3_valid_until', $a1A3LicenseValidUntil, $a1A3LicenseValidUntil !== null ? SQLITE3_TEXT : SQLITE3_NULL);
             $stmt->bindValue(':a2_id', $a2LicenseId, $a2LicenseId !== null ? SQLITE3_TEXT : SQLITE3_NULL);
             $stmt->bindValue(':a2_valid_until', $a2LicenseValidUntil, $a2LicenseValidUntil !== null ? SQLITE3_TEXT : SQLITE3_NULL);
+            if ($hasDisabledColumn) {
+                $stmt->bindValue(':disabled', $disabled ? 1 : 0, SQLITE3_INTEGER);
+            }
         } else {
             // Fallback for databases without license columns
-            $stmt = $db->prepare('INSERT INTO pilots (name, minutes_of_flights_needed) VALUES (:name, :minutes)');
-            $stmt->bindValue(':name', $name, SQLITE3_TEXT);
-            $stmt->bindValue(':minutes', $minutes, SQLITE3_INTEGER);
+            if ($hasDisabledColumn) {
+                $stmt = $db->prepare('INSERT INTO pilots (name, minutes_of_flights_needed, disabled) VALUES (:name, :minutes, :disabled)');
+                $stmt->bindValue(':name', $name, SQLITE3_TEXT);
+                $stmt->bindValue(':minutes', $minutes, SQLITE3_INTEGER);
+                $stmt->bindValue(':disabled', $disabled ? 1 : 0, SQLITE3_INTEGER);
+            } else {
+                $stmt = $db->prepare('INSERT INTO pilots (name, minutes_of_flights_needed) VALUES (:name, :minutes)');
+                $stmt->bindValue(':name', $name, SQLITE3_TEXT);
+                $stmt->bindValue(':minutes', $minutes, SQLITE3_INTEGER);
+            }
         }
         
         if (!$stmt->execute()) {
@@ -210,6 +235,7 @@ function handleUpdatePilot($db, $pilotId) {
     $name = trim($data['name'] ?? '');
     $minutes = max(1, intval($data['minutes_of_flights_needed'] ?? 45));
     $lockOnInvalid = isset($data['lock_on_invalid_license']) && $data['lock_on_invalid_license'] == '1';
+    $disabled = !empty($data['disabled']) && ($data['disabled'] === '1' || $data['disabled'] === true || $data['disabled'] === 1);
     
     // License fields (optional)
     $a1A3LicenseId = !empty($data['a1_a3_license_id']) ? trim($data['a1_a3_license_id']) : null;
@@ -245,13 +271,15 @@ function handleUpdatePilot($db, $pilotId) {
         
         $hasLicenseColumns = in_array('a1_a3_license_id', $columns);
         $hasLockColumn = in_array('lock_on_invalid_license', $columns);
+        $hasDisabledColumn = in_array('disabled', $columns);
         
         if ($hasLicenseColumns && $hasLockColumn) {
-            $stmt = $db->prepare('UPDATE pilots SET name = :name, minutes_of_flights_needed = :minutes, 
+            $disabledSet = $hasDisabledColumn ? ', disabled = :disabled' : '';
+            $stmt = $db->prepare("UPDATE pilots SET name = :name, minutes_of_flights_needed = :minutes, 
                                    a1_a3_license_id = :a1_a3_id, a1_a3_license_valid_until = :a1_a3_valid_until, 
                                    a2_license_id = :a2_id, a2_license_valid_until = :a2_valid_until,
-                                   lock_on_invalid_license = :lock_on_invalid
-                                   WHERE id = :id');
+                                   lock_on_invalid_license = :lock_on_invalid{$disabledSet}
+                                   WHERE id = :id");
             $stmt->bindValue(':name', $name, SQLITE3_TEXT);
             $stmt->bindValue(':minutes', $minutes, SQLITE3_INTEGER);
             $stmt->bindValue(':a1_a3_id', $a1A3LicenseId, $a1A3LicenseId !== null ? SQLITE3_TEXT : SQLITE3_NULL);
@@ -260,11 +288,15 @@ function handleUpdatePilot($db, $pilotId) {
             $stmt->bindValue(':a2_valid_until', $a2LicenseValidUntil, $a2LicenseValidUntil !== null ? SQLITE3_TEXT : SQLITE3_NULL);
             $stmt->bindValue(':lock_on_invalid', $lockOnInvalid ? 1 : 0, SQLITE3_INTEGER);
             $stmt->bindValue(':id', $pilotId, SQLITE3_INTEGER);
+            if ($hasDisabledColumn) {
+                $stmt->bindValue(':disabled', $disabled ? 1 : 0, SQLITE3_INTEGER);
+            }
         } elseif ($hasLicenseColumns) {
-            $stmt = $db->prepare('UPDATE pilots SET name = :name, minutes_of_flights_needed = :minutes, 
+            $disabledSet = $hasDisabledColumn ? ', disabled = :disabled' : '';
+            $stmt = $db->prepare("UPDATE pilots SET name = :name, minutes_of_flights_needed = :minutes, 
                                    a1_a3_license_id = :a1_a3_id, a1_a3_license_valid_until = :a1_a3_valid_until, 
-                                   a2_license_id = :a2_id, a2_license_valid_until = :a2_valid_until 
-                                   WHERE id = :id');
+                                   a2_license_id = :a2_id, a2_license_valid_until = :a2_valid_until{$disabledSet}
+                                   WHERE id = :id");
             $stmt->bindValue(':name', $name, SQLITE3_TEXT);
             $stmt->bindValue(':minutes', $minutes, SQLITE3_INTEGER);
             $stmt->bindValue(':a1_a3_id', $a1A3LicenseId, $a1A3LicenseId !== null ? SQLITE3_TEXT : SQLITE3_NULL);
@@ -272,12 +304,23 @@ function handleUpdatePilot($db, $pilotId) {
             $stmt->bindValue(':a2_id', $a2LicenseId, $a2LicenseId !== null ? SQLITE3_TEXT : SQLITE3_NULL);
             $stmt->bindValue(':a2_valid_until', $a2LicenseValidUntil, $a2LicenseValidUntil !== null ? SQLITE3_TEXT : SQLITE3_NULL);
             $stmt->bindValue(':id', $pilotId, SQLITE3_INTEGER);
+            if ($hasDisabledColumn) {
+                $stmt->bindValue(':disabled', $disabled ? 1 : 0, SQLITE3_INTEGER);
+            }
         } else {
             // Fallback for databases without license columns
-            $stmt = $db->prepare('UPDATE pilots SET name = :name, minutes_of_flights_needed = :minutes WHERE id = :id');
-            $stmt->bindValue(':name', $name, SQLITE3_TEXT);
-            $stmt->bindValue(':minutes', $minutes, SQLITE3_INTEGER);
-            $stmt->bindValue(':id', $pilotId, SQLITE3_INTEGER);
+            if ($hasDisabledColumn) {
+                $stmt = $db->prepare('UPDATE pilots SET name = :name, minutes_of_flights_needed = :minutes, disabled = :disabled WHERE id = :id');
+                $stmt->bindValue(':name', $name, SQLITE3_TEXT);
+                $stmt->bindValue(':minutes', $minutes, SQLITE3_INTEGER);
+                $stmt->bindValue(':disabled', $disabled ? 1 : 0, SQLITE3_INTEGER);
+                $stmt->bindValue(':id', $pilotId, SQLITE3_INTEGER);
+            } else {
+                $stmt = $db->prepare('UPDATE pilots SET name = :name, minutes_of_flights_needed = :minutes WHERE id = :id');
+                $stmt->bindValue(':name', $name, SQLITE3_TEXT);
+                $stmt->bindValue(':minutes', $minutes, SQLITE3_INTEGER);
+                $stmt->bindValue(':id', $pilotId, SQLITE3_INTEGER);
+            }
         }
         
         if (!$stmt->execute()) {

@@ -6,6 +6,17 @@
 
 $changelog = [
     [
+        'version' => '1.1.8',
+        'date' => '2026-05-12',
+        'changes' => [
+        ],
+        'bugfixes' => [
+        ],
+        'new_features' => [
+            'Piloten können deaktiviert werden',
+        ]
+    ],
+    [
         'version' => '1.1.7',
         'date' => '2026-03-31',
         'changes' => [
